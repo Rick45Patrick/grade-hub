@@ -1,6 +1,7 @@
 // ==========================================
 // GRADE HUB AUTHENTICATION
 // ==========================================
+console.log("Auth JS loaded");
 
 import { supabase } from "./supabase.js";
 
