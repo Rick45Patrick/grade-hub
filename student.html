@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Grade Hub - Student Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<h1>
+Student Dashboard
+</h1>
+
+
+<nav>
+
+<a href="student.html">
+Results
+</a>
+
+<a href="#" id="logout">
+Logout
+</a>
+
+</nav>
+
+
+</header>
+
+
+
+<section class="dashboard">
+
+
+
+<!-- PROFILE CARD -->
+
+<div class="card">
+
+
+<h2>
+Student Profile
+</h2>
+
+
+<div id="studentProfile">
+
+Loading profile...
+
+</div>
+
+
+</div>
+
+
+
+
+<br>
+
+
+
+
+<!-- SUMMARY CARDS -->
+
+<div class="cards">
+
+
+
+<div class="stat-card">
+
+<h3>
+Average Marks
+</h3>
+
+<p id="averageMarks">
+0%
+</p>
+
+
+</div>
+
+
+
+
+<div class="stat-card">
+
+<h3>
+CBC Grade
+</h3>
+
+<p id="overallGrade">
+-
+</p>
+
+
+</div>
+
+
+
+<div class="stat-card">
+
+<h3>
+Subjects
+</h3>
+
+<p id="subjectCount">
+0
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<!-- RESULTS TABLE -->
+
+
+<div class="card">
+
+
+<h2>
+My Results
+</h2>
+
+
+
+<div class="table-container">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Subject
+</th>
+
+
+<th>
+Marks
+</th>
+
+
+<th>
+Grade
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="resultTable">
+
+
+</tbody>
+
+
+</table>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<br>
+
+
+
+
+<!-- GRAPH -->
+
+
+<div class="card">
+
+
+<h2>
+Performance Analysis
+</h2>
+
+
+<canvas id="performanceChart"></canvas>
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+<script type="module" src="js/student.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</body>
+
+</html>
