@@ -1,5 +1,5 @@
 // ==========================================
-// GRADE HUB - RESULT UPLOAD
+// GRADE HUB - RESULT UPLOAD SYSTEM
 // ==========================================
 
 import { supabase } from "./supabase.js";
@@ -7,31 +7,63 @@ import { supabase } from "./supabase.js";
 
 
 let selectedStudent = null;
+let currentAdmin = null;
 
 
 
 // ==========================================
-// CHECK LOGIN
+// CHECK ADMIN LOGIN
 // ==========================================
 
 async function checkAdmin(){
 
 
-const {data} = await supabase.auth.getUser();
+    const {data} = await supabase.auth.getUser();
 
 
 
-if(!data.user){
+    if(!data.user){
 
-window.location="index.html";
+        window.location="index.html";
 
-return;
+        return null;
 
-}
+    }
 
 
-return data.user;
 
+    const {data:role}=await supabase
+
+    .from("user_roles")
+
+    .select("role,approved")
+
+    .eq("user_id",data.user.id)
+
+    .single();
+
+
+
+    if(
+        !role ||
+        (
+            role.role !== "admin" &&
+            role.role !== "super_admin"
+        ) ||
+        role.approved === false
+    ){
+
+        window.location="index.html";
+
+        return null;
+
+    }
+
+
+
+    currentAdmin = data.user;
+
+    return data.user;
 
 }
 
@@ -40,122 +72,131 @@ return data.user;
 
 
 // ==========================================
-// LOAD SELECTED STUDENT
+// LOAD STUDENT
 // ==========================================
-
 
 async function loadStudent(){
 
 
-const studentId =
-localStorage.getItem("selectedStudent");
+
+    await checkAdmin();
 
 
 
-if(!studentId){
+    const studentId =
+    localStorage.getItem("selectedStudent");
 
-alert("No student selected");
 
-window.location="admin.html";
 
-return;
+    if(!studentId){
+
+
+        alert("No student selected");
+
+
+        window.location="admin.html";
+
+
+        return;
+
+
+    }
+
+
+
+
+    selectedStudent = studentId;
+
+
+
+
+
+    const {data,error}=await supabase
+
+    .from("students")
+
+    .select(`
+
+        id,
+
+        admission_number,
+
+        class,
+
+        optional_subjects,
+
+        profiles(
+
+            full_name
+
+        )
+
+    `)
+
+    .eq("id",studentId)
+
+    .single();
+
+
+
+
+
+    if(error){
+
+        alert(error.message);
+
+        return;
+
+    }
+
+
+
+
+
+
+    document.getElementById("studentInfo").innerHTML = `
+
+    <h3>${data.profiles.full_name}</h3>
+
+    <p>
+    Admission:
+    ${data.admission_number}
+    </p>
+
+    <p>
+    Class:
+    ${data.class}
+    </p>
+
+    `;
+
+
+
+    document.getElementById("optionalName1").value =
+    data.optional_subjects[0] || "";
+
+
+
+    document.getElementById("optionalName2").value =
+    data.optional_subjects[1] || "";
+
+
+
+    document.getElementById("optionalName3").value =
+    data.optional_subjects[2] || "";
+
+
 
 }
 
 
-
-selectedStudent = studentId;
-
-
-
-const {data,error}=await supabase
-
-.from("students")
-
-.select(`
-
-id,
-
-admission_number,
-
-class,
-
-optional_subjects,
-
-profiles(
-full_name
-)
-
-`)
-
-.eq("id",studentId)
-
-.single();
-
-
-
-
-if(error){
-
-console.log(error.message);
-
-return;
-
-}
-
-
-
-
-document.getElementById("studentInfo")
-.innerHTML = `
-
-<h3>
-${data.profiles.full_name}
-</h3>
-
-<p>
-Admission: ${data.admission_number}
-</p>
-
-<p>
-Class: ${data.class}
-</p>
-
-`;
-
-
-
-
-
-// Load optional subjects
-
-document.getElementById("optionalName1")
-.value =
-data.optional_subjects[0] || "";
-
-
-
-document.getElementById("optionalName2")
-.value =
-data.optional_subjects[1] || "";
-
-
-
-document.getElementById("optionalName3")
-.value =
-data.optional_subjects[2] || "";
-
-
-
-}
 
 
 
 
 // ==========================================
-// SAVE RESULTS
+// SAVE RESULTS WITHOUT DUPLICATES
 // ==========================================
-
 
 document
 
@@ -164,147 +205,252 @@ document
 .addEventListener("submit",async(e)=>{
 
 
-e.preventDefault();
+    e.preventDefault();
 
 
 
-const user =
-await checkAdmin();
+    const term =
+    document.getElementById("term").value;
 
 
 
-if(!user)
-return;
-
-
-
-const term =
-document.getElementById("term").value;
-
-
-const year =
-document.getElementById("year").value;
-
-
-
-const results=[
-
-
-{
-subject:"Mathematics",
-marks:
-Number(document.getElementById("mathematics").value)
-},
-
-
-{
-subject:"English",
-marks:
-Number(document.getElementById("english").value)
-},
-
-
-{
-subject:"Kiswahili",
-marks:
-Number(document.getElementById("kiswahili").value)
-},
-
-
-{
-subject:"CSL",
-marks:
-Number(document.getElementById("csl").value)
-},
-
-
-
-{
-subject:
-document.getElementById("optionalName1").value,
-
-marks:
-Number(document.getElementById("optionalMark1").value)
-},
-
-
-{
-subject:
-document.getElementById("optionalName2").value,
-
-marks:
-Number(document.getElementById("optionalMark2").value)
-},
-
-
-{
-subject:
-document.getElementById("optionalName3").value,
-
-marks:
-Number(document.getElementById("optionalMark3").value)
-}
-
-
-];
+    const year =
+    Number(
+    document.getElementById("year").value
+    );
 
 
 
 
-
-for(const result of results){
-
-
-if(result.subject && result.marks){
+    const subjects = [
 
 
-const {error}=await supabase
+        {
+            name:"Mathematics",
+            mark:
+            Number(
+            document.getElementById("mathematics").value
+            )
+        },
 
-.from("results")
 
-.insert({
+        {
+            name:"English",
+            mark:
+            Number(
+            document.getElementById("english").value
+            )
+        },
 
-student_id:selectedStudent,
 
-subject:result.subject,
+        {
+            name:"Kiswahili",
+            mark:
+            Number(
+            document.getElementById("kiswahili").value
+            )
+        },
 
-marks:result.marks,
 
-term:term,
+        {
+            name:"CSL",
+            mark:
+            Number(
+            document.getElementById("csl").value
+            )
+        },
 
-year:Number(year),
 
-uploaded_by:user.id
+        {
+            name:
+            document.getElementById("optionalName1").value,
+
+            mark:
+            Number(
+            document.getElementById("optionalMark1").value
+            )
+        },
+
+
+        {
+            name:
+            document.getElementById("optionalName2").value,
+
+            mark:
+            Number(
+            document.getElementById("optionalMark2").value
+            )
+        },
+
+
+        {
+            name:
+            document.getElementById("optionalName3").value,
+
+            mark:
+            Number(
+            document.getElementById("optionalMark3").value
+            )
+        }
+
+
+    ];
+
+
+
+
+
+
+    for(const subject of subjects){
+
+
+
+        if(!subject.name)
+        continue;
+
+
+
+
+        // Check existing result
+
+        const {data:existing}=await supabase
+
+        .from("results")
+
+        .select("id")
+
+        .eq(
+            "student_id",
+            selectedStudent
+        )
+
+        .eq(
+            "subject",
+            subject.name
+        )
+
+        .eq(
+            "term",
+            term
+        )
+
+        .eq(
+            "year",
+            year
+        )
+
+        .maybeSingle();
+
+
+
+
+
+
+
+        if(existing){
+
+
+            // Update existing mark
+
+
+            const {error}=await supabase
+
+            .from("results")
+
+            .update({
+
+                marks:subject.mark,
+
+                uploaded_by:
+                currentAdmin.id
+
+            })
+
+            .eq(
+                "id",
+                existing.id
+            );
+
+
+
+            if(error){
+
+                alert(error.message);
+
+                return;
+
+            }
+
+
+
+        }
+
+
+
+        else{
+
+
+
+            // Insert new result
+
+
+            const {error}=await supabase
+
+            .from("results")
+
+            .insert({
+
+
+                student_id:selectedStudent,
+
+
+                subject:subject.name,
+
+
+                marks:subject.mark,
+
+
+                term:term,
+
+
+                year:year,
+
+
+                uploaded_by:
+                currentAdmin.id
+
+
+            });
+
+
+
+            if(error){
+
+                alert(error.message);
+
+                return;
+
+            }
+
+
+
+        }
+
+
+    }
+
+
+
+
+    document.getElementById("message")
+    .textContent =
+    "Results saved successfully (duplicates updated).";
+
+
 
 });
 
 
-
-if(error){
-
-document.getElementById("message")
-.textContent=error.message;
-
-return;
-
-}
-
-
-}
-
-
-}
-
-
-
-
-document.getElementById("message")
-.textContent=
-"Results uploaded successfully";
-
-
-
-});
 
 
 
@@ -314,7 +460,6 @@ document.getElementById("message")
 // LOGOUT
 // ==========================================
 
-
 document
 
 .getElementById("logout")
@@ -322,10 +467,10 @@ document
 .addEventListener("click",async()=>{
 
 
-await supabase.auth.signOut();
+    await supabase.auth.signOut();
 
 
-window.location="index.html";
+    window.location="index.html";
 
 
 });
@@ -333,6 +478,5 @@ window.location="index.html";
 
 
 
-// Start
 
 loadStudent();
