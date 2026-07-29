@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Grade Hub - Register</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="auth-container">
+
+
+<div class="auth-box">
+
+
+<h2>
+Create Account
+</h2>
+
+
+<form id="registerForm">
+
+
+<label>
+Account Type
+</label>
+
+
+<select id="accountType" required>
+
+<option value="">
+Select account type
+</option>
+
+<option value="student">
+Student
+</option>
+
+<option value="admin">
+Administrator Request
+</option>
+
+</select>
+
+
+
+<!-- Student Information -->
+
+
+<div id="studentFields">
+
+
+<label>
+Full Name
+</label>
+
+<input 
+type="text"
+id="fullName"
+placeholder="Full name">
+
+
+
+<label>
+Admission Number
+</label>
+
+<input
+type="text"
+id="admission"
+placeholder="Admission number">
+
+
+
+<label>
+Class / Grade
+</label>
+
+<input
+type="text"
+id="class"
+placeholder="Example: Grade 10">
+
+
+
+<h3>
+Choose Optional Subjects
+</h3>
+
+
+<label>
+Optional Subject 1
+</label>
+
+<select id="optional1">
+
+<option>Biology</option>
+<option>Chemistry</option>
+<option>Physics</option>
+<option>Geography</option>
+<option>History</option>
+<option>CRE</option>
+<option>Business Studies</option>
+<option>Agriculture</option>
+<option>Computer Studies</option>
+<option>Home Science</option>
+
+</select>
+
+
+
+<label>
+Optional Subject 2
+</label>
+
+<select id="optional2">
+
+<option>Biology</option>
+<option>Chemistry</option>
+<option>Physics</option>
+<option>Geography</option>
+<option>History</option>
+<option>CRE</option>
+<option>Business Studies</option>
+<option>Agriculture</option>
+<option>Computer Studies</option>
+<option>Home Science</option>
+
+</select>
+
+
+
+<label>
+Optional Subject 3
+</label>
+
+<select id="optional3">
+
+<option>Biology</option>
+<option>Chemistry</option>
+<option>Physics</option>
+<option>Geography</option>
+<option>History</option>
+<option>CRE</option>
+<option>Business Studies</option>
+<option>Agriculture</option>
+<option>Computer Studies</option>
+<option>Home Science</option>
+
+</select>
+
+
+</div>
+
+
+
+<!-- Admin Information -->
+
+
+<div id="adminFields">
+
+
+<label>
+Full Name
+</label>
+
+<input
+type="text"
+id="adminName"
+placeholder="Administrator name">
+
+
+
+</div>
+
+
+
+<label>
+Email Address
+</label>
+
+
+<input
+type="email"
+id="email"
+placeholder="Email"
+required>
+
+
+
+<label>
+Username
+</label>
+
+
+<input
+type="text"
+id="username"
+placeholder="Username"
+required>
+
+
+
+
+<label>
+Password
+</label>
+
+
+<input
+type="password"
+id="password"
+placeholder="Password"
+required>
+
+
+
+
+<label>
+Confirm Password
+</label>
+
+
+<input
+type="password"
+id="confirmPassword"
+placeholder="Confirm password"
+required>
+
+
+
+<button type="submit">
+
+Register
+
+</button>
+
+
+
+</form>
+
+
+<p id="message"></p>
+
+
+<p style="text-align:center">
+
+Already have an account?
+
+<a href="index.html">
+Login
+</a>
+
+</p>
+
+
+
+</div>
+
+
+</div>
+
+
+
+<script src="js/auth.js"></script>
+
+
+</body>
+
+</html>
