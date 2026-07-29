@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Grade Hub - Login</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="auth-container">
+
+
+    <div class="auth-box">
+
+
+        <h2>
+            Grade Hub Login
+        </h2>
+
+
+        <form id="loginForm">
+
+
+            <label>
+                Email Address
+            </label>
+
+            <input 
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+            >
+
+
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                required
+            >
+
+
+
+            <label>
+                Login As
+            </label>
+
+
+            <select id="role" required>
+
+                <option value="">
+                    Select account type
+                </option>
+
+                <option value="student">
+                    Student
+                </option>
+
+                <option value="admin">
+                    Administrator
+                </option>
+
+                <option value="super_admin">
+                    Super Administrator
+                </option>
+
+            </select>
+
+
+
+            <button type="submit">
+
+                Login
+
+            </button>
+
+
+        </form>
+
+
+        <p id="message"></p>
+
+
+        <br>
+
+
+        <p style="text-align:center">
+
+            Don't have an account?
+
+            <a href="register.html">
+                Register
+            </a>
+
+        </p>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+<script src="js/auth.js"></script>
+
+
+</body>
+
+</html>
