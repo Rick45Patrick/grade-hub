@@ -4,36 +4,16 @@
 
 import { supabase } from "./supabase.js";
 
+import {
+    getGrade,
+    calculateAverage,
+    getOverallLevel,
+    getGradeDescription
+} from "./grading.js";
+
+
+
 let chart;
-
-
-// ==========================================
-// CBC GRADING SYSTEM
-// ==========================================
-
-function getGrade(mark){
-
-    if(mark >= 90){
-        return "EE1";
-    }
-
-    else if(mark >= 75){
-        return "EE2";
-    }
-
-    else if(mark >= 50){
-        return "ME";
-    }
-
-    else if(mark >= 25){
-        return "AE";
-    }
-
-    else{
-        return "BE";
-    }
-
-}
 
 
 
@@ -43,25 +23,29 @@ function getGrade(mark){
 
 async function checkStudent(){
 
+
     const {data} = await supabase.auth.getUser();
+
 
 
     if(!data.user){
 
-        window.location="index.html";
+        window.location = "index.html";
 
         return null;
 
     }
 
 
-    const {data:role}=await supabase
+
+
+    const {data:role} = await supabase
 
     .from("user_roles")
 
     .select("role,approved")
 
-    .eq("user_id",data.user.id)
+    .eq("user_id", data.user.id)
 
     .single();
 
@@ -73,11 +57,12 @@ async function checkStudent(){
         role.approved === false
     ){
 
-        window.location="index.html";
+        window.location = "index.html";
 
         return null;
 
     }
+
 
 
     return data.user;
@@ -92,105 +77,118 @@ async function checkStudent(){
 // LOAD STUDENT DATA
 // ==========================================
 
-
 async function loadStudent(){
 
 
-const user =
-await checkStudent();
+    const user = await checkStudent();
 
 
 
-if(!user)
-return;
-
-
-
-
-// Get student profile
-
-const {data:student,error}=await supabase
-
-.from("students")
-
-.select(`
-
-id,
-
-admission_number,
-
-class,
-
-optional_subjects,
-
-profiles(
-full_name,
-email
-)
-
-`)
-
-.eq("user_id",user.id)
-
-.single();
+    if(!user)
+    return;
 
 
 
 
-if(error){
+    const {data:student,error} = await supabase
 
-console.log(error.message);
+    .from("students")
 
-return;
+    .select(`
+
+        id,
+
+        admission_number,
+
+        class,
+
+        optional_subjects,
+
+        profiles(
+
+            full_name,
+
+            email
+
+        )
+
+    `)
+
+    .eq("user_id", user.id)
+
+    .single();
+
+
+
+
+    if(error){
+
+        console.log(error.message);
+
+        return;
+
+    }
+
+
+
+
+
+    document.getElementById("studentProfile").innerHTML = `
+
+        <h3>
+        ${student.profiles.full_name}
+        </h3>
+
+        <p>
+        Admission Number:
+        ${student.admission_number}
+        </p>
+
+        <p>
+        Class:
+        ${student.class}
+        </p>
+
+        <p>
+        Email:
+        ${student.profiles.email}
+        </p>
+
+    `;
+
+
+
+
+
+
+    const {data:results,error:resultError} = await supabase
+
+    .from("results")
+
+    .select("*")
+
+    .eq("student_id", student.id);
+
+
+
+
+    if(resultError){
+
+        console.log(resultError.message);
+
+        return;
+
+    }
+
+
+
+    displayResults(results || []);
+
+
 
 }
 
 
-
-
-document.getElementById("studentProfile")
-.innerHTML=`
-
-<h3>${student.profiles.full_name}</h3>
-
-<p>
-Admission: ${student.admission_number}
-</p>
-
-<p>
-Class: ${student.class}
-</p>
-
-<p>
-Email: ${student.profiles.email}
-</p>
-
-`;
-
-
-
-
-// Load results
-
-const {data:results}=await supabase
-
-.from("results")
-
-.select("*")
-
-.eq("student_id",student.id);
-
-
-
-
-
-displayResults(results || []);
-
-
-
-
-
-}
 
 
 
@@ -199,190 +197,206 @@ displayResults(results || []);
 // DISPLAY RESULTS
 // ==========================================
 
-
 function displayResults(results){
 
 
 
-const table =
-document.getElementById("resultTable");
+    const table =
+    document.getElementById("resultTable");
 
 
 
-table.innerHTML="";
+    table.innerHTML = "";
 
 
 
-let total=0;
+    let subjects = [];
 
-
-let subjects=[];
-
-
-let marks=[];
-
-
-
-results.forEach(result=>{
-
-
-total += result.marks;
-
-
-subjects.push(result.subject);
-
-marks.push(result.marks);
-
-
-
-table.innerHTML +=`
-
-<tr>
-
-<td>
-${result.subject}
-</td>
-
-
-<td>
-${result.marks}%
-</td>
-
-
-<td>
-${getGrade(result.marks)}
-</td>
-
-
-</tr>
-
-`;
-
-
-});
+    let marks = [];
 
 
 
 
+    results.forEach(result=>{
 
-let average=0;
 
 
-if(results.length){
+        const grade =
+        getGrade(result.marks);
 
-average =
-Math.round(total/results.length);
+
+
+        table.innerHTML += `
+
+        <tr>
+
+
+        <td>
+        ${result.subject}
+        </td>
+
+
+        <td>
+        ${result.marks}%
+        </td>
+
+
+        <td>
+        ${grade}
+        </td>
+
+
+        </tr>
+
+        `;
+
+
+
+        subjects.push(result.subject);
+
+        marks.push(result.marks);
+
+
+
+    });
+
+
+
+
+
+
+
+    const average =
+    calculateAverage(results);
+
+
+
+    const overall =
+    getOverallLevel(results);
+
+
+
+
+    document.getElementById("averageMarks")
+    .textContent =
+    average + "%";
+
+
+
+    document.getElementById("overallGrade")
+    .textContent =
+    overall;
+
+
+
+
+    document.getElementById("subjectCount")
+    .textContent =
+    results.length;
+
+
+
+    createGraph(
+        subjects,
+        marks
+    );
+
 
 }
 
 
-
-document.getElementById("averageMarks")
-.textContent =
-average + "%";
-
-
-
-document.getElementById("overallGrade")
-.textContent =
-getGrade(average);
-
-
-
-document.getElementById("subjectCount")
-.textContent =
-results.length;
-
-
-
-
-createGraph(subjects,marks);
-
-
-
-}
 
 
 
 
 
 // ==========================================
-// CREATE PERFORMANCE GRAPH
+// PERFORMANCE GRAPH
 // ==========================================
-
 
 function createGraph(subjects,marks){
 
 
 
-const ctx =
-document
+    const ctx =
+    document
 
-.getElementById("performanceChart")
+    .getElementById("performanceChart")
 
-.getContext("2d");
+    .getContext("2d");
 
 
 
-if(chart){
+    if(chart){
 
-chart.destroy();
+        chart.destroy();
+
+    }
+
+
+
+
+    chart = new Chart(ctx,{
+
+
+        type:"line",
+
+
+        data:{
+
+
+            labels:subjects,
+
+
+            datasets:[{
+
+                label:"Performance",
+
+                data:marks,
+
+                borderWidth:3
+
+            }]
+
+
+        },
+
+
+
+        options:{
+
+
+            responsive:true,
+
+
+            scales:{
+
+
+                y:{
+
+
+                    beginAtZero:true,
+
+                    max:100
+
+
+                }
+
+
+            }
+
+
+        }
+
+
+
+    });
+
+
 
 }
 
 
-
-chart=new Chart(ctx,{
-
-type:"line",
-
-
-data:{
-
-
-labels:subjects,
-
-
-datasets:[{
-
-label:"Marks",
-
-data:marks,
-
-borderWidth:3,
-
-fill:false
-
-}]
-
-
-},
-
-
-options:{
-
-responsive:true,
-
-
-scales:{
-
-y:{
-
-beginAtZero:true,
-
-max:100
-
-}
-
-}
-
-}
-
-});
-
-
-
-}
 
 
 
@@ -391,7 +405,6 @@ max:100
 // LOGOUT
 // ==========================================
 
-
 document
 
 .getElementById("logout")
@@ -399,10 +412,10 @@ document
 .addEventListener("click",async()=>{
 
 
-await supabase.auth.signOut();
+    await supabase.auth.signOut();
 
 
-window.location="index.html";
+    window.location="index.html";
 
 
 });
@@ -411,6 +424,5 @@ window.location="index.html";
 
 
 
-// Start dashboard
 
 loadStudent();
