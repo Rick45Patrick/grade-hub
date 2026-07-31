@@ -3,184 +3,537 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>Grade Hub - Super Admin</title>
+    <title>Super Admin Dashboard — Grade Hub</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
 
-<body>
+<body class="dashboard-body">
 
 
-<header>
+<!-- =========================================
+     SIDEBAR
+========================================= -->
 
-<h1>
-Super Admin Dashboard
-</h1>
+<aside class="admin-sidebar">
 
+    <div class="sidebar-brand">
 
-<nav>
+        <div class="sidebar-logo">
+            GH
+        </div>
 
-<a href="admin.html">
-Admin Dashboard
-</a>
+        <div>
 
+            <strong>
+                Grade Hub
+            </strong>
 
-<a href="#" id="logout">
-Logout
-</a>
+            <small>
+                Super Admin
+            </small>
 
+        </div>
 
-</nav>
+    </div>
 
 
-</header>
+    <nav class="sidebar-navigation">
 
+        <a
+            href="#overview"
+            class="sidebar-link active"
+        >
+            <span>▦</span>
+            Overview
+        </a>
 
 
-<section class="dashboard">
+        <a
+            href="#adminRequests"
+            class="sidebar-link"
+        >
+            <span>♙</span>
+            Admin Requests
+        </a>
 
 
-<div class="card">
+        <a
+            href="#administrators"
+            class="sidebar-link"
+        >
+            <span>♟</span>
+            Administrators
+        </a>
 
 
-<h2>
-Pending Administrator Requests
-</h2>
+        <a
+            href="#students"
+            class="sidebar-link"
+        >
+            <span>🎓</span>
+            Students
+        </a>
 
+    </nav>
 
 
-<div class="table-container">
+    <div class="sidebar-bottom">
 
+        <button
+            id="logoutButton"
+            class="sidebar-logout"
+        >
+            <span>↪</span>
+            Sign Out
+        </button>
 
-<table>
+    </div>
 
+</aside>
 
-<thead>
 
-<tr>
 
-<th>
-Name
-</th>
+<!-- =========================================
+     MAIN
+========================================= -->
 
+<main class="admin-main">
 
-<th>
-Email
-</th>
 
+    <!-- TOP BAR -->
 
-<th>
-Username
-</th>
+    <header class="admin-topbar">
 
+        <div>
 
-<th>
-Action
-</th>
+            <p class="topbar-label">
+                Administration
+            </p>
 
+            <h1>
+                Super Admin Dashboard
+            </h1>
 
-</tr>
+        </div>
 
-</thead>
 
+        <div class="topbar-actions">
 
+            <button
+                id="refreshDashboard"
+                class="refresh-button"
+            >
+                ↻
+                Refresh
+            </button>
 
-<tbody id="adminRequests">
+        </div>
 
-</tbody>
+    </header>
 
 
+    <!-- MESSAGE -->
 
-</table>
+    <div
+        id="superAdminMessage"
+        class="super-admin-message"
+    ></div>
 
 
-</div>
 
+    <!-- =====================================
+         OVERVIEW
+    ====================================== -->
 
-</div>
+    <section
+        id="overview"
+        class="dashboard-section"
+    >
 
+        <div class="section-heading">
 
+            <div>
 
+                <span class="section-kicker">
+                    Overview
+                </span>
 
+                <h2>
+                    System Overview
+                </h2>
 
-<br>
+            </div>
 
+        </div>
 
 
+        <div class="statistics-grid">
 
-<div class="card">
 
+            <!-- STUDENTS -->
 
-<h2>
-Approved Administrators
-</h2>
+            <div class="stat-card">
 
+                <div class="stat-icon students-icon">
+                    🎓
+                </div>
 
+                <div>
 
-<div class="table-container">
+                    <span class="stat-label">
+                        Total Students
+                    </span>
 
+                    <strong
+                        id="totalStudents"
+                        class="stat-number"
+                    >
+                        0
+                    </strong>
 
-<table>
+                </div>
 
+            </div>
 
-<thead>
 
-<tr>
+            <!-- ADMINS -->
 
-<th>
-Name
-</th>
+            <div class="stat-card">
 
+                <div class="stat-icon admins-icon">
+                    🛡️
+                </div>
 
-<th>
-Email
-</th>
+                <div>
 
+                    <span class="stat-label">
+                        Administrators
+                    </span>
 
-<th>
-Role
-</th>
+                    <strong
+                        id="totalAdmins"
+                        class="stat-number"
+                    >
+                        0
+                    </strong>
 
+                </div>
 
-<th>
-Action
-</th>
+            </div>
 
 
-</tr>
+            <!-- PENDING -->
 
+            <div class="stat-card">
 
-</thead>
+                <div class="stat-icon pending-icon">
+                    ⏳
+                </div>
 
+                <div>
 
+                    <span class="stat-label">
+                        Pending Requests
+                    </span>
 
-<tbody id="adminList">
+                    <strong
+                        id="pendingAdmins"
+                        class="stat-number"
+                    >
+                        0
+                    </strong>
 
-</tbody>
+                </div>
 
+            </div>
 
-</table>
 
+        </div>
 
+    </section>
 
-</div>
 
 
+    <!-- =====================================
+         ADMIN REQUESTS
+    ====================================== -->
 
-</div>
+    <section
+        id="adminRequests"
+        class="dashboard-section"
+    >
 
+        <div class="section-heading">
 
-</section>
+            <div>
 
+                <span class="section-kicker">
+                    Access Control
+                </span>
 
+                <h2>
+                    Administrator Requests
+                </h2>
 
-<script type="module" src="js/superadmin.js"></script>
+                <p>
+                    Review people requesting administrator access.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Full Name
+                            </th>
+
+                            <th>
+                                Username
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Requested
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="adminRequests">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         APPROVED ADMINISTRATORS
+    ====================================== -->
+
+    <section
+        id="administrators"
+        class="dashboard-section"
+    >
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-kicker">
+                    Staff Management
+                </span>
+
+                <h2>
+                    Administrators
+                </h2>
+
+                <p>
+                    Manage approved administrator accounts.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Full Name
+                            </th>
+
+                            <th>
+                                Username
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="approvedAdmins">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         STUDENTS
+    ====================================== -->
+
+    <section
+        id="students"
+        class="dashboard-section"
+    >
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-kicker">
+                    Student Management
+                </span>
+
+                <h2>
+                    Registered Students
+                </h2>
+
+                <p>
+                    View and manage student accounts.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Admission
+                            </th>
+
+                            <th>
+                                Full Name
+                            </th>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Optional Subjects
+                            </th>
+
+                            <th>
+                                Username
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="studentTable">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+
+    <footer class="dashboard-footer">
+
+        <span>
+            Grade Hub
+        </span>
+
+        <span>
+            Super Administrator Control Panel
+        </span>
+
+    </footer>
+
+
+</main>
+
+
+
+<script
+    type="module"
+    src="js/superadmin.js"
+></script>
 
 
 </body>
