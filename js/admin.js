@@ -1,70 +1,193 @@
+// ==========================================
+// GRADE HUB - ADMIN DASHBOARD
+// ==========================================
+
 import { supabase } from "./supabase.js";
 
 
 // ==========================================
-// AUTH CHECK
+// ELEMENTS
 // ==========================================
 
-async function checkAdmin() {
+const studentTable =
+    document.getElementById("studentTable");
+
+const studentCount =
+    document.getElementById("studentCount");
+
+const searchStudent =
+    document.getElementById("searchStudent");
+
+const logoutButton =
+    document.getElementById("logout");
+
+
+// ==========================================
+// CHECK ADMIN SESSION
+// ==========================================
+
+async function checkAdminAccess() {
 
     const {
         data: {
             session
-        }
+        },
+        error: sessionError
     } = await supabase.auth.getSession();
+
+
+    if (sessionError) {
+
+        console.error(
+            "Session error:",
+            sessionError
+        );
+
+        window.location.replace(
+            "index.html"
+        );
+
+        return false;
+    }
 
 
     if (!session) {
 
-        window.location.replace("index.html");
+        console.log(
+            "No active session."
+        );
+
+        window.location.replace(
+            "index.html"
+        );
 
         return false;
     }
 
 
-    const user = session.user;
+    const userId =
+        session.user.id;
 
+
+    console.log(
+        "Admin user:",
+        userId
+    );
+
+
+    // ======================================
+    // GET ROLES
+    // ======================================
 
     const {
         data: roles,
-        error
+        error: roleError
     } = await supabase
         .from("user_roles")
-        .select("role, approved")
-        .eq("user_id", user.id);
+        .select(`
+            role,
+            approved
+        `)
+        .eq(
+            "user_id",
+            userId
+        );
 
 
-    if (error) {
+    if (roleError) {
 
         console.error(
-            "Role loading error:",
-            error
+            "Role error:",
+            roleError
+        );
+
+
+        /*
+         * Do NOT immediately sign the user out.
+         *
+         * This prevents the dashboard from
+         * appearing to log in and immediately
+         * log out because of a role query issue.
+         */
+
+        showAccessError(
+            "Unable to verify your administrator role."
         );
 
         return false;
     }
 
 
-    const allowed =
-        (roles || []).some(
-            role =>
+    console.log(
+        "User roles:",
+        roles
+    );
+
+
+    // ======================================
+    // FIND APPROVED ADMIN ROLE
+    // ======================================
+
+    const adminRole =
+        (roles || []).find(
+            item =>
                 (
-                    role.role === "admin" ||
-                    role.role === "super_admin"
+                    item.role === "admin" ||
+                    item.role === "super_admin"
                 ) &&
-                role.approved !== false
+                item.approved !== false
         );
 
 
-    if (!allowed) {
+    if (!adminRole) {
 
-        window.location.replace("index.html");
+        console.error(
+            "No approved admin role found.",
+            roles
+        );
+
+
+        showAccessError(
+            "This account does not have an approved administrator role."
+        );
 
         return false;
     }
+
+
+    console.log(
+        "Administrator access confirmed:",
+        adminRole
+    );
 
 
     return true;
+}
+
+
+// ==========================================
+// ACCESS ERROR
+// ==========================================
+
+function showAccessError(message) {
+
+    if (studentTable) {
+
+        studentTable.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    style="
+                        text-align:center;
+                        padding:25px;
+                        color:#991b1b;
+                    ">
+                    ${escapeHTML(message)}
+                </td>
+            </tr>
+        `;
+
+    }
+
 }
 
 
@@ -74,13 +197,18 @@ async function checkAdmin() {
 
 async function loadStudents() {
 
-    const table =
-        document.getElementById("studentTable");
+    if (!studentTable) {
+        return;
+    }
 
 
-    table.innerHTML = `
+    studentTable.innerHTML = `
         <tr>
-            <td colspan="5">
+            <td colspan="5"
+                style="
+                    text-align:center;
+                    padding:25px;
+                ">
                 Loading students...
             </td>
         </tr>
@@ -99,7 +227,12 @@ async function loadStudents() {
             class,
             optional_subjects
         `)
-        .order("admission_number");
+        .order(
+            "admission_number",
+            {
+                ascending: true
+            }
+        );
 
 
     if (error) {
@@ -110,12 +243,17 @@ async function loadStudents() {
         );
 
 
-        table.innerHTML = `
+        studentTable.innerHTML = `
             <tr>
-                <td colspan="5">
-                    Unable to load students.
-                    <br>
-                    ${escapeHTML(error.message)}
+                <td colspan="5"
+                    style="
+                        text-align:center;
+                        padding:25px;
+                        color:#991b1b;
+                    ">
+                    ${escapeHTML(
+                        error.message
+                    )}
                 </td>
             </tr>
         `;
@@ -125,25 +263,29 @@ async function loadStudents() {
 
 
     console.log(
-        "Students loaded:",
+        "Students:",
         students
     );
 
 
     if (!students || students.length === 0) {
 
-        table.innerHTML = `
+        studentTable.innerHTML = `
             <tr>
-                <td colspan="5">
+                <td colspan="5"
+                    style="
+                        text-align:center;
+                        padding:25px;
+                    ">
                     No students registered yet.
                 </td>
             </tr>
         `;
 
 
-        document.getElementById(
-            "studentCount"
-        ).textContent = "0";
+        if (studentCount) {
+            studentCount.textContent = "0";
+        }
 
 
         return;
@@ -156,7 +298,10 @@ async function loadStudents() {
 
     const userIds =
         students
-            .map(student => student.user_id)
+            .map(
+                student =>
+                    student.user_id
+            )
             .filter(Boolean);
 
 
@@ -176,7 +321,10 @@ async function loadStudents() {
                 username,
                 email
             `)
-            .in("id", userIds);
+            .in(
+                "id",
+                userIds
+            );
 
 
         if (profileError) {
@@ -188,7 +336,9 @@ async function loadStudents() {
 
         } else {
 
-            profiles = data || [];
+            profiles =
+                data || [];
+
         }
     }
 
@@ -196,20 +346,19 @@ async function loadStudents() {
     const profileMap =
         new Map(
             profiles.map(
-                profile =>
-                    [
-                        profile.id,
-                        profile
-                    ]
+                profile => [
+                    profile.id,
+                    profile
+                ]
             )
         );
 
 
     // ======================================
-    // DISPLAY
+    // DISPLAY STUDENTS
     // ======================================
 
-    table.innerHTML = "";
+    studentTable.innerHTML = "";
 
 
     students.forEach(student => {
@@ -267,15 +416,19 @@ async function loadStudents() {
             <td>
 
                 <button
-                    class="btn"
-                    data-upload="${student.id}"
+                    class="btn upload-student"
+                    data-id="${escapeHTML(
+                        student.id
+                    )}"
                 >
                     Upload
                 </button>
 
                 <button
-                    class="btn"
-                    data-delete="${student.id}"
+                    class="btn delete-student"
+                    data-id="${escapeHTML(
+                        student.id
+                    )}"
                     style="background:#dc2626"
                 >
                     Delete
@@ -286,24 +439,26 @@ async function loadStudents() {
         `;
 
 
-        table.appendChild(row);
+        studentTable.appendChild(row);
 
     });
 
 
-    document.getElementById(
-        "studentCount"
-    ).textContent =
-        students.length;
+    if (studentCount) {
+
+        studentCount.textContent =
+            students.length;
+
+    }
 
 
     // ======================================
-    // BUTTON EVENTS
+    // UPLOAD BUTTONS
     // ======================================
 
     document
         .querySelectorAll(
-            "[data-upload]"
+            ".upload-student"
         )
         .forEach(button => {
 
@@ -311,13 +466,13 @@ async function loadStudents() {
                 "click",
                 () => {
 
-                    const id =
-                        button.dataset.upload;
+                    const studentId =
+                        button.dataset.id;
 
 
                     localStorage.setItem(
                         "selectedStudent",
-                        id
+                        studentId
                     );
 
 
@@ -330,18 +485,22 @@ async function loadStudents() {
         });
 
 
+    // ======================================
+    // DELETE BUTTONS
+    // ======================================
+
     document
         .querySelectorAll(
-            "[data-delete]"
+            ".delete-student"
         )
         .forEach(button => {
 
             button.addEventListener(
                 "click",
-                () => {
+                async () => {
 
-                    deleteStudent(
-                        button.dataset.delete
+                    await deleteStudent(
+                        button.dataset.id
                     );
 
                 }
@@ -356,7 +515,12 @@ async function loadStudents() {
 // DELETE STUDENT
 // ==========================================
 
-async function deleteStudent(id) {
+async function deleteStudent(studentId) {
+
+    if (!studentId) {
+        return;
+    }
+
 
     const confirmed =
         window.confirm(
@@ -374,10 +538,19 @@ async function deleteStudent(id) {
     } = await supabase
         .from("students")
         .delete()
-        .eq("id", id);
+        .eq(
+            "id",
+            studentId
+        );
 
 
     if (error) {
+
+        console.error(
+            "Delete error:",
+            error
+        );
+
 
         alert(
             "Delete failed: " +
@@ -393,7 +566,8 @@ async function deleteStudent(id) {
     );
 
 
-    loadStudents();
+    await loadStudents();
+
 }
 
 
@@ -401,37 +575,34 @@ async function deleteStudent(id) {
 // SEARCH
 // ==========================================
 
-const search =
-    document.getElementById(
-        "searchStudent"
-    );
+if (searchStudent) {
 
-
-if (search) {
-
-    search.addEventListener(
+    searchStudent.addEventListener(
         "input",
         event => {
 
             const value =
                 event.target.value
+                    .trim()
                     .toLowerCase();
 
 
-            document
-                .querySelectorAll(
+            const rows =
+                document.querySelectorAll(
                     "#studentTable tr"
-                )
-                .forEach(row => {
+                );
 
-                    row.style.display =
-                        row.textContent
-                            .toLowerCase()
-                            .includes(value)
-                            ? ""
-                            : "none";
 
-                });
+            rows.forEach(row => {
+
+                row.style.display =
+                    row.textContent
+                        .toLowerCase()
+                        .includes(value)
+                        ? ""
+                        : "none";
+
+            });
 
         }
     );
@@ -443,22 +614,45 @@ if (search) {
 // LOGOUT
 // ==========================================
 
-const logout =
-    document.getElementById(
-        "logout"
-    );
+if (logoutButton) {
 
-
-if (logout) {
-
-    logout.addEventListener(
+    logoutButton.addEventListener(
         "click",
         async event => {
 
             event.preventDefault();
 
 
-            await supabase.auth.signOut();
+            logoutButton.textContent =
+                "Logging out...";
+
+
+            logoutButton.style.pointerEvents =
+                "none";
+
+
+            const {
+                error
+            } =
+                await supabase.auth.signOut();
+
+
+            if (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+
+                logoutButton.textContent =
+                    "Logout";
+
+                logoutButton.style.pointerEvents =
+                    "auto";
+
+                return;
+            }
 
 
             window.location.replace(
@@ -490,16 +684,20 @@ function escapeHTML(value) {
 // START
 // ==========================================
 
-(async function () {
+async function startAdminDashboard() {
 
     const allowed =
-        await checkAdmin();
+        await checkAdminAccess();
 
 
-    if (allowed) {
-
-        await loadStudents();
-
+    if (!allowed) {
+        return;
     }
 
-})();
+
+    await loadStudents();
+
+}
+
+
+startAdminDashboard();
