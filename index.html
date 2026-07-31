@@ -5,11 +5,19 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Grade Hub - Login</title>
+    <title>
+        Grade Hub — Login
+    </title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
@@ -17,109 +25,100 @@
 <body>
 
 
-<div class="auth-container">
+    <main class="login-page">
 
 
-    <div class="auth-box">
+        <section class="login-card">
 
 
-        <h2>
-            Grade Hub Login
-        </h2>
+            <div class="brand">
+
+                <div class="brand-icon">
+                    GH
+                </div>
+
+                <h1>
+                    Grade Hub
+                </h1>
+
+                <p>
+                    Student Results Portal
+                </p>
+
+            </div>
 
 
-        <form id="loginForm">
+            <form id="loginForm">
 
 
-            <label>
-                Email Address
-            </label>
+                <div class="form-group">
 
-            <input 
-                type="email"
-                id="email"
-                placeholder="Enter your email"
-                required
-            >
+                    <label for="email">
+                        Email address
+                    </label>
 
+                    <input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        required
+                    >
 
-
-            <label>
-                Password
-            </label>
-
-            <input
-                type="password"
-                id="password"
-                placeholder="Enter password"
-                required
-            >
+                </div>
 
 
+                <div class="form-group">
 
-            <label>
-                Login As
-            </label>
+                    <label for="password">
+                        Password
+                    </label>
 
+                    <input
+                        id="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        required
+                    >
 
-            <select id="role" required>
-
-                <option value="">
-                    Select account type
-                </option>
-
-                <option value="student">
-                    Student
-                </option>
-
-                <option value="admin">
-                    Administrator
-                </option>
-
-                <option value="super_admin">
-                    Super Administrator
-                </option>
-
-            </select>
+                </div>
 
 
-
-            <button type="submit">
-
-                Login
-
-            </button>
-
-
-        </form>
+                <button
+                    id="loginButton"
+                    type="submit"
+                >
+                    Sign In
+                </button>
 
 
-        <p id="message"></p>
+                <p
+                    id="message"
+                    class="message"
+                ></p>
 
 
-        <br>
+            </form>
 
 
-        <p style="text-align:center">
+            <div class="login-links">
 
-            Don't have an account?
+                <a href="register.html">
+                    Create student account
+                </a>
 
-            <a href="register.html">
-                Register
-            </a>
-
-        </p>
+            </div>
 
 
-
-    </div>
-
-
-</div>
+        </section>
 
 
+    </main>
 
-<script type="module" src="js/auth.js"></script>
+
+    <script
+        type="module"
+        src="js/auth.js"
+    ></script>
 
 
 </body>
