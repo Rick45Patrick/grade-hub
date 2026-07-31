@@ -1,5 +1,5 @@
 // ==========================================
-// GRADE HUB - MERIT LIST
+// GRADE HUB - MERIT LIST WITH POINTS
 // ==========================================
 
 import { supabase } from "./supabase.js";
@@ -40,15 +40,11 @@ const message =
     document.getElementById("message");
 
 
-// ==========================================
-// DATA
-// ==========================================
-
 let allLearners = [];
 
 
 // ==========================================
-// CBC GRADING
+// CBC GRADE
 // ==========================================
 
 function getCBCGrade(marks) {
@@ -56,17 +52,11 @@ function getCBCGrade(marks) {
     marks = Number(marks);
 
     if (marks >= 90) return "EE1";
-
     if (marks >= 80) return "EE2";
-
     if (marks >= 70) return "ME1";
-
     if (marks >= 60) return "ME2";
-
     if (marks >= 50) return "AE1";
-
     if (marks >= 40) return "AE2";
-
     if (marks >= 30) return "BE1";
 
     return "BE2";
@@ -99,6 +89,48 @@ function getCBCDescription(grade) {
 
         default:
             return "-";
+    }
+}
+
+
+// ==========================================
+// POINTS
+// ==========================================
+
+function getPoints(marks) {
+
+    const grade =
+        getCBCGrade(marks);
+
+
+    switch (grade) {
+
+        case "EE1":
+            return 8;
+
+        case "EE2":
+            return 7;
+
+        case "ME1":
+            return 6;
+
+        case "ME2":
+            return 5;
+
+        case "AE1":
+            return 4;
+
+        case "AE2":
+            return 3;
+
+        case "BE1":
+            return 2;
+
+        case "BE2":
+            return 1;
+
+        default:
+            return 0;
     }
 }
 
@@ -142,7 +174,6 @@ async function checkAdmin() {
             "index.html";
 
         return false;
-
     }
 
 
@@ -174,7 +205,6 @@ async function checkAdmin() {
         );
 
         return false;
-
     }
 
 
@@ -195,7 +225,6 @@ async function checkAdmin() {
             "index.html";
 
         return false;
-
     }
 
 
@@ -214,7 +243,7 @@ async function loadLearners() {
         <tr>
 
             <td
-                colspan="7"
+                colspan="8"
                 class="empty-row"
             >
                 Loading learners...
@@ -236,7 +265,7 @@ async function loadLearners() {
 
 
     // ======================================
-    // GET STUDENTS
+    // STUDENTS
     // ======================================
 
     const {
@@ -268,28 +297,12 @@ async function loadLearners() {
             studentError.message
         );
 
-        meritTable.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="7"
-                    class="empty-row"
-                >
-                    Unable to load learners.
-
-                </td>
-
-            </tr>
-
-        `;
-
         return;
     }
 
 
     // ======================================
-    // GET RESULTS
+    // RESULTS
     // ======================================
 
     const {
@@ -323,7 +336,7 @@ async function loadLearners() {
 
 
     // ======================================
-    // BUILD MERIT DATA
+    // BUILD LEARNERS
     // ======================================
 
     allLearners = [];
@@ -348,11 +361,6 @@ async function loadLearners() {
                     : student.profiles;
 
 
-            const fullName =
-                profile?.full_name ||
-                "Unknown Learner";
-
-
             allLearners.push({
 
                 id:
@@ -363,7 +371,8 @@ async function loadLearners() {
                     "-",
 
                 name:
-                    fullName,
+                    profile?.full_name ||
+                    "Unknown Learner",
 
                 username:
                     profile?.username ||
@@ -374,12 +383,7 @@ async function loadLearners() {
                     "-",
 
                 results:
-                    studentResults,
-
-                average:
-                    calculateAverage(
-                        studentResults
-                    )
+                    studentResults
 
             });
 
@@ -387,27 +391,7 @@ async function loadLearners() {
     );
 
 
-    // ======================================
-    // SORT
-    // ======================================
-
-    allLearners.sort(
-        (a, b) =>
-            b.average -
-            a.average
-    );
-
-
-    // ======================================
-    // CLASS FILTER
-    // ======================================
-
     populateClasses();
-
-
-    // ======================================
-    // DISPLAY
-    // ======================================
 
     renderMeritList();
 
@@ -426,7 +410,6 @@ function calculateAverage(results) {
     ) {
 
         return 0;
-
     }
 
 
@@ -445,16 +428,47 @@ function calculateAverage(results) {
     );
 
 
-    return (
-        total /
-        results.length
-    );
-
+    return total /
+        results.length;
 }
 
 
 // ==========================================
-// POPULATE CLASS FILTER
+// CALCULATE TOTAL POINTS
+// ==========================================
+
+function calculatePoints(results) {
+
+    if (
+        !results ||
+        results.length === 0
+    ) {
+
+        return 0;
+    }
+
+
+    let totalPoints = 0;
+
+
+    results.forEach(
+        result => {
+
+            totalPoints +=
+                getPoints(
+                    result.marks
+                );
+
+        }
+    );
+
+
+    return totalPoints;
+}
+
+
+// ==========================================
+// POPULATE CLASSES
 // ==========================================
 
 function populateClasses() {
@@ -509,7 +523,7 @@ function populateClasses() {
 
 
 // ==========================================
-// FILTER RESULTS
+// GET FILTERED LEARNERS
 // ==========================================
 
 function getFilteredLearners() {
@@ -535,16 +549,15 @@ function getFilteredLearners() {
     return allLearners.filter(
         learner => {
 
-
-            // ------------------------------
             // SEARCH
-            // ------------------------------
 
             const matchesSearch =
                 !searchValue ||
+
                 learner.name
                     .toLowerCase()
                     .includes(searchValue) ||
+
                 learner.admission
                     .toLowerCase()
                     .includes(searchValue);
@@ -555,9 +568,7 @@ function getFilteredLearners() {
             }
 
 
-            // ------------------------------
             // CLASS
-            // ------------------------------
 
             if (
                 selectedClass !==
@@ -567,15 +578,12 @@ function getFilteredLearners() {
             ) {
 
                 return false;
-
             }
 
 
-            // ------------------------------
             // TERM/YEAR
-            // ------------------------------
 
-            let filteredResults =
+            let relevantResults =
                 learner.results;
 
 
@@ -584,8 +592,8 @@ function getFilteredLearners() {
                 "all"
             ) {
 
-                filteredResults =
-                    filteredResults.filter(
+                relevantResults =
+                    relevantResults.filter(
                         result =>
                             result.term ===
                             selectedTerm
@@ -599,8 +607,8 @@ function getFilteredLearners() {
                 "all"
             ) {
 
-                filteredResults =
-                    filteredResults.filter(
+                relevantResults =
+                    relevantResults.filter(
                         result =>
                             String(
                                 result.year
@@ -612,9 +620,6 @@ function getFilteredLearners() {
 
             }
 
-
-            // If filters were selected,
-            // learner must have results.
 
             if (
                 (
@@ -628,12 +633,11 @@ function getFilteredLearners() {
             ) {
 
                 if (
-                    filteredResults.length ===
+                    relevantResults.length ===
                     0
                 ) {
 
                     return false;
-
                 }
 
             }
@@ -657,17 +661,17 @@ function renderMeritList() {
         getFilteredLearners();
 
 
-    // ======================================
-    // RECALCULATE AVERAGES FOR
-    // TERM/YEAR FILTERS
-    // ======================================
-
     const selectedTerm =
         termFilter.value;
+
 
     const selectedYear =
         yearFilter.value;
 
+
+    // ======================================
+    // CALCULATE PERFORMANCE
+    // ======================================
 
     learners =
         learners.map(
@@ -711,14 +715,27 @@ function renderMeritList() {
                 }
 
 
+                const average =
+                    calculateAverage(
+                        relevantResults
+                    );
+
+
+                const totalPoints =
+                    calculatePoints(
+                        relevantResults
+                    );
+
+
                 return {
 
                     ...learner,
 
                     rankingAverage:
-                        calculateAverage(
-                            relevantResults
-                        ),
+                        average,
+
+                    totalPoints:
+                        totalPoints,
 
                     subjectTotal:
                         relevantResults.length
@@ -730,13 +747,36 @@ function renderMeritList() {
 
 
     // ======================================
-    // SORT AGAIN
+    // RANKING
+    // ======================================
+    //
+    // 1. Highest total points first
+    // 2. Highest average as tiebreaker
+    //
     // ======================================
 
     learners.sort(
-        (a, b) =>
-            b.rankingAverage -
-            a.rankingAverage
+        (a, b) => {
+
+            if (
+                b.totalPoints !==
+                a.totalPoints
+            ) {
+
+                return (
+                    b.totalPoints -
+                    a.totalPoints
+                );
+
+            }
+
+
+            return (
+                b.rankingAverage -
+                a.rankingAverage
+            );
+
+        }
     );
 
 
@@ -786,10 +826,11 @@ function renderMeritList() {
             <tr>
 
                 <td
-                    colspan="7"
+                    colspan="8"
                     class="empty-row"
                 >
-                    No learners match the selected filters.
+                    No learners match
+                    the selected filters.
 
                 </td>
 
@@ -798,7 +839,6 @@ function renderMeritList() {
         `;
 
         return;
-
     }
 
 
@@ -832,6 +872,10 @@ function renderMeritList() {
                 );
 
 
+            const totalPoints =
+                learner.totalPoints;
+
+
             const row =
                 document.createElement(
                     "tr"
@@ -857,52 +901,90 @@ function renderMeritList() {
 
 
                 <td>
+
                     ${escapeHTML(
                         learner.admission
                     )}
+
                 </td>
 
 
                 <td>
 
                     <strong>
+
                         ${escapeHTML(
                             learner.name
                         )}
+
                     </strong>
+
 
                     <small style="
                         display:block;
                         margin-top:4px;
                         color:#697386;
                     ">
+
                         ${escapeHTML(
                             learner.username
                         )}
+
                     </small>
 
                 </td>
 
 
                 <td>
+
                     ${escapeHTML(
                         learner.className
                     )}
+
                 </td>
 
 
                 <td>
+
                     ${learner.subjectTotal}
+
                 </td>
 
 
                 <td>
 
                     <strong>
+
                         ${formatAverage(
                             average
                         )}%
+
                     </strong>
+
+                </td>
+
+
+                <td>
+
+                    <strong
+                        style="
+                            font-size:16px;
+                            color:#3730a3;
+                        "
+                    >
+
+                        ${totalPoints}
+
+                    </strong>
+
+                    <small style="
+                        color:#697386;
+                        display:block;
+                    ">
+
+                        points
+
+                    </small>
 
                 </td>
 
@@ -945,11 +1027,9 @@ function renderMeritList() {
 
 function formatAverage(value) {
 
-    return (
-        Math.round(
-            Number(value) * 100
-        ) / 100
-    );
+    return Math.round(
+        Number(value) * 100
+    ) / 100;
 
 }
 
@@ -961,22 +1041,27 @@ function formatAverage(value) {
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
