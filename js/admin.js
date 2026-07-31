@@ -1,213 +1,71 @@
-// ==========================================
-// GRADE HUB ADMIN DASHBOARD
-// ==========================================
-
 import { supabase } from "./supabase.js";
 
 
 // ==========================================
-// ELEMENTS
-// ==========================================
-
-const studentTable =
-    document.getElementById("studentTable");
-
-const studentCount =
-    document.getElementById("studentCount");
-
-const resultCount =
-    document.getElementById("resultCount");
-
-const pendingCount =
-    document.getElementById("pendingCount");
-
-const searchStudent =
-    document.getElementById("searchStudent");
-
-const logoutButton =
-    document.getElementById("logout");
-
-
-// ==========================================
-// CHECK ADMIN LOGIN
+// AUTH CHECK
 // ==========================================
 
 async function checkAdmin() {
 
-    try {
-
-        const {
-            data: authData,
-            error: authError
-        } = await supabase.auth.getUser();
-
-
-        // --------------------------------------
-        // Authentication error
-        // --------------------------------------
-
-        if (authError) {
-
-            console.error(
-                "Authentication error:",
-                authError
-            );
-
-            window.location.href =
-                "index.html";
-
-            return false;
+    const {
+        data: {
+            session
         }
+    } = await supabase.auth.getSession();
 
 
-        // --------------------------------------
-        // No logged-in user
-        // --------------------------------------
+    if (!session) {
 
-        if (!authData || !authData.user) {
-
-            console.log(
-                "No authenticated user."
-            );
-
-            window.location.href =
-                "index.html";
-
-            return false;
-        }
-
-
-        const user =
-            authData.user;
-
-
-        console.log(
-            "Logged in user:",
-            user.email
-        );
-
-
-        // --------------------------------------
-        // Get role
-        // --------------------------------------
-
-        const {
-            data: roles,
-            error: roleError
-        } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id);
-
-
-        if (roleError) {
-
-            console.error(
-                "Role lookup error:",
-                roleError
-            );
-
-            alert(
-                "Unable to verify your account role: " +
-                roleError.message
-            );
-
-            window.location.href =
-                "index.html";
-
-            return false;
-        }
-
-
-        // --------------------------------------
-        // No role found
-        // --------------------------------------
-
-        if (!roles || roles.length === 0) {
-
-            console.error(
-                "No role found for:",
-                user.id
-            );
-
-            alert(
-                "No administrator role was found for this account."
-            );
-
-            window.location.href =
-                "index.html";
-
-            return false;
-        }
-
-
-        // --------------------------------------
-        // Find admin role
-        // --------------------------------------
-
-        const isAdmin =
-            roles.some(
-                item =>
-                    item.role === "admin"
-            );
-
-
-        const isSuperAdmin =
-            roles.some(
-                item =>
-                    item.role === "super_admin"
-            );
-
-
-        // --------------------------------------
-        // Check permission
-        // --------------------------------------
-
-        if (!isAdmin && !isSuperAdmin) {
-
-            console.error(
-                "User roles:",
-                roles
-            );
-
-            alert(
-                "This account does not have administrator permission."
-            );
-
-            window.location.href =
-                "index.html";
-
-            return false;
-        }
-
-
-        // --------------------------------------
-        // Admin verified
-        // --------------------------------------
-
-        console.log(
-            "Administrator access confirmed."
-        );
-
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Admin authentication error:",
-            error
-        );
-
-        window.location.href =
-            "index.html";
+        window.location.replace("index.html");
 
         return false;
     }
-}
 
+
+    const user = session.user;
+
+
+    const {
+        data: roles,
+        error
+    } = await supabase
+        .from("user_roles")
+        .select("role, approved")
+        .eq("user_id", user.id);
+
+
+    if (error) {
+
+        console.error(
+            "Role loading error:",
+            error
+        );
+
+        return false;
+    }
+
+
+    const allowed =
+        (roles || []).some(
+            role =>
+                (
+                    role.role === "admin" ||
+                    role.role === "super_admin"
+                ) &&
+                role.approved !== false
+        );
+
+
+    if (!allowed) {
+
+        window.location.replace("index.html");
+
+        return false;
+    }
+
+
+    return true;
+}
 
 
 // ==========================================
@@ -216,12 +74,11 @@ async function checkAdmin() {
 
 async function loadStudents() {
 
-    if (!studentTable) {
-        return;
-    }
+    const table =
+        document.getElementById("studentTable");
 
 
-    studentTable.innerHTML = `
+    table.innerHTML = `
         <tr>
             <td colspan="5">
                 Loading students...
@@ -230,316 +87,269 @@ async function loadStudents() {
     `;
 
 
-    try {
-
-        const {
-            data: students,
-            error
-        } = await supabase
-            .from("students")
-            .select(`
-                id,
-                user_id,
-                admission_number,
-                class,
-                optional_subjects,
-                profiles(
-                    full_name
-                )
-            `)
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-        if (error) {
-
-            console.error(
-                "Student loading error:",
-                error
-            );
-
-
-            studentTable.innerHTML = `
-                <tr>
-                    <td colspan="5">
-                        Unable to load students.
-                    </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        const studentList =
-            students || [];
-
-
-        // --------------------------------------
-        // Student count
-        // --------------------------------------
-
-        if (studentCount) {
-
-            studentCount.textContent =
-                studentList.length;
-
-        }
-
-
-        // --------------------------------------
-        // No students
-        // --------------------------------------
-
-        if (studentList.length === 0) {
-
-            studentTable.innerHTML = `
-                <tr>
-                    <td colspan="5">
-                        No students registered.
-                    </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        // --------------------------------------
-        // Build table
-        // --------------------------------------
-
-        studentTable.innerHTML = "";
-
-
-        studentList.forEach(student => {
-
-            const profile =
-                student.profiles || {};
-
-
-            let subjects =
-                student.optional_subjects;
-
-
-            if (Array.isArray(subjects)) {
-
-                subjects =
-                    subjects.join(", ");
-
-            }
-
-            else if (!subjects) {
-
-                subjects = "—";
-
-            }
-
-
-            const row =
-                document.createElement("tr");
-
-
-            row.innerHTML = `
-
-                <td>
-                    ${escapeHTML(
-                        student.admission_number
-                    )}
-                </td>
-
-                <td>
-                    ${escapeHTML(
-                        profile.full_name || "—"
-                    )}
-                </td>
-
-                <td>
-                    ${escapeHTML(
-                        student.class || "—"
-                    )}
-                </td>
-
-                <td>
-                    ${escapeHTML(subjects)}
-                </td>
-
-                <td>
-
-                    <button
-                        class="btn upload-btn"
-                        data-id="${escapeHTML(
-                            student.id
-                        )}">
-                        Upload
-                    </button>
-
-                    <button
-                        class="btn delete-btn"
-                        data-id="${escapeHTML(
-                            student.id
-                        )}"
-                        style="background:red">
-                        Delete
-                    </button>
-
-                </td>
-            `;
-
-
-            studentTable.appendChild(row);
-
-        });
-
-
-        // --------------------------------------
-        // Upload buttons
-        // --------------------------------------
-
-        document
-            .querySelectorAll(".upload-btn")
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    function() {
-
-                        uploadResults(
-                            this.dataset.id
-                        );
-
-                    }
-                );
-
-            });
-
-
-        // --------------------------------------
-        // Delete buttons
-        // --------------------------------------
-
-        document
-            .querySelectorAll(".delete-btn")
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    function() {
-
-                        deleteStudent(
-                            this.dataset.id
-                        );
-
-                    }
-                );
-
-            });
-
-    }
-
-    catch (error) {
+    const {
+        data: students,
+        error
+    } = await supabase
+        .from("students")
+        .select(`
+            id,
+            user_id,
+            admission_number,
+            class,
+            optional_subjects
+        `)
+        .order("admission_number");
+
+
+    if (error) {
 
         console.error(
-            "Unexpected student error:",
+            "Student loading error:",
             error
         );
 
 
-        studentTable.innerHTML = `
+        table.innerHTML = `
             <tr>
                 <td colspan="5">
-                    Error loading students.
+                    Unable to load students.
+                    <br>
+                    ${escapeHTML(error.message)}
                 </td>
             </tr>
         `;
-    }
-}
 
-
-
-// ==========================================
-// ESCAPE HTML
-// ==========================================
-
-function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
+        return;
     }
 
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+    console.log(
+        "Students loaded:",
+        students
+    );
 
 
+    if (!students || students.length === 0) {
 
-// ==========================================
-// SEARCH STUDENTS
-// ==========================================
-
-if (searchStudent) {
-
-    searchStudent.addEventListener(
-        "input",
-        function(event) {
-
-            const value =
-                event.target.value
-                    .toLowerCase()
-                    .trim();
+        table.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    No students registered yet.
+                </td>
+            </tr>
+        `;
 
 
-            const rows =
-                document.querySelectorAll(
-                    "#studentTable tr"
-                );
+        document.getElementById(
+            "studentCount"
+        ).textContent = "0";
 
 
-            rows.forEach(row => {
+        return;
+    }
 
-                row.style.display =
-                    row.textContent
-                        .toLowerCase()
-                        .includes(value)
-                        ? ""
-                        : "none";
 
-            });
+    // ======================================
+    // LOAD PROFILES
+    // ======================================
 
+    const userIds =
+        students
+            .map(student => student.user_id)
+            .filter(Boolean);
+
+
+    let profiles = [];
+
+
+    if (userIds.length > 0) {
+
+        const {
+            data,
+            error: profileError
+        } = await supabase
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                username,
+                email
+            `)
+            .in("id", userIds);
+
+
+        if (profileError) {
+
+            console.error(
+                "Profile loading error:",
+                profileError
+            );
+
+        } else {
+
+            profiles = data || [];
         }
-    );
+    }
+
+
+    const profileMap =
+        new Map(
+            profiles.map(
+                profile =>
+                    [
+                        profile.id,
+                        profile
+                    ]
+            )
+        );
+
+
+    // ======================================
+    // DISPLAY
+    // ======================================
+
+    table.innerHTML = "";
+
+
+    students.forEach(student => {
+
+        const profile =
+            profileMap.get(
+                student.user_id
+            ) || {};
+
+
+        const subjects =
+            Array.isArray(
+                student.optional_subjects
+            )
+                ? student.optional_subjects
+                : [];
+
+
+        const row =
+            document.createElement("tr");
+
+
+        row.innerHTML = `
+
+            <td>
+                ${escapeHTML(
+                    student.admission_number || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    profile.full_name || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    student.class || "-"
+                )}
+            </td>
+
+            <td>
+                ${
+                    subjects.length
+                        ? subjects
+                            .map(
+                                escapeHTML
+                            )
+                            .join(", ")
+                        : "-"
+                }
+            </td>
+
+            <td>
+
+                <button
+                    class="btn"
+                    data-upload="${student.id}"
+                >
+                    Upload
+                </button>
+
+                <button
+                    class="btn"
+                    data-delete="${student.id}"
+                    style="background:#dc2626"
+                >
+                    Delete
+                </button>
+
+            </td>
+
+        `;
+
+
+        table.appendChild(row);
+
+    });
+
+
+    document.getElementById(
+        "studentCount"
+    ).textContent =
+        students.length;
+
+
+    // ======================================
+    // BUTTON EVENTS
+    // ======================================
+
+    document
+        .querySelectorAll(
+            "[data-upload]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const id =
+                        button.dataset.upload;
+
+
+                    localStorage.setItem(
+                        "selectedStudent",
+                        id
+                    );
+
+
+                    window.location.href =
+                        "upload.html";
+
+                }
+            );
+
+        });
+
+
+    document
+        .querySelectorAll(
+            "[data-delete]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    deleteStudent(
+                        button.dataset.delete
+                    );
+
+                }
+            );
+
+        });
+
 }
-
-
-
-// ==========================================
-// OPEN UPLOAD PAGE
-// ==========================================
-
-function uploadResults(id) {
-
-    localStorage.setItem(
-        "selectedStudent",
-        id
-    );
-
-
-    window.location.href =
-        "upload.html";
-}
-
 
 
 // ==========================================
@@ -559,146 +369,137 @@ async function deleteStudent(id) {
     }
 
 
-    try {
-
-        const {
-            error
-        } = await supabase
-            .from("students")
-            .delete()
-            .eq("id", id);
+    const {
+        error
+    } = await supabase
+        .from("students")
+        .delete()
+        .eq("id", id);
 
 
-        if (error) {
-
-            console.error(
-                "Delete student error:",
-                error
-            );
-
-            alert(
-                "Unable to delete student: " +
-                error.message
-            );
-
-            return;
-        }
-
+    if (error) {
 
         alert(
-            "Student deleted successfully."
+            "Delete failed: " +
+            error.message
         );
 
-
-        await loadStudents();
-
+        return;
     }
 
-    catch (error) {
 
-        console.error(
-            "Unexpected delete error:",
-            error
-        );
+    alert(
+        "Student deleted successfully."
+    );
 
 
-        alert(
-            "An unexpected error occurred."
-        );
-    }
+    loadStudents();
 }
 
+
+// ==========================================
+// SEARCH
+// ==========================================
+
+const search =
+    document.getElementById(
+        "searchStudent"
+    );
+
+
+if (search) {
+
+    search.addEventListener(
+        "input",
+        event => {
+
+            const value =
+                event.target.value
+                    .toLowerCase();
+
+
+            document
+                .querySelectorAll(
+                    "#studentTable tr"
+                )
+                .forEach(row => {
+
+                    row.style.display =
+                        row.textContent
+                            .toLowerCase()
+                            .includes(value)
+                            ? ""
+                            : "none";
+
+                });
+
+        }
+    );
+
+}
 
 
 // ==========================================
 // LOGOUT
 // ==========================================
 
-if (logoutButton) {
+const logout =
+    document.getElementById(
+        "logout"
+    );
 
-    logoutButton.addEventListener(
+
+if (logout) {
+
+    logout.addEventListener(
         "click",
-        async function(event) {
+        async event => {
 
             event.preventDefault();
 
 
-            logoutButton.textContent =
-                "Logging out...";
+            await supabase.auth.signOut();
 
 
-            logoutButton.style.pointerEvents =
-                "none";
-
-
-            const {
-                error
-            } =
-                await supabase
-                    .auth
-                    .signOut();
-
-
-            if (error) {
-
-                console.error(
-                    "Logout error:",
-                    error
-                );
-
-
-                alert(
-                    "Logout failed: " +
-                    error.message
-                );
-
-
-                logoutButton.textContent =
-                    "Logout";
-
-                logoutButton.style.pointerEvents =
-                    "auto";
-
-                return;
-            }
-
-
-            window.location.href =
-                "index.html";
+            window.location.replace(
+                "index.html"
+            );
 
         }
     );
+
 }
 
 
+// ==========================================
+// HTML ESCAPE
+// ==========================================
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 
 // ==========================================
-// INITIALIZE DASHBOARD
+// START
 // ==========================================
 
-async function initializeDashboard() {
+(async function () {
 
-    console.log(
-        "Initializing Grade Hub Admin Dashboard..."
-    );
-
-
-    const authorized =
+    const allowed =
         await checkAdmin();
 
 
-    if (!authorized) {
-        return;
+    if (allowed) {
+
+        await loadStudents();
+
     }
 
-
-    await loadStudents();
-
-
-    console.log(
-        "Admin dashboard loaded successfully."
-    );
-}
-
-
-initializeDashboard();
+})();
