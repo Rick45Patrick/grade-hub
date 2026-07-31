@@ -1,179 +1,475 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Register — Grade Hub</title>
+    <title>Grade Hub - Register</title>
 
     <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 15px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 760px;
+            background: white;
+            border-radius: 18px;
+            padding: 35px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 12px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #4f46e5;
+            color: white;
+            font-size: 21px;
+            font-weight: 800;
+        }
+
+        .register-header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .register-header p {
+            margin-top: 8px;
+            color: #6b7280;
+        }
+
+        .register-message {
+            display: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .register-message.show {
+            display: block;
+        }
+
+        .register-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .register-message.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 7px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group select {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #d8dee9;
+            border-radius: 9px;
+            background: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 18px;
+        }
+
+        .account-type-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .account-type {
+            border: 1px solid #d8dee9;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            display: flex !important;
+            gap: 10px;
+            align-items: flex-start;
+            transition: 0.2s;
+        }
+
+        .account-type:hover {
+            border-color: #4f46e5;
+        }
+
+        .account-type input {
+            margin-top: 3px;
+        }
+
+        .account-type span {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .account-type small {
+            color: #6b7280;
+            font-weight: normal;
+            line-height: 1.4;
+        }
+
+        .form-help {
+            color: #6b7280;
+            font-size: 13px;
+            margin: -2px 0 10px;
+        }
+
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 9px;
+            border: 1px solid #d8dee9;
+            border-radius: 10px;
+            padding: 14px;
+            max-height: 310px;
+            overflow-y: auto;
+        }
+
+        .subject-option {
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+            padding: 9px;
+            border-radius: 7px;
+            font-weight: normal !important;
+            cursor: pointer;
+        }
+
+        .subject-option:hover {
+            background: #f1f5ff;
+        }
+
+        .subject-option input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .register-button {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: 0.2s;
+        }
+
+        .register-button:hover {
+            background: #4338ca;
+        }
+
+        .register-button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 22px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .register-footer a {
+            color: #4f46e5;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 650px) {
+
+            .register-card {
+                padding: 24px 18px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .account-type-container {
+                grid-template-columns: 1fr;
+            }
+
+            .subjects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .register-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="register-page">
+<div class="register-container">
 
     <div class="register-card">
 
+        <!-- HEADER -->
+
         <div class="register-header">
 
-            <div class="register-logo">
+            <div class="logo">
                 GH
             </div>
 
-            <h1>Create Account</h1>
+            <h1>
+                Create Account
+            </h1>
 
             <p>
-                Join the Grade Hub Results Portal
+                Join Grade Hub and manage your academic progress.
             </p>
 
         </div>
 
 
+        <!-- MESSAGE -->
+
+        <div
+            id="registerMessage"
+            class="register-message"
+        ></div>
+
+
         <!-- ACCOUNT TYPE -->
 
-        <div class="account-type">
+        <div class="form-group">
 
-            <button
-                type="button"
-                class="account-option active"
-                id="studentType"
-            >
-                <span>🎓</span>
-                <strong>Student</strong>
-                <small>View your results</small>
-            </button>
+            <label>
+                Account Type
+            </label>
+
+            <div class="account-type-container">
+
+                <label class="account-type">
+
+                    <input
+                        type="radio"
+                        name="accountType"
+                        value="student"
+                        checked
+                    >
+
+                    <span>
+
+                        <strong>
+                            Student
+                        </strong>
+
+                        <small>
+                            Access your results and academic dashboard.
+                        </small>
+
+                    </span>
+
+                </label>
 
 
-            <button
-                type="button"
-                class="account-option"
-                id="adminType"
-            >
-                <span>🛡️</span>
-                <strong>Administrator</strong>
-                <small>Manage school results</small>
-            </button>
+                <label class="account-type">
+
+                    <input
+                        type="radio"
+                        name="accountType"
+                        value="admin"
+                    >
+
+                    <span>
+
+                        <strong>
+                            Administrator
+                        </strong>
+
+                        <small>
+                            Request administrator access.
+                        </small>
+
+                    </span>
+
+                </label>
+
+            </div>
 
         </div>
 
 
+        <!-- REGISTRATION FORM -->
+
         <form id="registerForm">
 
-            <input
-                type="hidden"
-                id="accountType"
-                value="student"
-            >
+            <div class="form-grid">
 
-
-            <!-- FULL NAME -->
-
-            <div class="form-group">
-
-                <label for="fullName">
-                    Full name
-                </label>
-
-                <input
-                    type="text"
-                    id="fullName"
-                    placeholder="Enter your full name"
-                    required
-                >
-
-            </div>
-
-
-            <!-- EMAIL -->
-
-            <div class="form-group">
-
-                <label for="email">
-                    Email address
-                </label>
-
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="you@example.com"
-                    required
-                >
-
-            </div>
-
-
-            <!-- USERNAME -->
-
-            <div class="form-group">
-
-                <label for="username">
-                    Username
-                </label>
-
-                <input
-                    type="text"
-                    id="username"
-                    placeholder="Choose a username"
-                    required
-                >
-
-            </div>
-
-
-            <!-- STUDENT INFORMATION -->
-
-            <div id="studentFields">
+                <!-- FULL NAME -->
 
                 <div class="form-group">
 
-                    <label for="admission">
-                        Admission number
+                    <label for="fullName">
+                        Full Name
                     </label>
 
                     <input
                         type="text"
-                        id="admission"
-                        placeholder="e.g. 20260001"
+                        id="fullName"
+                        placeholder="Enter your full name"
+                        required
                     >
 
                 </div>
 
 
+                <!-- USERNAME -->
+
                 <div class="form-group">
 
-                    <label for="className">
-                        Class
+                    <label for="username">
+                        Username
                     </label>
 
-                    <select id="className">
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Choose a username"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- EMAIL -->
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="example@email.com"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Create a password"
+                        minlength="6"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- STUDENT ONLY INFORMATION -->
+
+            <div id="studentFields">
+
+                <!-- GRADE -->
+
+                <div class="form-group">
+
+                    <label for="studentClass">
+                        Grade
+                    </label>
+
+                    <select
+                        id="studentClass"
+                        required
+                    >
 
                         <option value="">
-                            Select class
+                            Select your grade
                         </option>
 
-                        <option value="BE1">
-                            BE1
+                        <option value="Grade 10">
+                            Grade 10
                         </option>
 
-                        <option value="BE2">
-                            BE2
+                        <option value="Grade 11">
+                            Grade 11
                         </option>
 
-                        <option value="AE1">
-                            AE1
-                        </option>
-
-                        <option value="AE2">
-                            AE2
-                        </option>
-
-                        <option value="ME1">
-                            ME1
-                        </option>
-
-                        <option value="ME2">
-                            ME2
+                        <option value="Grade 12">
+                            Grade 12
                         </option>
 
                     </select>
@@ -181,77 +477,334 @@
                 </div>
 
 
-                <div class="form-group">
+                <!-- OPTIONAL SUBJECTS -->
+
+                <div
+                    id="subjectFields"
+                    class="form-group"
+                >
 
                     <label>
-                        Optional subjects
+                        Optional Subjects
                     </label>
 
-                    <p class="field-help">
-                        Select exactly 3 optional subjects.
+                    <p class="form-help">
+                        Select all optional subjects you study.
                     </p>
 
 
-                    <div class="subject-grid">
+                    <div class="subjects-grid">
+
 
                         <label class="subject-option">
                             <input
                                 type="checkbox"
-                                name="optionalSubject"
-                                value="Physics"
+                                name="subjects"
+                                value="Computer Science"
                             >
-                            Physics
+                            <span>Computer Science</span>
                         </label>
 
 
                         <label class="subject-option">
                             <input
                                 type="checkbox"
-                                name="optionalSubject"
-                                value="Chemistry"
-                            >
-                            Chemistry
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="optionalSubject"
-                                value="Biology"
-                            >
-                            Biology
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="optionalSubject"
-                                value="Computer Studies"
-                            >
-                            Computer Studies
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="optionalSubject"
+                                name="subjects"
                                 value="Business Studies"
                             >
-                            Business Studies
+                            <span>Business Studies</span>
                         </label>
 
 
                         <label class="subject-option">
                             <input
                                 type="checkbox"
-                                name="optionalSubject"
+                                name="subjects"
                                 value="Agriculture"
                             >
-                            Agriculture
+                            <span>Agriculture</span>
                         </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="French"
+                            >
+                            <span>French</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="German"
+                            >
+                            <span>German</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Arabic"
+                            >
+                            <span>Arabic</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Music"
+                            >
+                            <span>Music</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Art and Design"
+                            >
+                            <span>Art &amp; Design</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Sports"
+                            >
+                            <span>Sports</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Theatre and Film"
+                            >
+                            <span>Theatre &amp; Film</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Media Technology"
+                            >
+                            <span>Media Technology</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Home Science"
+                            >
+                            <span>Home Science</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Aviation"
+                            >
+                            <span>Aviation</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Marine and Fisheries"
+                            >
+                            <span>Marine &amp; Fisheries</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Building and Construction"
+                            >
+                            <span>Building &amp; Construction</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Metalwork"
+                            >
+                            <span>Metalwork</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Woodwork"
+                            >
+                            <span>Woodwork</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Electricity"
+                            >
+                            <span>Electricity</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Power Mechanics"
+                            >
+                            <span>Power Mechanics</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Leatherwork"
+                            >
+                            <span>Leatherwork</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Photography"
+                            >
+                            <span>Photography</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Dance"
+                            >
+                            <span>Dance</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Drama"
+                            >
+                            <span>Drama</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Computer Studies"
+                            >
+                            <span>Computer Studies</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Design and Technology"
+                            >
+                            <span>Design &amp; Technology</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Media and Film"
+                            >
+                            <span>Media &amp; Film</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Performing Arts"
+                            >
+                            <span>Performing Arts</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Food and Nutrition"
+                            >
+                            <span>Food &amp; Nutrition</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Fashion and Design"
+                            >
+                            <span>Fashion &amp; Design</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Electronics"
+                            >
+                            <span>Electronics</span>
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="subjects"
+                                value="Graphic Design"
+                            >
+                            <span>Graphic Design</span>
+                        </label>
+
 
                     </div>
 
@@ -260,67 +813,27 @@
             </div>
 
 
-            <!-- PASSWORD -->
-
-            <div class="form-group">
-
-                <label for="password">
-                    Password
-                </label>
-
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Minimum 8 characters"
-                    required
-                >
-
-            </div>
-
-
-            <!-- CONFIRM PASSWORD -->
-
-            <div class="form-group">
-
-                <label for="confirmPassword">
-                    Confirm password
-                </label>
-
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    placeholder="Enter password again"
-                    required
-                >
-
-            </div>
-
+            <!-- SUBMIT -->
 
             <button
                 type="submit"
                 id="registerButton"
-                class="primary-button"
+                class="register-button"
             >
-                Create Student Account
+                Create Account
             </button>
-
-
-            <div
-                id="registerMessage"
-                class="register-message"
-            ></div>
 
         </form>
 
 
+        <!-- FOOTER -->
+
         <div class="register-footer">
 
-            <span>
-                Already have an account?
-            </span>
+            Already have an account?
 
             <a href="index.html">
-                Sign in
+                Sign In
             </a>
 
         </div>
@@ -330,10 +843,440 @@
 </div>
 
 
-<script
-    type="module"
-    src="js/register.js"
-></script>
+<script type="module">
+
+import { supabase } from "./js/supabase.js";
+
+
+const form =
+    document.getElementById("registerForm");
+
+const button =
+    document.getElementById("registerButton");
+
+const message =
+    document.getElementById("registerMessage");
+
+const studentFields =
+    document.getElementById("studentFields");
+
+const studentClass =
+    document.getElementById("studentClass");
+
+
+/* ============================
+   MESSAGE
+============================ */
+
+function showMessage(text, type = "error") {
+
+    message.textContent = text;
+
+    message.className =
+        "register-message show " + type;
+
+}
+
+
+/* ============================
+   ACCOUNT TYPE
+============================ */
+
+function updateAccountType() {
+
+    const selected =
+        document.querySelector(
+            'input[name="accountType"]:checked'
+        );
+
+    if (!selected) {
+        return;
+    }
+
+
+    const isStudent =
+        selected.value === "student";
+
+
+    studentFields.classList.toggle(
+        "hidden",
+        !isStudent
+    );
+
+
+    studentClass.required =
+        isStudent;
+
+}
+
+
+document
+    .querySelectorAll(
+        'input[name="accountType"]'
+    )
+    .forEach(input => {
+
+        input.addEventListener(
+            "change",
+            updateAccountType
+        );
+
+    });
+
+
+updateAccountType();
+
+
+/* ============================
+   REGISTRATION
+============================ */
+
+form.addEventListener(
+    "submit",
+    async event => {
+
+        event.preventDefault();
+
+
+        button.disabled = true;
+
+        button.textContent =
+            "Creating Account...";
+
+
+        const accountType =
+            document.querySelector(
+                'input[name="accountType"]:checked'
+            ).value;
+
+
+        const fullName =
+            document
+                .getElementById("fullName")
+                .value
+                .trim();
+
+
+        const username =
+            document
+                .getElementById("username")
+                .value
+                .trim();
+
+
+        const email =
+            document
+                .getElementById("email")
+                .value
+                .trim();
+
+
+        const password =
+            document
+                .getElementById("password")
+                .value;
+
+
+        const selectedClass =
+            studentClass.value;
+
+
+        const selectedSubjects =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="subjects"]:checked'
+                )
+            ).map(
+                checkbox => checkbox.value
+            );
+
+
+        try {
+
+            /* ============================
+               VALIDATION
+            ============================ */
+
+            if (!fullName) {
+                throw new Error(
+                    "Please enter your full name."
+                );
+            }
+
+
+            if (!username) {
+                throw new Error(
+                    "Please enter a username."
+                );
+            }
+
+
+            if (!email) {
+                throw new Error(
+                    "Please enter your email address."
+                );
+            }
+
+
+            if (password.length < 6) {
+                throw new Error(
+                    "Password must contain at least 6 characters."
+                );
+            }
+
+
+            if (
+                accountType === "student" &&
+                !selectedClass
+            ) {
+
+                throw new Error(
+                    "Please select your grade."
+                );
+
+            }
+
+
+            /* ============================
+               CHECK EXISTING PROFILE
+            ============================ */
+
+            const duplicate =
+                await supabase
+                    .from("profiles")
+                    .select("id")
+                    .or(
+                        `username.eq.${username},email.eq.${email}`
+                    )
+                    .limit(1);
+
+
+            if (duplicate.error) {
+
+                throw duplicate.error;
+
+            }
+
+
+            if (
+                duplicate.data &&
+                duplicate.data.length > 0
+            ) {
+
+                throw new Error(
+                    "That username or email is already registered."
+                );
+
+            }
+
+
+            /* ============================
+               CREATE AUTH USER
+            ============================ */
+
+            const {
+                data: authData,
+                error: authError
+            } =
+                await supabase.auth.signUp({
+
+                    email: email,
+
+                    password: password
+
+                });
+
+
+            if (authError) {
+
+                throw authError;
+
+            }
+
+
+            const user =
+                authData.user;
+
+
+            if (!user) {
+
+                throw new Error(
+                    "The account could not be created."
+                );
+
+            }
+
+
+            /* ============================
+               CREATE PROFILE
+            ============================ */
+
+            const {
+                error: profileError
+            } =
+                await supabase
+                    .from("profiles")
+                    .insert({
+
+                        id: user.id,
+
+                        full_name:
+                            fullName,
+
+                        username:
+                            username,
+
+                        email:
+                            email
+
+                    });
+
+
+            if (profileError) {
+
+                throw profileError;
+
+            }
+
+
+            /* ============================
+               ADMIN REQUEST
+            ============================ */
+
+            if (
+                accountType === "admin"
+            ) {
+
+                const {
+                    error: requestError
+                } =
+                    await supabase
+                        .from("admin_requests")
+                        .insert({
+
+                            user_id:
+                                user.id,
+
+                            full_name:
+                                fullName,
+
+                            username:
+                                username,
+
+                            email:
+                                email,
+
+                            status:
+                                "pending"
+
+                        });
+
+
+                if (requestError) {
+
+                    throw requestError;
+
+                }
+
+
+                showMessage(
+                    "Your account has been created. Your administrator request is waiting for Super Admin approval.",
+                    "success"
+                );
+
+            }
+
+
+            /* ============================
+               STUDENT ACCOUNT
+            ============================ */
+
+            else {
+
+                const {
+                    error: studentError
+                } =
+                    await supabase
+                        .from("students")
+                        .insert({
+
+                            user_id:
+                                user.id,
+
+                            admission_number:
+                                username,
+
+                            class:
+                                selectedClass,
+
+                            optional_subjects:
+                                selectedSubjects
+
+                        });
+
+
+                if (studentError) {
+
+                    throw studentError;
+
+                }
+
+
+                showMessage(
+                    "Student account created successfully.",
+                    "success"
+                );
+
+            }
+
+
+            /* ============================
+               RESET FORM
+            ============================ */
+
+            form.reset();
+
+
+            document.querySelector(
+                'input[name="accountType"][value="student"]'
+            ).checked = true;
+
+
+            updateAccountType();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                "Registration failed.",
+                "error"
+            );
+
+        }
+
+
+        finally {
+
+            button.disabled = false;
+
+            button.textContent =
+                "Create Account";
+
+        }
+
+    });
+
+</script>
 
 </body>
 </html>
+```
