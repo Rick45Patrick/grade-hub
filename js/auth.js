@@ -1,325 +1,214 @@
-// ==========================================
-// GRADE HUB AUTHENTICATION
-// ==========================================
-console.log("Auth JS loaded");
-
 import { supabase } from "./supabase.js";
 
 
-// ==========================================
-// REGISTER ACCOUNT
-// ==========================================
-
-const registerForm = document.getElementById("registerForm");
-
-
-if (registerForm) {
-
-registerForm.addEventListener("submit", async (e)=>{
-
-
-e.preventDefault();
-
-
-const accountType =
-document.getElementById("accountType").value;
-
-
-const email =
-document.getElementById("email").value.trim();
-
-
-const password =
-document.getElementById("password").value;
-
-
-const confirmPassword =
-document.getElementById("confirmPassword").value;
+const loginForm =
+    document.getElementById("loginForm");
 
 
 const message =
-document.getElementById("message");
+    document.getElementById("message");
 
 
+const loginButton =
+    document.getElementById("loginButton");
 
-if(password !== confirmPassword){
 
-message.textContent =
-"Passwords do not match";
 
-return;
+loginForm.addEventListener(
+    "submit",
+    async function (event) {
 
-}
+        event.preventDefault();
 
 
+        const email =
+            document
+                .getElementById("email")
+                .value
+                .trim();
 
-if(password.length < 6){
 
-message.textContent =
-"Password must be at least 6 characters";
+        const password =
+            document
+                .getElementById("password")
+                .value;
 
-return;
 
-}
+        message.textContent =
+            "Signing in...";
 
 
+        loginButton.disabled =
+            true;
 
 
-// Create Supabase account
+        const {
+            data,
+            error
+        } =
+            await supabase.auth.signInWithPassword({
 
-const {data,error} =
-await supabase.auth.signUp({
+                email: email,
 
-email: email,
+                password: password
 
-password: password
+            });
 
-});
 
+        if (error) {
 
+            console.error(error);
 
-if(error){
+            message.textContent =
+                error.message;
 
-message.textContent =
-error.message;
+            loginButton.disabled =
+                false;
 
-return;
+            return;
 
-}
+        }
 
 
+        const user =
+            data.user;
 
-const user = data.user;
 
+        console.log(
+            "Authenticated user:",
+            user.id
+        );
 
 
-// Student registration
+        const {
+            data: roles,
+            error: roleError
+        } =
+            await supabase
 
-if(accountType === "student"){
+                .from("user_roles")
 
+                .select(
+                    "role, approved"
+                )
 
-const student = {
+                .eq(
+                    "user_id",
+                    user.id
+                );
 
-id:user.id,
 
-full_name:
-document.getElementById("fullName").value,
+        if (roleError) {
 
+            console.error(
+                "Role error:",
+                roleError
+            );
 
-username:
-document.getElementById("username").value,
+            message.textContent =
+                "Could not load your account role.";
 
+            await supabase.auth.signOut();
 
-email:email
+            loginButton.disabled =
+                false;
 
-};
+            return;
 
+        }
 
 
-await supabase
-.from("profiles")
-.insert(student);
+        console.log(
+            "Account roles:",
+            roles
+        );
 
 
+        if (
+            !roles ||
+            roles.length === 0
+        ) {
 
-await supabase
-.from("user_roles")
-.insert({
+            message.textContent =
+                "No account role found.";
 
-user_id:user.id,
+            await supabase.auth.signOut();
 
-role:"student",
+            loginButton.disabled =
+                false;
 
-approved:true
+            return;
 
-});
+        }
 
 
+        const activeRole =
+            roles.find(
+                role =>
+                    role.approved === true
+            );
 
-await supabase
-.from("students")
-.insert({
 
-user_id:user.id,
+        if (!activeRole) {
 
-admission_number:
-document.getElementById("admission").value,
+            message.textContent =
+                "Your account has not been approved.";
 
+            await supabase.auth.signOut();
 
-class:
-document.getElementById("class").value,
+            loginButton.disabled =
+                false;
 
+            return;
 
-optional_subjects:[
+        }
 
-document.getElementById("optional1").value,
 
-document.getElementById("optional2").value,
+        message.textContent =
+            "Login successful. Redirecting...";
 
-document.getElementById("optional3").value
 
-]
+        if (
+            activeRole.role ===
+            "super_admin"
+        ) {
 
-});
+            window.location.href =
+                "superadmin.html";
 
+        }
 
+        else if (
+            activeRole.role ===
+            "admin"
+        ) {
 
-message.textContent =
-"Student account created successfully";
+            window.location.href =
+                "admin.html";
 
+        }
 
-}
+        else if (
+            activeRole.role ===
+            "student"
+        ) {
 
+            window.location.href =
+                "student.html";
 
+        }
 
-// Admin request
+        else {
 
-if(accountType === "admin"){
+            message.textContent =
+                "Unknown account role.";
 
+            await supabase.auth.signOut();
 
-await supabase
-.from("admin_requests")
-.insert({
+            loginButton.disabled =
+                false;
 
-user_id:user.id,
+        }
 
-full_name:
-document.getElementById("adminName").value,
-
-
-email:email,
-
-
-username:
-document.getElementById("username").value
-
-});
-
-
-
-message.textContent =
-"Admin request sent. Wait for approval.";
-
-}
-
-
-});
-
-}
-
-
-
-
-// ==========================================
-// LOGIN
-// ==========================================
-
-
-const loginForm =
-document.getElementById("loginForm");
-
-
-
-if(loginForm){
-
-
-loginForm.addEventListener("submit", async(e)=>{
-
-
-e.preventDefault();
-
-
-
-const email =
-document.getElementById("email").value;
-
-
-const password =
-document.getElementById("password").value;
-
-
-
-const {data,error} =
-await supabase.auth.signInWithPassword({
-
-email,
-
-password
-
-});
-
-
-
-if(error){
-
-document.getElementById("message").textContent =
-error.message;
-
-return;
-
-}
-
-
-
-const user=data.user;
-
-
-
-const {data:roles}=await supabase
-
-.from("user_roles")
-
-.select("role,approved")
-
-.eq("user_id",user.id);
-
-
-
-if(!roles || roles.length===0){
-
-alert("No account role found");
-
-return;
-
-}
-
-
-
-const role=roles[0];
-
-
-
-if(role.approved===false){
-
-alert("Account waiting for approval");
-
-await supabase.auth.signOut();
-
-return;
-
-}
-
-
-
-
-if(role.role==="student"){
-
-window.location="student.html";
-
-}
-
-
-
-if(role.role==="admin" ||
-role.role==="super_admin"){
-
-window.location="admin.html";
-
-}
-
-
-
-});
-
-
-}
+    }
+);
