@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,8 +31,8 @@
 
         .register-card {
             width: 100%;
-            max-width: 760px;
-            background: white;
+            max-width: 800px;
+            background: #ffffff;
             border-radius: 18px;
             padding: 35px;
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
@@ -93,7 +93,7 @@
             margin-bottom: 18px;
         }
 
-        .form-group label {
+        .form-group > label {
             display: block;
             font-weight: 600;
             font-size: 14px;
@@ -168,15 +168,25 @@
             margin: -2px 0 10px;
         }
 
+        /* SUBJECT GROUPS */
+
+        .subject-section {
+            margin-bottom: 18px;
+        }
+
+        .subject-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+            margin: 0 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
         .subjects-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 9px;
-            border: 1px solid #d8dee9;
-            border-radius: 10px;
-            padding: 14px;
-            max-height: 310px;
-            overflow-y: auto;
+            gap: 7px;
         }
 
         .subject-option {
@@ -187,16 +197,32 @@
             border-radius: 7px;
             font-weight: normal !important;
             cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.15s;
         }
 
         .subject-option:hover {
             background: #f1f5ff;
+            border-color: #dbe4ff;
         }
 
         .subject-option input {
             width: 16px;
             height: 16px;
             cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .subject-option span {
+            font-size: 13px;
+        }
+
+        .subjects-container {
+            border: 1px solid #d8dee9;
+            border-radius: 10px;
+            padding: 14px;
+            max-height: 500px;
+            overflow-y: auto;
         }
 
         .register-button {
@@ -278,9 +304,7 @@
                 GH
             </div>
 
-            <h1>
-                Create Account
-            </h1>
+            <h1>Create Account</h1>
 
             <p>
                 Join Grade Hub and manage your academic progress.
@@ -317,15 +341,11 @@
                     >
 
                     <span>
-
-                        <strong>
-                            Student
-                        </strong>
+                        <strong>Student</strong>
 
                         <small>
                             Access your results and academic dashboard.
                         </small>
-
                     </span>
 
                 </label>
@@ -340,15 +360,11 @@
                     >
 
                     <span>
-
-                        <strong>
-                            Administrator
-                        </strong>
+                        <strong>Administrator</strong>
 
                         <small>
                             Request administrator access.
                         </small>
-
                     </span>
 
                 </label>
@@ -358,7 +374,7 @@
         </div>
 
 
-        <!-- REGISTRATION FORM -->
+        <!-- FORM -->
 
         <form id="registerForm">
 
@@ -439,7 +455,7 @@
             </div>
 
 
-            <!-- STUDENT ONLY INFORMATION -->
+            <!-- STUDENT INFORMATION -->
 
             <div id="studentFields">
 
@@ -479,332 +495,363 @@
 
                 <!-- OPTIONAL SUBJECTS -->
 
-                <div
-                    id="subjectFields"
-                    class="form-group"
-                >
+                <div class="form-group">
 
                     <label>
                         Optional Subjects
                     </label>
 
                     <p class="form-help">
-                        Select all optional subjects you study.
+                        Select the optional subjects you study.
                     </p>
 
 
-                    <div class="subjects-grid">
+                    <div class="subjects-container">
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Computer Science"
-                            >
-                            <span>Computer Science</span>
-                        </label>
+                        <!-- STEM -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                STEM &amp; Sciences
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Physics">
+                                    <span>Physics</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Chemistry">
+                                    <span>Chemistry</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Biology">
+                                    <span>Biology</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="General Science">
+                                    <span>General Science</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Mathematics">
+                                    <span>Mathematics</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Advanced Mathematics">
+                                    <span>Advanced Mathematics</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Computer Science">
+                                    <span>Computer Science</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Computer Studies">
+                                    <span>Computer Studies</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Engineering Science">
+                                    <span>Engineering Science</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Electronics">
+                                    <span>Electronics</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Business Studies"
-                            >
-                            <span>Business Studies</span>
-                        </label>
+                        <!-- HUMANITIES -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                Humanities
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Geography">
+                                    <span>Geography</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="History and Government">
+                                    <span>History &amp; Government</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Religious Education">
+                                    <span>Religious Education</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="CRE">
+                                    <span>CRE</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="IRE">
+                                    <span>IRE</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="HRE">
+                                    <span>HRE</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Agriculture"
-                            >
-                            <span>Agriculture</span>
-                        </label>
+                        <!-- LANGUAGES -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                Languages
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="English">
+                                    <span>English</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Kiswahili">
+                                    <span>Kiswahili</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="French">
+                                    <span>French</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="German">
+                                    <span>German</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Arabic">
+                                    <span>Arabic</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="French"
-                            >
-                            <span>French</span>
-                        </label>
+                        <!-- TECHNICAL -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                Technical &amp; Applied Subjects
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Agriculture">
+                                    <span>Agriculture</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Design and Technology">
+                                    <span>Design &amp; Technology</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Building and Construction">
+                                    <span>Building &amp; Construction</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Electricity">
+                                    <span>Electricity</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Metalwork">
+                                    <span>Metalwork</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Woodwork">
+                                    <span>Woodwork</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Power Mechanics">
+                                    <span>Power Mechanics</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Fashion and Design">
+                                    <span>Fashion &amp; Design</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Home Science">
+                                    <span>Home Science</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Food and Nutrition">
+                                    <span>Food &amp; Nutrition</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Aviation">
+                                    <span>Aviation</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Marine and Fisheries">
+                                    <span>Marine &amp; Fisheries</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="German"
-                            >
-                            <span>German</span>
-                        </label>
+                        <!-- BUSINESS -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                Business &amp; Entrepreneurship
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Business Studies">
+                                    <span>Business Studies</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Accounting">
+                                    <span>Accounting</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Entrepreneurship">
+                                    <span>Entrepreneurship</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Economics">
+                                    <span>Economics</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Arabic"
-                            >
-                            <span>Arabic</span>
-                        </label>
+                        <!-- CREATIVE -->
+
+                        <div class="subject-section">
+
+                            <p class="subject-section-title">
+                                Creative &amp; Performing Arts
+                            </p>
+
+                            <div class="subjects-grid">
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Art and Design">
+                                    <span>Art &amp; Design</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Music">
+                                    <span>Music</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Drama">
+                                    <span>Drama</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Theatre and Film">
+                                    <span>Theatre &amp; Film</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Performing Arts">
+                                    <span>Performing Arts</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Sports">
+                                    <span>Sports</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Photography">
+                                    <span>Photography</span>
+                                </label>
+
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Graphic Design">
+                                    <span>Graphic Design</span>
+                                </label>
+
+                            </div>
+
+                        </div>
 
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Music"
-                            >
-                            <span>Music</span>
-                        </label>
+                        <!-- MEDIA -->
 
+                        <div class="subject-section">
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Art and Design"
-                            >
-                            <span>Art &amp; Design</span>
-                        </label>
+                            <p class="subject-section-title">
+                                Media &amp; Technology
+                            </p>
 
+                            <div class="subjects-grid">
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Sports"
-                            >
-                            <span>Sports</span>
-                        </label>
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Media Technology">
+                                    <span>Media Technology</span>
+                                </label>
 
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Media and Film">
+                                    <span>Media &amp; Film</span>
+                                </label>
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Theatre and Film"
-                            >
-                            <span>Theatre &amp; Film</span>
-                        </label>
+                                <label class="subject-option">
+                                    <input type="checkbox" name="subjects" value="Information Technology">
+                                    <span>Information Technology</span>
+                                </label>
 
+                            </div>
 
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Media Technology"
-                            >
-                            <span>Media Technology</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Home Science"
-                            >
-                            <span>Home Science</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Aviation"
-                            >
-                            <span>Aviation</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Marine and Fisheries"
-                            >
-                            <span>Marine &amp; Fisheries</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Building and Construction"
-                            >
-                            <span>Building &amp; Construction</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Metalwork"
-                            >
-                            <span>Metalwork</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Woodwork"
-                            >
-                            <span>Woodwork</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Electricity"
-                            >
-                            <span>Electricity</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Power Mechanics"
-                            >
-                            <span>Power Mechanics</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Leatherwork"
-                            >
-                            <span>Leatherwork</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Photography"
-                            >
-                            <span>Photography</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Dance"
-                            >
-                            <span>Dance</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Drama"
-                            >
-                            <span>Drama</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Computer Studies"
-                            >
-                            <span>Computer Studies</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Design and Technology"
-                            >
-                            <span>Design &amp; Technology</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Media and Film"
-                            >
-                            <span>Media &amp; Film</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Performing Arts"
-                            >
-                            <span>Performing Arts</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Food and Nutrition"
-                            >
-                            <span>Food &amp; Nutrition</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Fashion and Design"
-                            >
-                            <span>Fashion &amp; Design</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Electronics"
-                            >
-                            <span>Electronics</span>
-                        </label>
-
-
-                        <label class="subject-option">
-                            <input
-                                type="checkbox"
-                                name="subjects"
-                                value="Graphic Design"
-                            >
-                            <span>Graphic Design</span>
-                        </label>
-
+                        </div>
 
                     </div>
 
@@ -864,9 +911,9 @@ const studentClass =
     document.getElementById("studentClass");
 
 
-/* ============================
-   MESSAGE
-============================ */
+/* ================================
+   SHOW MESSAGE
+================================ */
 
 function showMessage(text, type = "error") {
 
@@ -878,9 +925,9 @@ function showMessage(text, type = "error") {
 }
 
 
-/* ============================
+/* ================================
    ACCOUNT TYPE
-============================ */
+================================ */
 
 function updateAccountType() {
 
@@ -892,7 +939,6 @@ function updateAccountType() {
     if (!selected) {
         return;
     }
-
 
     const isStudent =
         selected.value === "student";
@@ -927,9 +973,9 @@ document
 updateAccountType();
 
 
-/* ============================
-   REGISTRATION
-============================ */
+/* ================================
+   FORM SUBMISSION
+================================ */
 
 form.addEventListener(
     "submit",
@@ -944,84 +990,92 @@ form.addEventListener(
             "Creating Account...";
 
 
-        const accountType =
-            document.querySelector(
-                'input[name="accountType"]:checked'
-            ).value;
-
-
-        const fullName =
-            document
-                .getElementById("fullName")
-                .value
-                .trim();
-
-
-        const username =
-            document
-                .getElementById("username")
-                .value
-                .trim();
-
-
-        const email =
-            document
-                .getElementById("email")
-                .value
-                .trim();
-
-
-        const password =
-            document
-                .getElementById("password")
-                .value;
-
-
-        const selectedClass =
-            studentClass.value;
-
-
-        const selectedSubjects =
-            Array.from(
-                document.querySelectorAll(
-                    'input[name="subjects"]:checked'
-                )
-            ).map(
-                checkbox => checkbox.value
-            );
-
-
         try {
+
+            const accountType =
+                document.querySelector(
+                    'input[name="accountType"]:checked'
+                ).value;
+
+
+            const fullName =
+                document
+                    .getElementById("fullName")
+                    .value
+                    .trim();
+
+
+            const username =
+                document
+                    .getElementById("username")
+                    .value
+                    .trim();
+
+
+            const email =
+                document
+                    .getElementById("email")
+                    .value
+                    .trim();
+
+
+            const password =
+                document
+                    .getElementById("password")
+                    .value;
+
+
+            const selectedClass =
+                studentClass.value;
+
+
+            const selectedSubjects =
+                Array.from(
+                    document.querySelectorAll(
+                        'input[name="subjects"]:checked'
+                    )
+                ).map(
+                    checkbox => checkbox.value
+                );
+
 
             /* ============================
                VALIDATION
             ============================ */
 
             if (!fullName) {
+
                 throw new Error(
                     "Please enter your full name."
                 );
+
             }
 
 
             if (!username) {
+
                 throw new Error(
                     "Please enter a username."
                 );
+
             }
 
 
             if (!email) {
+
                 throw new Error(
-                    "Please enter your email address."
+                    "Please enter your email."
                 );
+
             }
 
 
             if (password.length < 6) {
+
                 throw new Error(
                     "Password must contain at least 6 characters."
                 );
+
             }
 
 
@@ -1038,7 +1092,7 @@ form.addEventListener(
 
 
             /* ============================
-               CHECK EXISTING PROFILE
+               CHECK DUPLICATE PROFILE
             ============================ */
 
             const duplicate =
@@ -1071,7 +1125,7 @@ form.addEventListener(
 
 
             /* ============================
-               CREATE AUTH USER
+               CREATE SUPABASE AUTH USER
             ============================ */
 
             const {
@@ -1101,7 +1155,7 @@ form.addEventListener(
             if (!user) {
 
                 throw new Error(
-                    "The account could not be created."
+                    "Account creation failed."
                 );
 
             }
@@ -1180,7 +1234,7 @@ form.addEventListener(
 
 
                 showMessage(
-                    "Your account has been created. Your administrator request is waiting for Super Admin approval.",
+                    "Account created successfully. Your administrator request is now waiting for Super Admin approval.",
                     "success"
                 );
 
@@ -1188,7 +1242,7 @@ form.addEventListener(
 
 
             /* ============================
-               STUDENT ACCOUNT
+               STUDENT
             ============================ */
 
             else {
@@ -1231,7 +1285,7 @@ form.addEventListener(
 
 
             /* ============================
-               RESET FORM
+               RESET
             ============================ */
 
             form.reset();
