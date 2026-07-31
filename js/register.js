@@ -1,267 +1,413 @@
 import { supabase } from "./supabase.js";
 
+// ==========================================
+// ELEMENTS
+// ==========================================
 
-const form =
-    document.getElementById("registerForm");
+const form = document.getElementById("registerForm");
+const registerButton = document.getElementById("registerButton");
+const message = document.getElementById("registerMessage");
 
-const studentType =
-    document.getElementById("studentType");
+const studentFields = document.getElementById("studentFields");
+const admissionGroup = document.getElementById("admissionGroup");
 
-const adminType =
-    document.getElementById("adminType");
-
-const accountType =
-    document.getElementById("accountType");
-
-const studentFields =
-    document.getElementById("studentFields");
-
-const registerButton =
-    document.getElementById("registerButton");
-
-const message =
-    document.getElementById("registerMessage");
+const admissionInput = document.getElementById("admission");
+const studentClass = document.getElementById("studentClass");
+const subjectCounter = document.getElementById("subjectCounter");
 
 
-function setAccountType(type) {
+// ==========================================
+// MESSAGE
+// ==========================================
 
-    accountType.value = type;
+function showMessage(text, type) {
+
+    message.textContent = text;
+
+    message.className =
+        "register-message show " + type;
+
+    // Make sure it is visible
+    message.style.display = "block";
+
+    // Scroll to the message
+    message.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
 
 
-    studentType.classList.toggle(
-        "active",
-        type === "student"
-    );
+// ==========================================
+// ACCOUNT TYPE
+// ==========================================
+
+function getAccountType() {
+
+    const selected =
+        document.querySelector(
+            'input[name="accountType"]:checked'
+        );
+
+    return selected
+        ? selected.value
+        : "student";
+}
 
 
-    adminType.classList.toggle(
-        "active",
-        type === "admin"
-    );
+function updateAccountType() {
 
+    const type = getAccountType();
 
-    if (type === "student") {
+    const isStudent = type === "student";
+
+    if (studentFields) {
+
+        studentFields.classList.toggle(
+            "hidden",
+            !isStudent
+        );
 
         studentFields.style.display =
-            "block";
+            isStudent ? "block" : "none";
+    }
+
+
+    if (admissionGroup) {
+
+        admissionGroup.classList.toggle(
+            "hidden",
+            !isStudent
+        );
+
+        admissionGroup.style.display =
+            isStudent ? "block" : "none";
+    }
+
+
+    if (studentClass) {
+        studentClass.required = isStudent;
+    }
+
+
+    if (admissionInput) {
+        admissionInput.required = isStudent;
+    }
+
+
+    if (registerButton) {
 
         registerButton.textContent =
-            "Create Student Account";
-
-    } else {
-
-        studentFields.style.display =
-            "none";
-
-        registerButton.textContent =
-            "Request Administrator Account";
-
+            isStudent
+                ? "Create Student Account"
+                : "Request Administrator Account";
     }
 }
 
 
-studentType.addEventListener(
-    "click",
-    () => setAccountType("student")
-);
+document
+    .querySelectorAll(
+        'input[name="accountType"]'
+    )
+    .forEach(input => {
+
+        input.addEventListener(
+            "change",
+            updateAccountType
+        );
+
+    });
 
 
-adminType.addEventListener(
-    "click",
-    () => setAccountType("admin")
-);
+// ==========================================
+// SUBJECT COUNTER
+// ==========================================
 
+function updateSubjectCounter() {
+
+    const selected =
+        document.querySelectorAll(
+            'input[name="subjects"]:checked'
+        );
+
+    const count = selected.length;
+
+    if (subjectCounter) {
+
+        subjectCounter.textContent =
+            `${count} subject${count === 1 ? "" : "s"} selected`;
+    }
+}
+
+
+document
+    .querySelectorAll(
+        'input[name="subjects"]'
+    )
+    .forEach(checkbox => {
+
+        checkbox.addEventListener(
+            "change",
+            updateSubjectCounter
+        );
+
+    });
+
+
+updateAccountType();
+updateSubjectCounter();
+
+
+// ==========================================
+// REGISTRATION
+// ==========================================
 
 form.addEventListener(
     "submit",
-    async (event) => {
+    async function (event) {
 
         event.preventDefault();
 
-
+        // Clear previous message
         message.textContent = "";
-        message.className =
-            "register-message";
-
-
-        const type =
-            accountType.value;
-
-
-        const fullName =
-            document
-                .getElementById("fullName")
-                .value
-                .trim();
-
-
-        const email =
-            document
-                .getElementById("email")
-                .value
-                .trim();
-
-
-        const username =
-            document
-                .getElementById("username")
-                .value
-                .trim();
-
-
-        const password =
-            document
-                .getElementById("password")
-                .value;
-
-
-        const confirmPassword =
-            document
-                .getElementById("confirmPassword")
-                .value;
-
-
-        if (password.length < 8) {
-
-            showError(
-                "Password must contain at least 8 characters."
-            );
-
-            return;
-        }
-
-
-        if (password !== confirmPassword) {
-
-            showError(
-                "The passwords do not match."
-            );
-
-            return;
-        }
-
-
-        let admission = "";
-        let className = "";
-        let optionalSubjects = [];
-
-
-        if (type === "student") {
-
-            admission =
-                document
-                    .getElementById("admission")
-                    .value
-                    .trim();
-
-
-            className =
-                document
-                    .getElementById("className")
-                    .value;
-
-
-            optionalSubjects =
-                Array.from(
-                    document.querySelectorAll(
-                        'input[name="optionalSubject"]:checked'
-                    )
-                )
-                .map(
-                    checkbox => checkbox.value
-                );
-
-
-            if (!admission) {
-
-                showError(
-                    "Enter the student's admission number."
-                );
-
-                return;
-            }
-
-
-            if (!className) {
-
-                showError(
-                    "Select the student's class."
-                );
-
-                return;
-            }
-
-
-            if (optionalSubjects.length !== 3) {
-
-                showError(
-                    "Select exactly 3 optional subjects."
-                );
-
-                return;
-            }
-
-        }
-
+        message.className = "register-message";
+        message.style.display = "none";
 
         registerButton.disabled = true;
-
-        registerButton.textContent =
-            "Creating account...";
+        registerButton.textContent = "Creating Account...";
 
 
         try {
 
+            // ==================================
+            // ACCOUNT TYPE
+            // ==================================
+
+            const accountType =
+                getAccountType();
+
+
+            // ==================================
+            // BASIC INFORMATION
+            // ==================================
+
+            const fullName =
+                document
+                    .getElementById("fullName")
+                    .value
+                    .trim();
+
+
+            const username =
+                document
+                    .getElementById("username")
+                    .value
+                    .trim();
+
+
+            const email =
+                document
+                    .getElementById("email")
+                    .value
+                    .trim()
+                    .toLowerCase();
+
+
+            const password =
+                document
+                    .getElementById("password")
+                    .value;
+
+
+            const confirmPassword =
+                document
+                    .getElementById("confirmPassword")
+                    .value;
+
+
+            // ==================================
+            // VALIDATION
+            // ==================================
+
+            if (!fullName) {
+
+                throw new Error(
+                    "Please enter your full name."
+                );
+            }
+
+
+            if (!username) {
+
+                throw new Error(
+                    "Please enter a username."
+                );
+            }
+
+
+            if (!email) {
+
+                throw new Error(
+                    "Please enter your email."
+                );
+            }
+
+
+            if (password.length < 8) {
+
+                throw new Error(
+                    "Password must contain at least 8 characters."
+                );
+            }
+
+
+            if (password !== confirmPassword) {
+
+                throw new Error(
+                    "The passwords do not match."
+                );
+            }
+
+
+            // ==================================
+            // STUDENT DATA
+            // ==================================
+
+            let admission = null;
+            let className = null;
+            let optionalSubjects = [];
+
+
+            if (accountType === "student") {
+
+                admission =
+                    admissionInput.value.trim();
+
+
+                className =
+                    studentClass.value;
+
+
+                optionalSubjects =
+                    Array.from(
+                        document.querySelectorAll(
+                            'input[name="subjects"]:checked'
+                        )
+                    ).map(
+                        checkbox => checkbox.value
+                    );
+
+
+                if (!admission) {
+
+                    throw new Error(
+                        "Please enter the admission number."
+                    );
+                }
+
+
+                if (!className) {
+
+                    throw new Error(
+                        "Please select Grade 10, Grade 11, or Grade 12."
+                    );
+                }
+
+
+                if (optionalSubjects.length < 1) {
+
+                    throw new Error(
+                        "Please select at least one optional subject."
+                    );
+                }
+            }
+
+
+            // ==================================
+            // CHECK USERNAME
+            // ==================================
+
             const {
-                data,
-                error
+                data: existingUsername,
+                error: usernameCheckError
+            } =
+                await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("username", username)
+                    .maybeSingle();
+
+
+            if (usernameCheckError) {
+
+                console.error(
+                    "Username check error:",
+                    usernameCheckError
+                );
+            }
+
+
+            if (existingUsername) {
+
+                throw new Error(
+                    "That username is already in use."
+                );
+            }
+
+
+            // ==================================
+            // CREATE AUTH ACCOUNT
+            // ==================================
+
+            const {
+                data: authData,
+                error: authError
             } =
                 await supabase.auth.signUp({
 
-                    email,
+                    email: email,
 
-                    password,
+                    password: password,
 
                     options: {
 
                         data: {
 
-                            full_name:
-                                fullName,
+                            full_name: fullName,
 
-                            username:
-                                username
-
+                            username: username
                         }
-
                     }
-
                 });
 
 
-            if (error) {
+            if (authError) {
 
-                throw error;
-
+                throw authError;
             }
 
 
-            if (!data.user) {
+            if (!authData.user) {
 
                 throw new Error(
                     "The account could not be created."
                 );
-
             }
 
 
             const userId =
-                data.user.id;
+                authData.user.id;
 
 
-            /*
-             * PROFILE
-             */
+            console.log(
+                "Auth account created:",
+                userId
+            );
+
+
+            // ==================================
+            // CREATE PROFILE
+            // ==================================
 
             const {
                 error: profileError
@@ -272,34 +418,30 @@ form.addEventListener(
 
                         id: userId,
 
-                        full_name:
-                            fullName,
+                        full_name: fullName,
 
-                        username:
-                            username,
+                        username: username,
 
-                        email:
-                            email
-
+                        email: email
                     });
 
 
             if (profileError) {
 
-                console.error(
-                    profileError
-                );
-
                 throw profileError;
-
             }
 
 
-            /*
-             * STUDENT
-             */
+            // ==================================
+            // STUDENT
+            // ==================================
 
-            if (type === "student") {
+            if (accountType === "student") {
+
+
+                // ------------------------------
+                // STUDENT RECORD
+                // ------------------------------
 
                 const {
                     error: studentError
@@ -308,31 +450,26 @@ form.addEventListener(
                         .from("students")
                         .insert({
 
-                            user_id:
-                                userId,
+                            user_id: userId,
 
-                            admission_number:
-                                admission,
+                            admission_number: admission,
 
-                            class:
-                                className,
+                            class: className,
 
                             optional_subjects:
                                 optionalSubjects
-
                         });
 
 
                 if (studentError) {
 
-                    console.error(
-                        studentError
-                    );
-
                     throw studentError;
-
                 }
 
+
+                // ------------------------------
+                // STUDENT ROLE
+                // ------------------------------
 
                 const {
                     error: roleError
@@ -341,50 +478,54 @@ form.addEventListener(
                         .from("user_roles")
                         .insert({
 
-                            user_id:
-                                userId,
+                            user_id: userId,
 
-                            role:
-                                "student",
-
-                            approved:
-                                true
-
+                            role: "student"
                         });
 
 
                 if (roleError) {
 
-                    console.error(
-                        roleError
-                    );
-
                     throw roleError;
-
                 }
 
 
-                showSuccess(
-                    "Student account created successfully. You can now sign in."
+                // ==================================
+                // SUCCESS
+                // ==================================
+
+                showMessage(
+                    "Registration successful! Your student account has been created. You can now sign in.",
+                    "success"
                 );
 
 
-                form.reset();
+                // Change button text
+                registerButton.textContent =
+                    "Registration Successful";
 
 
-                setAccountType(
-                    "student"
-                );
+                // Wait before resetting
+                setTimeout(() => {
+
+                    form.reset();
+
+                    updateAccountType();
+
+                    updateSubjectCounter();
+
+                    registerButton.disabled = false;
+
+                }, 2500);
 
 
                 return;
-
             }
 
 
-            /*
-             * ADMIN REQUEST
-             */
+            // ==================================
+            // ADMIN REQUEST
+            // ==================================
 
             const {
                 error: requestError
@@ -393,44 +534,58 @@ form.addEventListener(
                     .from("admin_requests")
                     .insert({
 
-                        user_id:
-                            userId,
+                        user_id: userId,
 
-                        full_name:
-                            fullName,
+                        full_name: fullName,
 
-                        email:
-                            email,
+                        username: username,
 
-                        username:
-                            username,
+                        email: email,
 
-                        status:
-                            "pending"
-
+                        status: "pending"
                     });
 
 
             if (requestError) {
 
-                console.error(
-                    requestError
-                );
-
                 throw requestError;
-
             }
 
 
-            showSuccess(
-                "Administrator request submitted. The Super Admin must approve your account."
+            // ==================================
+            // ADMIN SUCCESS
+            // ==================================
+
+            showMessage(
+                "Registration successful! Your administrator request has been submitted and is waiting for Super Admin approval.",
+                "success"
             );
 
 
-            form.reset();
+            registerButton.textContent =
+                "Request Submitted";
 
 
-        } catch (error) {
+            setTimeout(() => {
+
+                form.reset();
+
+                updateAccountType();
+
+                updateSubjectCounter();
+
+                registerButton.disabled = false;
+
+            }, 2500);
+
+        }
+
+
+        // ==================================
+        // ERROR
+        // ==================================
+
+        catch (error) {
 
             console.error(
                 "Registration error:",
@@ -438,55 +593,18 @@ form.addEventListener(
             );
 
 
-            showError(
+            showMessage(
                 error.message ||
-                "Registration failed."
+                "Registration failed. Please try again.",
+                "error"
             );
 
-        } finally {
 
             registerButton.disabled =
                 false;
 
-
-            if (
-                accountType.value ===
-                "student"
-            ) {
-
-                registerButton.textContent =
-                    "Create Student Account";
-
-            } else {
-
-                registerButton.textContent =
-                    "Request Administrator Account";
-
-            }
-
+            updateAccountType();
         }
 
     }
 );
-
-
-function showError(text) {
-
-    message.textContent =
-        text;
-
-    message.className =
-        "register-message error";
-
-}
-
-
-function showSuccess(text) {
-
-    message.textContent =
-        text;
-
-    message.className =
-        "register-message success";
-
-}
