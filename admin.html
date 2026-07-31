@@ -3,13 +3,642 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>Grade Hub - Admin Dashboard</title>
+    <title>Grade Hub | Admin Dashboard</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        /* ==========================================
+           GRADE HUB ADMIN DASHBOARD
+        ========================================== */
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+
+            --background: #f5f7fb;
+
+            --card: #ffffff;
+
+            --text: #172033;
+
+            --muted: #697386;
+
+            --border: #e5e9f2;
+
+            --success: #15803d;
+
+            --danger: #dc2626;
+
+            --warning: #b45309;
+        }
+
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
+
+            color: var(--text);
+
+            min-height: 100vh;
+        }
+
+
+        /* ==========================================
+           HEADER
+        ========================================== */
+
+        header {
+
+            background: #111827;
+
+            color: white;
+
+            min-height: 72px;
+
+            padding:
+                0 30px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(15, 23, 42, .12);
+        }
+
+
+        header h1 {
+
+            margin: 0;
+
+            font-size: 21px;
+
+            font-weight: 800;
+
+            letter-spacing: -.3px;
+        }
+
+
+        nav {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+
+        nav a {
+
+            color: #cbd5e1;
+
+            text-decoration: none;
+
+            padding:
+                10px 14px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            transition:
+                background .2s,
+                color .2s;
+        }
+
+
+        nav a:hover {
+
+            background: #1f2937;
+
+            color: white;
+        }
+
+
+        #logout {
+
+            cursor: pointer;
+        }
+
+
+        /* ==========================================
+           MAIN DASHBOARD
+        ========================================== */
+
+        .dashboard {
+
+            width:
+                min(
+                    1250px,
+                    calc(100% - 40px)
+                );
+
+            margin:
+                30px auto;
+
+            padding-bottom: 40px;
+        }
+
+
+        /* ==========================================
+           STAT CARDS
+        ========================================== */
+
+        .cards {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+
+            gap: 18px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .stat-card {
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 16px;
+
+            padding: 22px;
+
+            box-shadow:
+                0 7px 25px
+                rgba(15, 23, 42, .05);
+
+            transition:
+                transform .2s,
+                box-shadow .2s;
+        }
+
+
+        .stat-card:hover {
+
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 12px 30px
+                rgba(15, 23, 42, .08);
+        }
+
+
+        .stat-card h3 {
+
+            margin: 0;
+
+            color: var(--muted);
+
+            font-size: 14px;
+
+            font-weight: 700;
+        }
+
+
+        .stat-card p {
+
+            margin:
+                8px 0 0;
+
+            font-size: 32px;
+
+            font-weight: 850;
+
+            color: var(--text);
+        }
+
+
+        /* ==========================================
+           MAIN CARD
+        ========================================== */
+
+        .card {
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 18px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 7px 25px
+                rgba(15, 23, 42, .05);
+        }
+
+
+        .card h2 {
+
+            margin:
+                0 0 6px;
+
+            font-size: 21px;
+
+            font-weight: 800;
+        }
+
+
+        .card h2::after {
+
+            content: "";
+
+            display: block;
+
+            width: 42px;
+
+            height: 3px;
+
+            margin-top: 9px;
+
+            border-radius: 5px;
+
+            background: var(--primary);
+        }
+
+
+        /* ==========================================
+           SEARCH
+        ========================================== */
+
+        #searchStudent {
+
+            width: 100%;
+
+            max-width: 400px;
+
+            margin:
+                20px 0;
+
+            padding:
+                12px 14px;
+
+            border:
+                1px solid #d9deea;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            font:
+                inherit;
+
+            color: var(--text);
+
+            background: white;
+        }
+
+
+        #searchStudent:focus {
+
+            border-color:
+                var(--primary);
+
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .1);
+        }
+
+
+        /* ==========================================
+           TABLE CONTAINER
+        ========================================== */
+
+        .table-container {
+
+            width: 100%;
+
+            overflow-x: auto;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 12px;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            min-width: 800px;
+
+            border-collapse:
+                collapse;
+
+            background: white;
+        }
+
+
+        thead {
+
+            background: #f8fafc;
+        }
+
+
+        th {
+
+            text-align: left;
+
+            padding:
+                14px 16px;
+
+            font-size: 13px;
+
+            color: #475569;
+
+            font-weight: 800;
+
+            border-bottom:
+                1px solid var(--border);
+
+            white-space: nowrap;
+        }
+
+
+        td {
+
+            padding:
+                14px 16px;
+
+            font-size: 14px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            color: var(--text);
+
+            vertical-align: middle;
+        }
+
+
+        tbody tr:last-child td {
+
+            border-bottom: 0;
+        }
+
+
+        tbody tr:hover {
+
+            background: #fafbff;
+        }
+
+
+        /* ==========================================
+           BUTTONS
+        ========================================== */
+
+        .btn {
+
+            border: 0;
+
+            border-radius: 8px;
+
+            padding:
+                8px 12px;
+
+            background:
+                #eef2ff;
+
+            color:
+                #3730a3;
+
+            font-size: 13px;
+
+            font-weight: 750;
+
+            cursor: pointer;
+
+            margin-right: 6px;
+
+            transition:
+                transform .15s,
+                background .15s;
+        }
+
+
+        .btn:hover {
+
+            transform:
+                translateY(-1px);
+
+            background:
+                #e0e7ff;
+        }
+
+
+        .delete-btn {
+
+            background:
+                #fee2e2 !important;
+
+            color:
+                #991b1b !important;
+        }
+
+
+        .delete-btn:hover {
+
+            background:
+                #fecaca !important;
+        }
+
+
+        .upload-btn {
+
+            background:
+                #dcfce7;
+
+            color:
+                #166534;
+        }
+
+
+        .upload-btn:hover {
+
+            background:
+                #bbf7d0;
+        }
+
+
+        /* ==========================================
+           EMPTY TABLE
+        ========================================== */
+
+        #studentTable:empty::after {
+
+            content:
+                "No students registered.";
+
+            display: block;
+
+            padding: 30px;
+
+            text-align: center;
+
+            color: var(--muted);
+        }
+
+
+        /* ==========================================
+           RESPONSIVE
+        ========================================== */
+
+        @media (max-width: 850px) {
+
+            header {
+
+                padding:
+                    16px 20px;
+
+                flex-direction: column;
+
+                align-items:
+                    flex-start;
+
+                gap: 12px;
+            }
+
+
+            nav {
+
+                width: 100%;
+            }
+
+
+            nav a {
+
+                flex: 1;
+
+                text-align: center;
+            }
+
+
+            .dashboard {
+
+                width:
+                    calc(100% - 28px);
+
+                margin:
+                    20px auto;
+            }
+
+
+            .cards {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .card {
+
+                padding: 18px;
+            }
+        }
+
+
+        @media (max-width: 500px) {
+
+            header h1 {
+
+                font-size: 18px;
+            }
+
+
+            nav {
+
+                flex-direction: column;
+
+                align-items:
+                    stretch;
+            }
+
+
+            nav a {
+
+                width: 100%;
+            }
+
+
+            .dashboard {
+
+                width:
+                    calc(100% - 20px);
+
+                margin-top: 15px;
+            }
+
+
+            .stat-card {
+
+                padding: 18px;
+            }
+
+
+            .stat-card p {
+
+                font-size: 28px;
+            }
+
+
+            .card h2 {
+
+                font-size: 19px;
+            }
+        }
+
+    </style>
 
 </head>
 
@@ -17,170 +646,183 @@
 <body>
 
 
-<header>
+    <!-- ==========================================
+         HEADER
+    ========================================== -->
 
-<h1>
-Grade Hub Admin
-</h1>
+    <header>
 
+        <h1>
+            Grade Hub Admin
+        </h1>
 
-<nav>
 
-<a href="admin.html">
-Dashboard
-</a>
+        <nav>
 
-<a href="#" id="logout">
-Logout
-</a>
+            <a
+                href="admin.html"
+            >
+                Dashboard
+            </a>
 
-</nav>
 
+            <a
+                href="#"
+                id="logout"
+            >
+                Logout
+            </a>
 
-</header>
+        </nav>
 
+    </header>
 
 
-<section class="dashboard">
 
+    <!-- ==========================================
+         DASHBOARD
+    ========================================== -->
 
-<div class="cards">
+    <section class="dashboard">
 
 
-<div class="stat-card">
+        <!-- ======================================
+             STATISTICS
+        ====================================== -->
 
-<h3>
-Students
-</h3>
+        <div class="cards">
 
-<p id="studentCount">
-0
-</p>
 
-</div>
+            <div class="stat-card">
 
+                <h3>
+                    Students
+                </h3>
 
+                <p id="studentCount">
+                    0
+                </p>
 
-<div class="stat-card">
+            </div>
 
-<h3>
-Results Uploaded
-</h3>
 
-<p id="resultCount">
-0
-</p>
 
-</div>
+            <div class="stat-card">
 
+                <h3>
+                    Results Uploaded
+                </h3>
 
+                <p id="resultCount">
+                    0
+                </p>
 
+            </div>
 
-<div class="stat-card">
 
-<h3>
-Pending
-</h3>
 
-<p id="pendingCount">
-0
-</p>
+            <div class="stat-card">
 
-</div>
+                <h3>
+                    Pending
+                </h3>
 
+                <p id="pendingCount">
+                    0
+                </p>
 
-</div>
+            </div>
 
 
+        </div>
 
 
 
-<div class="card">
+        <!-- ======================================
+             STUDENT MANAGEMENT
+        ====================================== -->
 
+        <div class="card">
 
-<h2>
-Student Management
-</h2>
 
+            <h2>
+                Student Management
+            </h2>
 
 
-<input
+            <input
+                type="text"
+                id="searchStudent"
+                placeholder="Search student..."
+                autocomplete="off"
+            >
 
-type="text"
 
-id="searchStudent"
+            <div class="table-container">
 
-placeholder="Search student..."
 
->
+                <table>
 
 
+                    <thead>
 
+                        <tr>
 
-<div class="table-container">
+                            <th>
+                                Admission
+                            </th>
 
 
-<table>
+                            <th>
+                                Name
+                            </th>
 
 
-<thead>
+                            <th>
+                                Class
+                            </th>
 
-<tr>
 
-<th>
-Admission
-</th>
+                            <th>
+                                Optional Subjects
+                            </th>
 
 
-<th>
-Name
-</th>
+                            <th>
+                                Actions
+                            </th>
 
+                        </tr>
 
-<th>
-Class
-</th>
+                    </thead>
 
 
-<th>
-Optional Subjects
-</th>
+                    <tbody id="studentTable">
 
+                    </tbody>
 
-<th>
-Actions
-</th>
 
+                </table>
 
-</tr>
 
+            </div>
 
-</thead>
 
+        </div>
 
 
-<tbody id="studentTable">
+    </section>
 
 
-</tbody>
 
+    <!-- ==========================================
+         ADMIN JAVASCRIPT
+    ========================================== -->
 
-</table>
-
-
-
-</div>
-
-
-</div>
-
-
-
-</section>
-
-
-
-<script type="module" src="js/admin.js"></script>
+    <script
+        type="module"
+        src="js/admin.js">
+    </script>
 
 
 </body>
