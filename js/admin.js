@@ -6,50 +6,207 @@ import { supabase } from "./supabase.js";
 
 
 // ==========================================
+// ELEMENTS
+// ==========================================
+
+const studentTable =
+    document.getElementById("studentTable");
+
+const studentCount =
+    document.getElementById("studentCount");
+
+const resultCount =
+    document.getElementById("resultCount");
+
+const pendingCount =
+    document.getElementById("pendingCount");
+
+const searchStudent =
+    document.getElementById("searchStudent");
+
+const logoutButton =
+    document.getElementById("logout");
+
+
+// ==========================================
 // CHECK ADMIN LOGIN
 // ==========================================
 
-async function checkAdmin(){
+async function checkAdmin() {
 
-    const {data} = await supabase.auth.getUser();
+    try {
 
-    if(!data.user){
+        const {
+            data: authData,
+            error: authError
+        } = await supabase.auth.getUser();
 
-        window.location = "index.html";
 
-        return;
+        // --------------------------------------
+        // Authentication error
+        // --------------------------------------
+
+        if (authError) {
+
+            console.error(
+                "Authentication error:",
+                authError
+            );
+
+            window.location.href =
+                "index.html";
+
+            return false;
+        }
+
+
+        // --------------------------------------
+        // No logged-in user
+        // --------------------------------------
+
+        if (!authData || !authData.user) {
+
+            console.log(
+                "No authenticated user."
+            );
+
+            window.location.href =
+                "index.html";
+
+            return false;
+        }
+
+
+        const user =
+            authData.user;
+
+
+        console.log(
+            "Logged in user:",
+            user.email
+        );
+
+
+        // --------------------------------------
+        // Get role
+        // --------------------------------------
+
+        const {
+            data: roles,
+            error: roleError
+        } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id);
+
+
+        if (roleError) {
+
+            console.error(
+                "Role lookup error:",
+                roleError
+            );
+
+            alert(
+                "Unable to verify your account role: " +
+                roleError.message
+            );
+
+            window.location.href =
+                "index.html";
+
+            return false;
+        }
+
+
+        // --------------------------------------
+        // No role found
+        // --------------------------------------
+
+        if (!roles || roles.length === 0) {
+
+            console.error(
+                "No role found for:",
+                user.id
+            );
+
+            alert(
+                "No administrator role was found for this account."
+            );
+
+            window.location.href =
+                "index.html";
+
+            return false;
+        }
+
+
+        // --------------------------------------
+        // Find admin role
+        // --------------------------------------
+
+        const isAdmin =
+            roles.some(
+                item =>
+                    item.role === "admin"
+            );
+
+
+        const isSuperAdmin =
+            roles.some(
+                item =>
+                    item.role === "super_admin"
+            );
+
+
+        // --------------------------------------
+        // Check permission
+        // --------------------------------------
+
+        if (!isAdmin && !isSuperAdmin) {
+
+            console.error(
+                "User roles:",
+                roles
+            );
+
+            alert(
+                "This account does not have administrator permission."
+            );
+
+            window.location.href =
+                "index.html";
+
+            return false;
+        }
+
+
+        // --------------------------------------
+        // Admin verified
+        // --------------------------------------
+
+        console.log(
+            "Administrator access confirmed."
+        );
+
+
+        return true;
 
     }
 
+    catch (error) {
 
-    const {data:role}=await supabase
+        console.error(
+            "Admin authentication error:",
+            error
+        );
 
-    .from("user_roles")
+        window.location.href =
+            "index.html";
 
-    .select("role,approved")
-
-    .eq("user_id",data.user.id)
-    .single();
-
-
-
-    if(
-        !role ||
-        (role.role !== "admin" &&
-        role.role !== "super_admin") ||
-        role.approved === false
-    ){
-
-        window.location="index.html";
-
+        return false;
     }
-
 }
-
-
-
-checkAdmin();
-
 
 
 
@@ -57,124 +214,274 @@ checkAdmin();
 // LOAD STUDENTS
 // ==========================================
 
-async function loadStudents(){
+async function loadStudents() {
+
+    if (!studentTable) {
+        return;
+    }
 
 
-const table =
-document.getElementById("studentTable");
+    studentTable.innerHTML = `
+        <tr>
+            <td colspan="5">
+                Loading students...
+            </td>
+        </tr>
+    `;
 
 
+    try {
 
-const {data:students,error}=await supabase
+        const {
+            data: students,
+            error
+        } = await supabase
+            .from("students")
+            .select(`
+                id,
+                user_id,
+                admission_number,
+                class,
+                optional_subjects,
+                profiles(
+                    full_name
+                )
+            `)
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
 
-.from("students")
 
-.select(`
+        if (error) {
 
-id,
-
-admission_number,
-
-class,
-
-optional_subjects,
-
-profiles(
-full_name
-)
-
-`);
+            console.error(
+                "Student loading error:",
+                error
+            );
 
 
+            studentTable.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        Unable to load students.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
 
 
-if(error){
+        const studentList =
+            students || [];
 
-console.log(error.message);
 
-return;
+        // --------------------------------------
+        // Student count
+        // --------------------------------------
 
+        if (studentCount) {
+
+            studentCount.textContent =
+                studentList.length;
+
+        }
+
+
+        // --------------------------------------
+        // No students
+        // --------------------------------------
+
+        if (studentList.length === 0) {
+
+            studentTable.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        No students registered.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        // --------------------------------------
+        // Build table
+        // --------------------------------------
+
+        studentTable.innerHTML = "";
+
+
+        studentList.forEach(student => {
+
+            const profile =
+                student.profiles || {};
+
+
+            let subjects =
+                student.optional_subjects;
+
+
+            if (Array.isArray(subjects)) {
+
+                subjects =
+                    subjects.join(", ");
+
+            }
+
+            else if (!subjects) {
+
+                subjects = "—";
+
+            }
+
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHTML(
+                        student.admission_number
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        profile.full_name || "—"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        student.class || "—"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(subjects)}
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn upload-btn"
+                        data-id="${escapeHTML(
+                            student.id
+                        )}">
+                        Upload
+                    </button>
+
+                    <button
+                        class="btn delete-btn"
+                        data-id="${escapeHTML(
+                            student.id
+                        )}"
+                        style="background:red">
+                        Delete
+                    </button>
+
+                </td>
+            `;
+
+
+            studentTable.appendChild(row);
+
+        });
+
+
+        // --------------------------------------
+        // Upload buttons
+        // --------------------------------------
+
+        document
+            .querySelectorAll(".upload-btn")
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        uploadResults(
+                            this.dataset.id
+                        );
+
+                    }
+                );
+
+            });
+
+
+        // --------------------------------------
+        // Delete buttons
+        // --------------------------------------
+
+        document
+            .querySelectorAll(".delete-btn")
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        deleteStudent(
+                            this.dataset.id
+                        );
+
+                    }
+                );
+
+            });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Unexpected student error:",
+            error
+        );
+
+
+        studentTable.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    Error loading students.
+                </td>
+            </tr>
+        `;
+    }
 }
 
 
 
-table.innerHTML="";
+// ==========================================
+// ESCAPE HTML
+// ==========================================
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
 
 
-
-students.forEach(student=>{
-
-
-table.innerHTML += `
-
-<tr>
-
-
-<td>
-${student.admission_number}
-</td>
-
-
-<td>
-${student.profiles.full_name}
-</td>
-
-
-<td>
-${student.class}
-</td>
-
-
-<td>
-${student.optional_subjects.join(", ")}
-</td>
-
-
-
-<td>
-
-
-<button 
-class="btn"
-onclick="uploadResults('${student.id}')">
-
-Upload
-
-</button>
-
-
-
-<button
-class="btn"
-style="background:red"
-onclick="deleteStudent('${student.id}')">
-
-Delete
-
-</button>
-
-
-
-</td>
-
-
-</tr>
-
-
-`;
-
-
-});
-
-
-
-document.getElementById("studentCount")
-.textContent = students.length;
-
-
-
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
-
 
 
 
@@ -182,39 +489,38 @@ document.getElementById("studentCount")
 // SEARCH STUDENTS
 // ==========================================
 
+if (searchStudent) {
 
-document
+    searchStudent.addEventListener(
+        "input",
+        function(event) {
 
-.getElementById("searchStudent")
-
-.addEventListener("input",async(e)=>{
-
-
-const value=e.target.value.toLowerCase();
-
-
-const rows=document.querySelectorAll("#studentTable tr");
+            const value =
+                event.target.value
+                    .toLowerCase()
+                    .trim();
 
 
-
-rows.forEach(row=>{
-
-
-row.style.display =
-row.textContent.toLowerCase()
-.includes(value)
-?
-""
-:
-"none";
+            const rows =
+                document.querySelectorAll(
+                    "#studentTable tr"
+                );
 
 
-});
+            rows.forEach(row => {
 
+                row.style.display =
+                    row.textContent
+                        .toLowerCase()
+                        .includes(value)
+                        ? ""
+                        : "none";
 
-});
+            });
 
-
+        }
+    );
+}
 
 
 
@@ -222,21 +528,17 @@ row.textContent.toLowerCase()
 // OPEN UPLOAD PAGE
 // ==========================================
 
+function uploadResults(id) {
 
-window.uploadResults=function(id){
-
-
-localStorage.setItem(
-"selectedStudent",
-id
-);
+    localStorage.setItem(
+        "selectedStudent",
+        id
+    );
 
 
-window.location="upload.html";
-
-
-};
-
+    window.location.href =
+        "upload.html";
+}
 
 
 
@@ -244,55 +546,67 @@ window.location="upload.html";
 // DELETE STUDENT
 // ==========================================
 
+async function deleteStudent(id) {
 
-window.deleteStudent=async function(id){
-
-
-const confirmDelete =
-confirm(
-"Are you sure you want to delete this student?"
-);
+    const confirmed =
+        window.confirm(
+            "Are you sure you want to delete this student?"
+        );
 
 
-
-if(!confirmDelete)
-return;
-
-
+    if (!confirmed) {
+        return;
+    }
 
 
-const {error}=await supabase
+    try {
 
-.from("students")
+        const {
+            error
+        } = await supabase
+            .from("students")
+            .delete()
+            .eq("id", id);
 
-.delete()
 
-.eq("id",id);
+        if (error) {
+
+            console.error(
+                "Delete student error:",
+                error
+            );
+
+            alert(
+                "Unable to delete student: " +
+                error.message
+            );
+
+            return;
+        }
 
 
+        alert(
+            "Student deleted successfully."
+        );
 
-if(error){
 
-alert(error.message);
+        await loadStudents();
 
-return;
+    }
 
+    catch (error) {
+
+        console.error(
+            "Unexpected delete error:",
+            error
+        );
+
+
+        alert(
+            "An unexpected error occurred."
+        );
+    }
 }
-
-
-
-alert(
-"Student deleted successfully"
-);
-
-
-
-loadStudents();
-
-
-};
-
-
 
 
 
@@ -300,25 +614,91 @@ loadStudents();
 // LOGOUT
 // ==========================================
 
+if (logoutButton) {
 
-document
+    logoutButton.addEventListener(
+        "click",
+        async function(event) {
 
-.getElementById("logout")
-
-.addEventListener("click",async()=>{
-
-
-await supabase.auth.signOut();
+            event.preventDefault();
 
 
-window.location="index.html";
+            logoutButton.textContent =
+                "Logging out...";
 
 
-});
+            logoutButton.style.pointerEvents =
+                "none";
+
+
+            const {
+                error
+            } =
+                await supabase
+                    .auth
+                    .signOut();
+
+
+            if (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+
+                alert(
+                    "Logout failed: " +
+                    error.message
+                );
+
+
+                logoutButton.textContent =
+                    "Logout";
+
+                logoutButton.style.pointerEvents =
+                    "auto";
+
+                return;
+            }
+
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
+}
 
 
 
+// ==========================================
+// INITIALIZE DASHBOARD
+// ==========================================
 
-// Start dashboard
+async function initializeDashboard() {
 
-loadStudents();
+    console.log(
+        "Initializing Grade Hub Admin Dashboard..."
+    );
+
+
+    const authorized =
+        await checkAdmin();
+
+
+    if (!authorized) {
+        return;
+    }
+
+
+    await loadStudents();
+
+
+    console.log(
+        "Admin dashboard loaded successfully."
+    );
+}
+
+
+initializeDashboard();
