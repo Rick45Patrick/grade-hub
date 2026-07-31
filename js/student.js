@@ -4,425 +4,769 @@
 
 import { supabase } from "./supabase.js";
 
-import {
-    getGrade,
-    calculateAverage,
-    getOverallLevel,
-    getGradeDescription
-} from "./grading.js";
 
+// ==========================================
+// ELEMENTS
+// ==========================================
 
+const profileBox =
+    document.getElementById("studentProfile");
 
-let chart;
+const resultTable =
+    document.getElementById("resultTable");
 
+const averageMarks =
+    document.getElementById("averageMarks");
+
+const overallGrade =
+    document.getElementById("overallGrade");
+
+const subjectCount =
+    document.getElementById("subjectCount");
+
+const logoutButton =
+    document.getElementById("logout");
 
 
 // ==========================================
-// CHECK STUDENT LOGIN
+// PAGE MESSAGE
 // ==========================================
 
-async function checkStudent(){
+function showProfileMessage(message) {
 
-
-    const {data} = await supabase.auth.getUser();
-
-
-
-    if(!data.user){
-
-        window.location = "index.html";
-
-        return null;
-
+    if (profileBox) {
+        profileBox.textContent = message;
     }
-
-
-
-
-    const {data:role} = await supabase
-
-    .from("user_roles")
-
-    .select("role,approved")
-
-    .eq("user_id", data.user.id)
-
-    .single();
-
-
-
-    if(
-        !role ||
-        role.role !== "student" ||
-        role.approved === false
-    ){
-
-        window.location = "index.html";
-
-        return null;
-
-    }
-
-
-
-    return data.user;
 
 }
 
 
-
-
-
 // ==========================================
-// LOAD STUDENT DATA
+// GET CURRENT USER
 // ==========================================
 
-async function loadStudent(){
+async function getCurrentUser() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getUser();
 
 
-    const user = await checkStudent();
+    if (error) {
 
+        console.error(
+            "Authentication error:",
+            error
+        );
 
-
-    if(!user)
-    return;
-
-
-
-
-    const {data:student,error} = await supabase
-
-    .from("students")
-
-    .select(`
-
-        id,
-
-        admission_number,
-
-        class,
-
-        optional_subjects,
-
-        profiles(
-
-            full_name,
-
-            email
-
-        )
-
-    `)
-
-    .eq("user_id", user.id)
-
-    .single();
-
-
-
-
-    if(error){
-
-        console.log(error.message);
-
-        return;
-
+        return null;
     }
 
 
+    return data?.user || null;
+}
 
 
+// ==========================================
+// CHECK STUDENT ROLE
+// ==========================================
 
-    document.getElementById("studentProfile").innerHTML = `
+async function checkStudentRole(userId) {
 
-        <h3>
-        ${student.profiles.full_name}
-        </h3>
+    const {
+        data: roles,
+        error
+    } = await supabase
+        .from("user_roles")
+        .select("role, approved")
+        .eq("user_id", userId);
 
-        <p>
-        Admission Number:
-        ${student.admission_number}
-        </p>
 
-        <p>
-        Class:
-        ${student.class}
-        </p>
+    if (error) {
 
-        <p>
-        Email:
-        ${student.profiles.email}
-        </p>
+        console.error(
+            "Role error:",
+            error
+        );
+
+        return null;
+    }
+
+
+    /*
+     * Find an approved student role.
+     *
+     * Some existing accounts may have more
+     * than one role, so we don't use .single().
+     */
+
+    const studentRole =
+        (roles || []).find(
+            role =>
+                role.role === "student" &&
+                role.approved !== false
+        );
+
+
+    return studentRole || null;
+}
+
+
+// ==========================================
+// LOAD STUDENT PROFILE
+// ==========================================
+
+async function loadStudentProfile(userId) {
+
+    const {
+        data: profile,
+        error: profileError
+    } =
+        await supabase
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                username,
+                email
+            `)
+            .eq("id", userId)
+            .maybeSingle();
+
+
+    if (profileError) {
+
+        console.error(
+            "Profile error:",
+            profileError
+        );
+
+        throw profileError;
+    }
+
+
+    const {
+        data: student,
+        error: studentError
+    } =
+        await supabase
+            .from("students")
+            .select(`
+                id,
+                admission_number,
+                class,
+                optional_subjects
+            `)
+            .eq("user_id", userId)
+            .maybeSingle();
+
+
+    if (studentError) {
+
+        console.error(
+            "Student error:",
+            studentError
+        );
+
+        throw studentError;
+    }
+
+
+    if (!profile) {
+
+        throw new Error(
+            "Your profile could not be found."
+        );
+    }
+
+
+    if (!student) {
+
+        throw new Error(
+            "Your student record could not be found."
+        );
+    }
+
+
+    const subjects =
+        Array.isArray(student.optional_subjects)
+            ? student.optional_subjects
+            : [];
+
+
+    profileBox.innerHTML = `
+
+        <div class="profile-details">
+
+            <p>
+                <strong>Name:</strong>
+                ${escapeHTML(profile.full_name || "-")}
+            </p>
+
+            <p>
+                <strong>Username:</strong>
+                ${escapeHTML(profile.username || "-")}
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                ${escapeHTML(profile.email || "-")}
+            </p>
+
+            <p>
+                <strong>Admission:</strong>
+                ${escapeHTML(student.admission_number || "-")}
+            </p>
+
+            <p>
+                <strong>Class:</strong>
+                ${escapeHTML(student.class || "-")}
+            </p>
+
+            <p>
+                <strong>Optional Subjects:</strong>
+                ${
+                    subjects.length
+                        ? subjects.map(escapeHTML).join(", ")
+                        : "None"
+                }
+            </p>
+
+        </div>
 
     `;
 
 
+    subjectCount.textContent =
+        subjects.length;
 
 
-
-
-    const {data:results,error:resultError} = await supabase
-
-    .from("results")
-
-    .select("*")
-
-    .eq("student_id", student.id);
-
-
-
-
-    if(resultError){
-
-        console.log(resultError.message);
-
-        return;
-
-    }
-
-
-
-    displayResults(results || []);
-
-
-
+    return {
+        profile,
+        student
+    };
 }
 
 
-
-
-
-
 // ==========================================
-// DISPLAY RESULTS
+// LOAD RESULTS
 // ==========================================
 
-function displayResults(results){
+async function loadResults(userId) {
+
+    /*
+     * Results are connected through student_id.
+     */
+
+    const {
+        data: student,
+        error: studentError
+    } =
+        await supabase
+            .from("students")
+            .select("id")
+            .eq("user_id", userId)
+            .maybeSingle();
 
 
+    if (studentError) {
 
-    const table =
-    document.getElementById("resultTable");
+        console.error(
+            "Student lookup error:",
+            studentError
+        );
 
-
-
-    table.innerHTML = "";
-
-
-
-    let subjects = [];
-
-    let marks = [];
+        return;
+    }
 
 
+    if (!student) {
+
+        resultTable.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty">
+                    Student record not found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
 
 
-    results.forEach(result=>{
+    /*
+     * Try loading the results.
+     *
+     * The query assumes the results table contains:
+     * student_id
+     * subject
+     * marks
+     */
 
+    const {
+        data: results,
+        error: resultError
+    } =
+        await supabase
+            .from("results")
+            .select(`
+                id,
+                subject,
+                marks
+            `)
+            .eq("student_id", student.id)
+            .order("subject");
+
+
+    if (resultError) {
+
+        console.error(
+            "Results error:",
+            resultError
+        );
+
+
+        resultTable.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty">
+                    No results available yet.
+                </td>
+            </tr>
+        `;
+
+
+        averageMarks.textContent =
+            "0%";
+
+        overallGrade.textContent =
+            "-";
+
+        return;
+    }
+
+
+    if (!results || results.length === 0) {
+
+        resultTable.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty">
+                    No results have been uploaded yet.
+                </td>
+            </tr>
+        `;
+
+
+        averageMarks.textContent =
+            "0%";
+
+        overallGrade.textContent =
+            "-";
+
+        return;
+    }
+
+
+    // ======================================
+    // DISPLAY RESULTS
+    // ======================================
+
+    resultTable.innerHTML = "";
+
+
+    const marksArray = [];
+
+
+    results.forEach(result => {
+
+        const marks =
+            Number(result.marks);
+
+
+        if (!Number.isNaN(marks)) {
+
+            marksArray.push(marks);
+
+        }
 
 
         const grade =
-        getGrade(result.marks);
+            getGrade(marks);
 
 
-
-        table.innerHTML += `
-
-        <tr>
+        const row =
+            document.createElement("tr");
 
 
-        <td>
-        ${result.subject}
-        </td>
+        row.innerHTML = `
 
+            <td>
+                ${escapeHTML(result.subject || "-")}
+            </td>
 
-        <td>
-        ${result.marks}%
-        </td>
+            <td>
+                ${Number.isNaN(marks) ? "-" : marks}
+            </td>
 
-
-        <td>
-        ${grade}
-        </td>
-
-
-        </tr>
+            <td>
+                ${grade}
+            </td>
 
         `;
 
 
-
-        subjects.push(result.subject);
-
-        marks.push(result.marks);
-
-
+        resultTable.appendChild(row);
 
     });
 
 
+    // ======================================
+    // AVERAGE
+    // ======================================
+
+    if (marksArray.length === 0) {
+
+        averageMarks.textContent =
+            "0%";
+
+        overallGrade.textContent =
+            "-";
+
+        return;
+    }
 
 
-
+    const total =
+        marksArray.reduce(
+            (sum, mark) => sum + mark,
+            0
+        );
 
 
     const average =
-    calculateAverage(results);
+        total / marksArray.length;
 
 
-
-    const overall =
-    getOverallLevel(results);
-
+    averageMarks.textContent =
+        `${average.toFixed(1)}%`;
 
 
-
-    document.getElementById("averageMarks")
-    .textContent =
-    average + "%";
+    overallGrade.textContent =
+        getGrade(average);
 
 
+    // ======================================
+    // GRAPH
+    // ======================================
 
-    document.getElementById("overallGrade")
-    .textContent =
-    overall;
-
-
-
-
-    document.getElementById("subjectCount")
-    .textContent =
-    results.length;
-
-
-
-    createGraph(
-        subjects,
-        marks
-    );
-
+    createPerformanceChart(results);
 
 }
 
 
+// ==========================================
+// GRADE CALCULATION
+// ==========================================
+
+function getGrade(marks) {
+
+    const score = Number(marks);
 
 
+    if (Number.isNaN(score)) {
+        return "-";
+    }
 
+
+    /*
+     * Basic percentage grading.
+     *
+     * We can replace this with the exact
+     * CBC grading system you want later.
+     */
+
+    if (score >= 80) return "A";
+    if (score >= 70) return "B";
+    if (score >= 60) return "C";
+    if (score >= 50) return "D";
+
+    return "E";
+}
 
 
 // ==========================================
 // PERFORMANCE GRAPH
 // ==========================================
 
-function createGraph(subjects,marks){
+let performanceChart = null;
 
 
+function createPerformanceChart(results) {
 
-    const ctx =
-    document
-
-    .getElementById("performanceChart")
-
-    .getContext("2d");
-
+    const canvas =
+        document.getElementById(
+            "performanceChart"
+        );
 
 
-    if(chart){
+    if (!canvas) {
+        return;
+    }
 
-        chart.destroy();
+
+    const labels =
+        results.map(
+            result => result.subject
+        );
+
+
+    const values =
+        results.map(
+            result => Number(result.marks) || 0
+        );
+
+
+    if (performanceChart) {
+
+        performanceChart.destroy();
 
     }
 
 
+    performanceChart =
+        new Chart(
+            canvas,
+            {
 
+                type: "line",
 
-    chart = new Chart(ctx,{
+                data: {
 
+                    labels: labels,
 
-        type:"line",
+                    datasets: [
 
+                        {
+                            label:
+                                "Subject Performance",
 
-        data:{
+                            data:
+                                values,
 
+                            tension:
+                                0.3,
 
-            labels:subjects,
+                            fill:
+                                false,
 
+                            borderWidth:
+                                2,
 
-            datasets:[{
+                            pointRadius:
+                                5
+                        }
 
-                label:"Performance",
+                    ]
 
-                data:marks,
+                },
 
-                borderWidth:3
+                options: {
 
-            }]
+                    responsive: true,
 
+                    maintainAspectRatio:
+                        true,
 
-        },
+                    scales: {
 
+                        y: {
 
+                            beginAtZero:
+                                true,
 
-        options:{
+                            max:
+                                100,
 
+                            title: {
 
-            responsive:true,
+                                display:
+                                    true,
 
+                                text:
+                                    "Marks (%)"
 
-            scales:{
+                            }
 
+                        }
 
-                y:{
+                    },
 
+                    plugins: {
 
-                    beginAtZero:true,
+                        legend: {
 
-                    max:100
+                            display:
+                                true
 
+                        }
+
+                    }
 
                 }
 
-
             }
-
-
-        }
-
-
-
-    });
-
-
+        );
 
 }
-
-
-
-
 
 
 // ==========================================
 // LOGOUT
 // ==========================================
 
-document
+if (logoutButton) {
 
-.getElementById("logout")
+    logoutButton.addEventListener(
+        "click",
+        async event => {
 
-.addEventListener("click",async()=>{
-
-
-    await supabase.auth.signOut();
-
-
-    window.location="index.html";
+            event.preventDefault();
 
 
-});
+            logoutButton.textContent =
+                "Logging out...";
+
+            logoutButton.style.pointerEvents =
+                "none";
 
 
+            const {
+                error
+            } =
+                await supabase.auth.signOut();
 
 
+            if (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+                logoutButton.textContent =
+                    "Logout";
+
+                logoutButton.style.pointerEvents =
+                    "auto";
+
+                return;
+            }
 
 
-loadStudent();
+            window.location.replace(
+                "index.html"
+            );
+
+        }
+    );
+
+}
+
+
+// ==========================================
+// SECURITY / AUTH INITIALIZATION
+// ==========================================
+
+async function initializeStudentDashboard() {
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+
+        if (!user) {
+
+            window.location.replace(
+                "index.html"
+            );
+
+            return;
+        }
+
+
+        const role =
+            await checkStudentRole(
+                user.id
+            );
+
+
+        if (!role) {
+
+            console.error(
+                "No approved student role found."
+            );
+
+
+            await supabase.auth.signOut();
+
+
+            window.location.replace(
+                "index.html"
+            );
+
+            return;
+        }
+
+
+        // Load profile
+        await loadStudentProfile(
+            user.id
+        );
+
+
+        // Load results
+        await loadResults(
+            user.id
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard initialization error:",
+            error
+        );
+
+
+        showProfileMessage(
+            "Unable to load your account information."
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// HTML ESCAPE
+// ==========================================
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+// ==========================================
+// START
+// ==========================================
+
+initializeStudentDashboard();
+
