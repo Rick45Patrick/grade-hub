@@ -1,279 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
+    <title>Register — Grade Hub</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Grade Hub - Register</title>
-
-<link rel="stylesheet" href="css/style.css">
-
+    <link rel="stylesheet" href="css/style.css">
 </head>
-
 
 <body>
 
+<div class="register-page">
 
-<div class="auth-container">
+    <div class="register-card">
 
+        <div class="register-header">
 
-<div class="auth-box">
+            <div class="register-logo">
+                GH
+            </div>
 
+            <h1>Create Account</h1>
 
-<h2>
-Create Account
-</h2>
+            <p>
+                Join the Grade Hub Results Portal
+            </p>
 
-
-<form id="registerForm">
-
-
-<label>
-Account Type
-</label>
-
-
-<select id="accountType" required>
-
-<option value="">
-Select account type
-</option>
-
-<option value="student">
-Student
-</option>
-
-<option value="admin">
-Administrator Request
-</option>
-
-</select>
+        </div>
 
 
+        <!-- ACCOUNT TYPE -->
 
-<!-- Student Information -->
+        <div class="account-type">
 
-
-<div id="studentFields">
-
-
-<label>
-Full Name
-</label>
-
-<input 
-type="text"
-id="fullName"
-placeholder="Full name">
+            <button
+                type="button"
+                class="account-option active"
+                id="studentType"
+            >
+                <span>🎓</span>
+                <strong>Student</strong>
+                <small>View your results</small>
+            </button>
 
 
+            <button
+                type="button"
+                class="account-option"
+                id="adminType"
+            >
+                <span>🛡️</span>
+                <strong>Administrator</strong>
+                <small>Manage school results</small>
+            </button>
 
-<label>
-Admission Number
-</label>
-
-<input
-type="text"
-id="admission"
-placeholder="Admission number">
-
-
-
-<label>
-Class / Grade
-</label>
-
-<input
-type="text"
-id="class"
-placeholder="Example: Grade 10">
+        </div>
 
 
+        <form id="registerForm">
 
-<h3>
-Choose Optional Subjects
-</h3>
-
-
-<label>
-Optional Subject 1
-</label>
-
-<select id="optional1">
-
-<option>Biology</option>
-<option>Chemistry</option>
-<option>Physics</option>
-<option>Geography</option>
-<option>History</option>
-<option>CRE</option>
-<option>Business Studies</option>
-<option>Agriculture</option>
-<option>Computer Studies</option>
-<option>Home Science</option>
-
-</select>
+            <input
+                type="hidden"
+                id="accountType"
+                value="student"
+            >
 
 
+            <!-- FULL NAME -->
 
-<label>
-Optional Subject 2
-</label>
+            <div class="form-group">
 
-<select id="optional2">
+                <label for="fullName">
+                    Full name
+                </label>
 
-<option>Biology</option>
-<option>Chemistry</option>
-<option>Physics</option>
-<option>Geography</option>
-<option>History</option>
-<option>CRE</option>
-<option>Business Studies</option>
-<option>Agriculture</option>
-<option>Computer Studies</option>
-<option>Home Science</option>
+                <input
+                    type="text"
+                    id="fullName"
+                    placeholder="Enter your full name"
+                    required
+                >
 
-</select>
+            </div>
 
 
+            <!-- EMAIL -->
 
-<label>
-Optional Subject 3
-</label>
+            <div class="form-group">
 
-<select id="optional3">
+                <label for="email">
+                    Email address
+                </label>
 
-<option>Biology</option>
-<option>Chemistry</option>
-<option>Physics</option>
-<option>Geography</option>
-<option>History</option>
-<option>CRE</option>
-<option>Business Studies</option>
-<option>Agriculture</option>
-<option>Computer Studies</option>
-<option>Home Science</option>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="you@example.com"
+                    required
+                >
 
-</select>
+            </div>
 
+
+            <!-- USERNAME -->
+
+            <div class="form-group">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    placeholder="Choose a username"
+                    required
+                >
+
+            </div>
+
+
+            <!-- STUDENT INFORMATION -->
+
+            <div id="studentFields">
+
+                <div class="form-group">
+
+                    <label for="admission">
+                        Admission number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="admission"
+                        placeholder="e.g. 20260001"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="className">
+                        Class
+                    </label>
+
+                    <select id="className">
+
+                        <option value="">
+                            Select class
+                        </option>
+
+                        <option value="BE1">
+                            BE1
+                        </option>
+
+                        <option value="BE2">
+                            BE2
+                        </option>
+
+                        <option value="AE1">
+                            AE1
+                        </option>
+
+                        <option value="AE2">
+                            AE2
+                        </option>
+
+                        <option value="ME1">
+                            ME1
+                        </option>
+
+                        <option value="ME2">
+                            ME2
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Optional subjects
+                    </label>
+
+                    <p class="field-help">
+                        Select exactly 3 optional subjects.
+                    </p>
+
+
+                    <div class="subject-grid">
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Physics"
+                            >
+                            Physics
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Chemistry"
+                            >
+                            Chemistry
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Biology"
+                            >
+                            Biology
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Computer Studies"
+                            >
+                            Computer Studies
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Business Studies"
+                            >
+                            Business Studies
+                        </label>
+
+
+                        <label class="subject-option">
+                            <input
+                                type="checkbox"
+                                name="optionalSubject"
+                                value="Agriculture"
+                            >
+                            Agriculture
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Minimum 8 characters"
+                    required
+                >
+
+            </div>
+
+
+            <!-- CONFIRM PASSWORD -->
+
+            <div class="form-group">
+
+                <label for="confirmPassword">
+                    Confirm password
+                </label>
+
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    placeholder="Enter password again"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                id="registerButton"
+                class="primary-button"
+            >
+                Create Student Account
+            </button>
+
+
+            <div
+                id="registerMessage"
+                class="register-message"
+            ></div>
+
+        </form>
+
+
+        <div class="register-footer">
+
+            <span>
+                Already have an account?
+            </span>
+
+            <a href="index.html">
+                Sign in
+            </a>
+
+        </div>
+
+    </div>
 
 </div>
 
 
-
-<!-- Admin Information -->
-
-
-<div id="adminFields">
-
-
-<label>
-Full Name
-</label>
-
-<input
-type="text"
-id="adminName"
-placeholder="Administrator name">
-
-
-
-</div>
-
-
-
-<label>
-Email Address
-</label>
-
-
-<input
-type="email"
-id="email"
-placeholder="Email"
-required>
-
-
-
-<label>
-Username
-</label>
-
-
-<input
-type="text"
-id="username"
-placeholder="Username"
-required>
-
-
-
-
-<label>
-Password
-</label>
-
-
-<input
-type="password"
-id="password"
-placeholder="Password"
-required>
-
-
-
-
-<label>
-Confirm Password
-</label>
-
-
-<input
-type="password"
-id="confirmPassword"
-placeholder="Confirm password"
-required>
-
-
-
-<button type="submit">
-
-Register
-
-</button>
-
-
-
-</form>
-
-
-<p id="message"></p>
-
-
-<p style="text-align:center">
-
-Already have an account?
-
-<a href="index.html">
-Login
-</a>
-
-</p>
-
-
-
-</div>
-
-
-</div>
-
-
-
-<script type="module" src="js/auth.js"></script>
+<script
+    type="module"
+    src="js/register.js"
+></script>
 
 </body>
-
 </html>
