@@ -1,113 +1,851 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Grade Hub | Super Admin</title>
+
   <link rel="stylesheet" href="css/style.css">
+
   <style>
-    :root{--gh-bg:#f5f7fb;--gh-card:#fff;--gh-text:#172033;--gh-muted:#697386;--gh-border:#e5e9f2;--gh-primary:#4f46e5;--gh-success:#15803d;--gh-danger:#dc2626;--gh-warning:#b45309}
-    body{margin:0;background:var(--gh-bg);color:var(--gh-text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .sa-layout{min-height:100vh;display:grid;grid-template-columns:250px 1fr}
-    .sa-sidebar{background:#111827;color:#fff;padding:22px 16px;display:flex;flex-direction:column}
-    .sa-brand{display:flex;align-items:center;gap:12px;padding:8px 10px 26px}
-    .sa-logo{width:42px;height:42px;border-radius:12px;background:#4f46e5;display:grid;place-items:center;font-weight:800}
-    .sa-brand strong{display:block}.sa-brand small{color:#aeb7c8}
-    .sa-nav{display:grid;gap:7px}
-    .sa-nav a{color:#cbd5e1;text-decoration:none;padding:12px;border-radius:10px}
-    .sa-nav a:hover,.sa-nav a.active{background:#1f2937;color:#fff}
-    .sa-logout{margin-top:auto;border:1px solid #374151;background:#1f2937;color:#fff;border-radius:10px;padding:12px;cursor:pointer}
-    .sa-main{padding:28px;min-width:0}
-    .sa-top{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
-    .sa-top h1{margin:0 0 5px;font-size:28px}.sa-top p{margin:0;color:var(--gh-muted)}
-    .sa-refresh{border:1px solid var(--gh-border);background:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
-    .sa-message{display:none;padding:12px 15px;border-radius:10px;margin-bottom:18px;background:#eef2ff}.sa-message.show{display:block}
-    .sa-message.error{background:#fef2f2;color:#991b1b}.sa-message.success{background:#f0fdf4;color:#166534}
-    .sa-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
-    .sa-stat,.sa-card{background:var(--gh-card);border:1px solid var(--gh-border);border-radius:16px;box-shadow:0 5px 18px rgba(15,23,42,.04)}
-    .sa-stat{padding:20px}.sa-stat span{color:var(--gh-muted);font-size:14px}.sa-stat strong{display:block;font-size:30px;margin-top:7px}
-    .sa-section{margin-bottom:28px}.sa-section h2{font-size:20px;margin:0 0 5px}.sa-section>p{color:var(--gh-muted);margin:0 0 14px}
-    .sa-card{overflow:hidden}.sa-table-wrap{overflow-x:auto}
-    table{width:100%;border-collapse:collapse;min-width:780px}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--gh-border);font-size:14px}th{background:#f8fafc;color:#475569;font-weight:700}
-    .sa-status{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}.pending{background:#fff7ed;color:var(--gh-warning)}.approved{background:#f0fdf4;color:var(--gh-success)}
-    .sa-btn{border:0;border-radius:8px;padding:8px 11px;cursor:pointer;font-weight:600;margin-right:6px}.approve{background:#dcfce7;color:#166534}.reject{background:#fee2e2;color:#991b1b}.neutral{background:#eef2ff;color:#3730a3}
-    .sa-empty{text-align:center;color:var(--gh-muted);padding:30px}
-    @media(max-width:850px){.sa-layout{grid-template-columns:1fr}.sa-sidebar{position:relative}.sa-nav{grid-template-columns:repeat(2,1fr)}.sa-logout{margin-top:16px}.sa-stats{grid-template-columns:1fr}.sa-main{padding:18px}.sa-top{align-items:flex-start}}
+    :root{
+      --gh-bg:#f5f7fb;
+      --gh-card:#fff;
+      --gh-text:#172033;
+      --gh-muted:#697386;
+      --gh-border:#e5e9f2;
+      --gh-primary:#4f46e5;
+      --gh-success:#15803d;
+      --gh-danger:#dc2626;
+      --gh-warning:#b45309;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      background:var(--gh-bg);
+      color:var(--gh-text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    .sa-layout{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:250px 1fr;
+    }
+
+    .sa-sidebar{
+      background:#111827;
+      color:#fff;
+      padding:22px 16px;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .sa-brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 10px 26px;
+    }
+
+    .sa-logo{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      background:#4f46e5;
+      display:grid;
+      place-items:center;
+      font-weight:800;
+    }
+
+    .sa-brand strong{
+      display:block;
+    }
+
+    .sa-brand small{
+      color:#aeb7c8;
+    }
+
+    .sa-nav{
+      display:grid;
+      gap:7px;
+    }
+
+    .sa-nav a{
+      color:#cbd5e1;
+      text-decoration:none;
+      padding:12px;
+      border-radius:10px;
+    }
+
+    .sa-nav a:hover,
+    .sa-nav a.active{
+      background:#1f2937;
+      color:#fff;
+    }
+
+    .sa-logout{
+      margin-top:auto;
+      border:1px solid #374151;
+      background:#1f2937;
+      color:#fff;
+      border-radius:10px;
+      padding:12px;
+      cursor:pointer;
+    }
+
+    .sa-main{
+      padding:28px;
+      min-width:0;
+    }
+
+    .sa-top{
+      display:flex;
+      justify-content:space-between;
+      gap:20px;
+      align-items:center;
+      margin-bottom:24px;
+    }
+
+    .sa-top h1{
+      margin:0 0 5px;
+      font-size:28px;
+    }
+
+    .sa-top p{
+      margin:0;
+      color:var(--gh-muted);
+    }
+
+    .sa-refresh{
+      border:1px solid var(--gh-border);
+      background:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .sa-message{
+      display:none;
+      padding:12px 15px;
+      border-radius:10px;
+      margin-bottom:18px;
+      background:#eef2ff;
+    }
+
+    .sa-message.show{
+      display:block;
+    }
+
+    .sa-message.error{
+      background:#fef2f2;
+      color:#991b1b;
+    }
+
+    .sa-message.success{
+      background:#f0fdf4;
+      color:#166534;
+    }
+
+    .sa-stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+      margin-bottom:28px;
+    }
+
+    .sa-stat,
+    .sa-card{
+      background:var(--gh-card);
+      border:1px solid var(--gh-border);
+      border-radius:16px;
+      box-shadow:0 5px 18px rgba(15,23,42,.04);
+    }
+
+    .sa-stat{
+      padding:20px;
+    }
+
+    .sa-stat span{
+      color:var(--gh-muted);
+      font-size:14px;
+    }
+
+    .sa-stat strong{
+      display:block;
+      font-size:30px;
+      margin-top:7px;
+    }
+
+    .sa-section{
+      margin-bottom:28px;
+    }
+
+    .sa-section h2{
+      font-size:20px;
+      margin:0 0 5px;
+    }
+
+    .sa-section>p{
+      color:var(--gh-muted);
+      margin:0 0 14px;
+    }
+
+    .sa-card{
+      overflow:hidden;
+    }
+
+    .sa-table-wrap{
+      overflow-x:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:780px;
+    }
+
+    th,
+    td{
+      text-align:left;
+      padding:14px 16px;
+      border-bottom:1px solid var(--gh-border);
+      font-size:14px;
+    }
+
+    th{
+      background:#f8fafc;
+      color:#475569;
+      font-weight:700;
+    }
+
+    .sa-status{
+      display:inline-block;
+      padding:5px 9px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .pending{
+      background:#fff7ed;
+      color:var(--gh-warning);
+    }
+
+    .approved{
+      background:#f0fdf4;
+      color:var(--gh-success);
+    }
+
+    .sa-btn{
+      border:0;
+      border-radius:8px;
+      padding:8px 11px;
+      cursor:pointer;
+      font-weight:600;
+      margin-right:6px;
+    }
+
+    .approve{
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .reject{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .neutral{
+      background:#eef2ff;
+      color:#3730a3;
+    }
+
+    .danger{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .sa-empty{
+      text-align:center;
+      color:var(--gh-muted);
+      padding:30px;
+    }
+
+    /* =====================================
+       GRADING SYSTEM
+    ===================================== */
+
+    .grading-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      padding:18px;
+      border-bottom:1px solid var(--gh-border);
+    }
+
+    .grading-header h3{
+      margin:0;
+      font-size:17px;
+    }
+
+    .grading-header p{
+      margin:4px 0 0;
+      color:var(--gh-muted);
+      font-size:13px;
+    }
+
+    .grading-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .grading-table{
+      min-width:850px;
+    }
+
+    .grading-input{
+      width:100%;
+      padding:9px 10px;
+      border:1px solid #d9deea;
+      border-radius:8px;
+      outline:none;
+      font:inherit;
+      background:#fff;
+    }
+
+    .grading-input:focus{
+      border-color:#4f46e5;
+      box-shadow:0 0 0 3px rgba(79,70,229,.1);
+    }
+
+    .grade-number{
+      width:110px;
+    }
+
+    .grade-points{
+      width:90px;
+    }
+
+    .grading-footer{
+      padding:16px;
+      background:#f8fafc;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+    }
+
+    .primary-button{
+      border:0;
+      border-radius:9px;
+      padding:10px 15px;
+      background:#4f46e5;
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .primary-button:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    .secondary-button{
+      border:1px solid var(--gh-border);
+      border-radius:9px;
+      padding:10px 15px;
+      background:#fff;
+      color:#172033;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .grading-note{
+      margin:0;
+      padding:14px 16px;
+      color:#475569;
+      background:#f8fafc;
+      font-size:13px;
+    }
+
+    @media(max-width:850px){
+
+      .sa-layout{
+        grid-template-columns:1fr;
+      }
+
+      .sa-sidebar{
+        position:relative;
+      }
+
+      .sa-nav{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .sa-logout{
+        margin-top:16px;
+      }
+
+      .sa-stats{
+        grid-template-columns:1fr;
+      }
+
+      .sa-main{
+        padding:18px;
+      }
+
+      .sa-top{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .grading-header{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="sa-layout">
-    <aside class="sa-sidebar">
-      <div class="sa-brand">
-        <div class="sa-logo">GH</div>
-        <div><strong>Grade Hub</strong><small>Super Admin</small></div>
+
+<div class="sa-layout">
+
+  <!-- SIDEBAR -->
+
+  <aside class="sa-sidebar">
+
+    <div class="sa-brand">
+
+      <div class="sa-logo">
+        GH
       </div>
-      <nav class="sa-nav">
-        <a class="active" href="#overview">Overview</a>
-        <a href="#requests">Admin Requests</a>
-        <a href="#admins">Administrators</a>
-        <a href="#students">Students</a>
-        <a href="merit.html">Merit List</a>
-      </nav>
-      <button id="logoutButton" class="sa-logout">Sign out</button>
-    </aside>
 
-    <main class="sa-main">
-      <header class="sa-top">
-        <div>
-          <h1>Super Admin Dashboard</h1>
-          <p>Manage administrator requests and student accounts.</p>
+      <div>
+        <strong>Grade Hub</strong>
+        <small>Super Admin</small>
+      </div>
+
+    </div>
+
+
+    <nav class="sa-nav">
+
+      <a class="active" href="#overview">
+        Overview
+      </a>
+
+      <a href="#requests">
+        Admin Requests
+      </a>
+
+      <a href="#admins">
+        Administrators
+      </a>
+
+      <a href="#students">
+        Students
+      </a>
+
+      <a href="#grading">
+        Grading System
+      </a>
+
+      <a href="merit.html">
+        Merit List
+      </a>
+
+    </nav>
+
+
+    <button id="logoutButton" class="sa-logout">
+      Sign out
+    </button>
+
+  </aside>
+
+
+  <!-- MAIN -->
+
+  <main class="sa-main">
+
+    <header class="sa-top">
+
+      <div>
+
+        <h1>
+          Super Admin Dashboard
+        </h1>
+
+        <p>
+          Manage administrator requests, students and grading.
+        </p>
+
+      </div>
+
+
+      <button id="refreshDashboard" class="sa-refresh">
+        Refresh
+      </button>
+
+    </header>
+
+
+    <div id="saMessage" class="sa-message"></div>
+
+
+    <!-- OVERVIEW -->
+
+    <section id="overview" class="sa-section">
+
+      <h2>
+        Overview
+      </h2>
+
+      <p>
+        Current Grade Hub account statistics.
+      </p>
+
+
+      <div class="sa-stats">
+
+        <div class="sa-stat">
+
+          <span>
+            Students
+          </span>
+
+          <strong id="totalStudents">
+            0
+          </strong>
+
         </div>
-        <button id="refreshDashboard" class="sa-refresh">Refresh</button>
-      </header>
 
-      <div id="saMessage" class="sa-message"></div>
 
-      <section id="overview" class="sa-section">
-        <h2>Overview</h2>
-        <p>Current Grade Hub account statistics.</p>
-        <div class="sa-stats">
-          <div class="sa-stat"><span>Students</span><strong id="totalStudents">0</strong></div>
-          <div class="sa-stat"><span>Administrators</span><strong id="totalAdmins">0</strong></div>
-          <div class="sa-stat"><span>Pending requests</span><strong id="pendingAdmins">0</strong></div>
+        <div class="sa-stat">
+
+          <span>
+            Administrators
+          </span>
+
+          <strong id="totalAdmins">
+            0
+          </strong>
+
         </div>
-      </section>
 
-      <section id="requests" class="sa-section">
-        <h2>Administrator Requests</h2>
-        <p>Approve or reject pending administrator applications.</p>
-        <div class="sa-card sa-table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="adminRequests"><tr><td colspan="6" class="sa-empty">Loading...</td></tr></tbody>
+
+        <div class="sa-stat">
+
+          <span>
+            Pending requests
+          </span>
+
+          <strong id="pendingAdmins">
+            0
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ADMIN REQUESTS -->
+
+    <section id="requests" class="sa-section">
+
+      <h2>
+        Administrator Requests
+      </h2>
+
+      <p>
+        Approve or reject pending administrator applications.
+      </p>
+
+
+      <div class="sa-card sa-table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="adminRequests">
+
+            <tr>
+              <td colspan="6" class="sa-empty">
+                Loading...
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- ADMINISTRATORS -->
+
+    <section id="admins" class="sa-section">
+
+      <h2>
+        Administrators
+      </h2>
+
+      <p>
+        Approved administrator accounts.
+      </p>
+
+
+      <div class="sa-card sa-table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Status</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="approvedAdmins">
+
+            <tr>
+
+              <td colspan="4" class="sa-empty">
+                Loading...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- STUDENTS -->
+
+    <section id="students" class="sa-section">
+
+      <h2>
+        Students
+      </h2>
+
+      <p>
+        Registered students and their class information.
+      </p>
+
+
+      <div class="sa-card sa-table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Admission</th>
+              <th>Name</th>
+              <th>Class</th>
+              <th>Optional Subjects</th>
+              <th>Username</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="studentTable">
+
+            <tr>
+
+              <td colspan="5" class="sa-empty">
+                Loading...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- GRADING SYSTEM -->
+
+    <section id="grading" class="sa-section">
+
+      <h2>
+        Grading System
+      </h2>
+
+      <p>
+        Configure the CBC grading levels, minimum marks and merit points.
+      </p>
+
+
+      <div class="sa-card">
+
+        <div class="grading-header">
+
+          <div>
+
+            <h3>
+              Grade Configuration
+            </h3>
+
+            <p>
+              Only the Super Admin can modify these values.
+            </p>
+
+          </div>
+
+
+          <div class="grading-actions">
+
+            <button
+              id="addGradeButton"
+              class="primary-button"
+              type="button">
+
+              + Add Grade
+
+            </button>
+
+            <button
+              id="resetGradesButton"
+              class="secondary-button"
+              type="button">
+
+              Reset Defaults
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <p class="grading-note">
+
+          Minimum mark determines when a learner receives the grade.
+          Points are used when calculating the merit ranking.
+
+        </p>
+
+
+        <div class="sa-table-wrap">
+
+          <table class="grading-table">
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  Grade
+                </th>
+
+                <th>
+                  Minimum Mark
+                </th>
+
+                <th>
+                  Points
+                </th>
+
+                <th>
+                  Description
+                </th>
+
+                <th>
+                  Action
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody id="gradingTable">
+
+              <tr>
+
+                <td colspan="5" class="sa-empty">
+                  Loading grading system...
+                </td>
+
+              </tr>
+
+            </tbody>
+
           </table>
-        </div>
-      </section>
 
-      <section id="admins" class="sa-section">
-        <h2>Administrators</h2>
-        <p>Approved administrator accounts.</p>
-        <div class="sa-card sa-table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Status</th></tr></thead>
-            <tbody id="approvedAdmins"><tr><td colspan="4" class="sa-empty">Loading...</td></tr></tbody>
-          </table>
         </div>
-      </section>
 
-      <section id="students" class="sa-section">
-        <h2>Students</h2>
-        <p>Registered students and their class information.</p>
-        <div class="sa-card sa-table-wrap">
-          <table>
-            <thead><tr><th>Admission</th><th>Name</th><th>Class</th><th>Optional Subjects</th><th>Username</th></tr></thead>
-            <tbody id="studentTable"><tr><td colspan="5" class="sa-empty">Loading...</td></tr></tbody>
-          </table>
+
+        <div class="grading-footer">
+
+          <button
+            id="saveGradesButton"
+            class="primary-button"
+            type="button">
+
+            Save Grading System
+
+          </button>
+
         </div>
-      </section>
-    </main>
-  </div>
-  <script type="module" src="js/superadmin.js"></script>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+<script type="module" src="js/superadmin.js"></script>
+
 </body>
 </html>
