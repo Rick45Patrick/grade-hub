@@ -1,244 +1,376 @@
+// ==========================================
+// GRADE HUB - STUDENT DASHBOARD
+// CBC GRADING SYSTEM
+// ==========================================
+
 import { supabase } from "./supabase.js";
 
-const profileBox = document.getElementById("studentProfile");
-const resultTable = document.getElementById("resultTable");
-const averageMarks = document.getElementById("averageMarks");
-const overallGrade = document.getElementById("overallGrade");
-const subjectCount = document.getElementById("subjectCount");
-const logoutButton = document.getElementById("logout");
+
+// ==========================================
+// CBC GRADING
+// ==========================================
+
+function getCBCGrade(marks) {
+
+    marks = Number(marks);
+
+    if (marks >= 90) return "EE1";
+    if (marks >= 80) return "EE2";
+
+    if (marks >= 70) return "ME1";
+    if (marks >= 60) return "ME2";
+
+    if (marks >= 50) return "AE1";
+    if (marks >= 40) return "AE2";
+
+    if (marks >= 30) return "BE1";
+
+    return "BE2";
+}
 
 
 // ==========================================
-// AUTHENTICATION
+// CBC GRADE DESCRIPTION
 // ==========================================
 
-async function initializeStudent() {
+function getCBCDescription(grade) {
 
-    try {
+    switch (grade) {
 
-        const {
-            data: {
-                session
-            }
-        } = await supabase.auth.getSession();
+        case "EE1":
+            return "Exceeding Expectations";
 
+        case "EE2":
+            return "Exceeding Expectations";
 
-        if (!session) {
+        case "ME1":
+            return "Meeting Expectations";
 
-            window.location.replace("index.html");
+        case "ME2":
+            return "Meeting Expectations";
 
-            return;
-        }
+        case "AE1":
+            return "Approaching Expectations";
 
+        case "AE2":
+            return "Approaching Expectations";
 
-        const user = session.user;
+        case "BE1":
+            return "Below Expectations";
 
+        case "BE2":
+            return "Below Expectations";
 
-        console.log("Logged in user:", user.id);
-
-
-        // --------------------------------------
-        // Find student record FIRST
-        // --------------------------------------
-
-        const {
-            data: student,
-            error: studentError
-        } = await supabase
-            .from("students")
-            .select(`
-                id,
-                user_id,
-                admission_number,
-                class,
-                optional_subjects
-            `)
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-
-        if (studentError) {
-
-            console.error(
-                "Student lookup error:",
-                studentError
-            );
-
-            showError(
-                "Unable to load your student account."
-            );
-
-            return;
-        }
-
-
-        if (!student) {
-
-            console.error(
-                "No student record found for:",
-                user.id
-            );
-
-            showError(
-                "No student record is linked to this account."
-            );
-
-            return;
-        }
-
-
-        console.log(
-            "Student record:",
-            student
-        );
-
-
-        // --------------------------------------
-        // Load profile
-        // --------------------------------------
-
-        const {
-            data: profile,
-            error: profileError
-        } = await supabase
-            .from("profiles")
-            .select(`
-                id,
-                full_name,
-                username,
-                email
-            `)
-            .eq("id", user.id)
-            .maybeSingle();
-
-
-        if (profileError) {
-
-            console.error(
-                "Profile error:",
-                profileError
-            );
-
-        }
-
-
-        // --------------------------------------
-        // Display profile
-        // --------------------------------------
-
-        displayProfile(
-            profile || {},
-            student
-        );
-
-
-        // --------------------------------------
-        // Load results
-        // --------------------------------------
-
-        await loadResults(
-            student.id
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Student dashboard error:",
-            error
-        );
-
-        showError(
-            error.message ||
-            "Unable to load the student dashboard."
-        );
+        default:
+            return "-";
     }
 }
 
 
 // ==========================================
-// DISPLAY PROFILE
+// ELEMENTS
 // ==========================================
 
-function displayProfile(profile, student) {
+const profileBox =
+    document.getElementById("studentProfile");
 
-    const subjects =
-        Array.isArray(student.optional_subjects)
-            ? student.optional_subjects
-            : [];
+const resultTable =
+    document.getElementById("resultTable");
+
+const averageMarks =
+    document.getElementById("averageMarks");
+
+const overallGrade =
+    document.getElementById("overallGrade");
+
+const subjectCount =
+    document.getElementById("subjectCount");
+
+const logoutButton =
+    document.getElementById("logout");
+
+
+// ==========================================
+// CHART
+// ==========================================
+
+let performanceChart = null;
+
+
+// ==========================================
+// SHOW MESSAGE
+// ==========================================
+
+function showError(message) {
+
+    if (profileBox) {
+
+        profileBox.innerHTML = `
+            <div style="
+                padding:15px;
+                border-radius:10px;
+                background:#fef2f2;
+                color:#991b1b;
+            ">
+                ${message}
+            </div>
+        `;
+
+    }
+
+}
+
+
+// ==========================================
+// CHECK LOGIN
+// ==========================================
+
+async function checkLogin() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getUser();
+
+
+    if (error) {
+
+        console.error(error);
+
+        window.location.href = "index.html";
+
+        return null;
+
+    }
+
+
+    if (!data || !data.user) {
+
+        window.location.href = "index.html";
+
+        return null;
+
+    }
+
+
+    return data.user;
+}
+
+
+// ==========================================
+// LOAD STUDENT
+// ==========================================
+
+async function loadStudent() {
+
+    const user = await checkLogin();
+
+
+    if (!user) {
+        return;
+    }
+
+
+    // ======================================
+    // GET STUDENT
+    // ======================================
+
+    const {
+        data: student,
+        error: studentError
+    } = await supabase
+
+        .from("students")
+
+        .select(`
+            id,
+            user_id,
+            admission_number,
+            class,
+            optional_subjects,
+            profiles(
+                full_name,
+                username,
+                email
+            )
+        `)
+
+        .eq("user_id", user.id)
+
+        .maybeSingle();
+
+
+    if (studentError) {
+
+        console.error(
+            "Student error:",
+            studentError
+        );
+
+        showError(
+            "Unable to load your student profile."
+        );
+
+        return;
+    }
+
+
+    if (!student) {
+
+        showError(
+            "No student profile was found for this account."
+        );
+
+        return;
+    }
+
+
+    // ======================================
+    // PROFILE
+    // ======================================
+
+    const profile =
+        Array.isArray(student.profiles)
+            ? student.profiles[0]
+            : student.profiles;
+
+
+    const fullName =
+        profile?.full_name || "Student";
+
+
+    const username =
+        profile?.username || "-";
+
+
+    const email =
+        profile?.email || user.email || "-";
 
 
     profileBox.innerHTML = `
 
-        <div class="profile-grid">
+        <div style="
+            display:grid;
+            grid-template-columns:
+                repeat(auto-fit,minmax(180px,1fr));
+            gap:15px;
+        ">
 
-            <div class="profile-item">
-                <span>Name</span>
-                <strong>
-                    ${escapeHTML(
-                        profile.full_name || "-"
-                    )}
+            <div style="
+                padding:15px;
+                background:#f8fafc;
+                border:1px solid #e5e9f2;
+                border-radius:12px;
+            ">
+
+                <small style="color:#697386;">
+                    Full Name
+                </small>
+
+                <strong style="
+                    display:block;
+                    margin-top:5px;
+                ">
+                    ${fullName}
                 </strong>
+
             </div>
 
-            <div class="profile-item">
-                <span>Username</span>
-                <strong>
-                    ${escapeHTML(
-                        profile.username || "-"
-                    )}
+
+            <div style="
+                padding:15px;
+                background:#f8fafc;
+                border:1px solid #e5e9f2;
+                border-radius:12px;
+            ">
+
+                <small style="color:#697386;">
+                    Admission Number
+                </small>
+
+                <strong style="
+                    display:block;
+                    margin-top:5px;
+                ">
+                    ${student.admission_number}
                 </strong>
+
             </div>
 
-            <div class="profile-item">
-                <span>Email</span>
-                <strong>
-                    ${escapeHTML(
-                        profile.email || "-"
-                    )}
+
+            <div style="
+                padding:15px;
+                background:#f8fafc;
+                border:1px solid #e5e9f2;
+                border-radius:12px;
+            ">
+
+                <small style="color:#697386;">
+                    Class
+                </small>
+
+                <strong style="
+                    display:block;
+                    margin-top:5px;
+                ">
+                    ${student.class}
                 </strong>
+
             </div>
 
-            <div class="profile-item">
-                <span>Admission Number</span>
-                <strong>
-                    ${escapeHTML(
-                        student.admission_number || "-"
-                    )}
+
+            <div style="
+                padding:15px;
+                background:#f8fafc;
+                border:1px solid #e5e9f2;
+                border-radius:12px;
+            ">
+
+                <small style="color:#697386;">
+                    Username
+                </small>
+
+                <strong style="
+                    display:block;
+                    margin-top:5px;
+                ">
+                    ${username}
                 </strong>
+
             </div>
 
-            <div class="profile-item">
-                <span>Class</span>
-                <strong>
-                    ${escapeHTML(
-                        student.class || "-"
-                    )}
-                </strong>
-            </div>
 
-            <div class="profile-item profile-wide">
-                <span>Optional Subjects</span>
-                <strong>
-                    ${
-                        subjects.length
-                            ? subjects
-                                .map(
-                                    escapeHTML
-                                )
-                                .join(", ")
-                            : "None selected"
-                    }
+            <div style="
+                padding:15px;
+                background:#f8fafc;
+                border:1px solid #e5e9f2;
+                border-radius:12px;
+            ">
+
+                <small style="color:#697386;">
+                    Email
+                </small>
+
+                <strong style="
+                    display:block;
+                    margin-top:5px;
+                    word-break:break-word;
+                ">
+                    ${email}
                 </strong>
+
             </div>
 
         </div>
     `;
 
 
-    subjectCount.textContent =
-        subjects.length;
+    // ======================================
+    // LOAD RESULTS
+    // ======================================
+
+    await loadResults(student.id);
+
 }
 
 
@@ -252,14 +384,28 @@ async function loadResults(studentId) {
         data: results,
         error
     } = await supabase
+
         .from("results")
+
         .select(`
             id,
             subject,
-            marks
+            marks,
+            term,
+            year
         `)
-        .eq("student_id", studentId)
-        .order("subject");
+
+        .eq(
+            "student_id",
+            studentId
+        )
+
+        .order(
+            "year",
+            {
+                ascending: false
+            }
+        );
 
 
     if (error) {
@@ -269,55 +415,147 @@ async function loadResults(studentId) {
             error
         );
 
-
         resultTable.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    No results available yet.
-                </td>
-            </tr>
-        `;
 
-        averageMarks.textContent = "0%";
-        overallGrade.textContent = "-";
+            <tr>
+
+                <td
+                    colspan="3"
+                    style="
+                        text-align:center;
+                        padding:25px;
+                        color:#991b1b;
+                    "
+                >
+                    Unable to load results.
+                </td>
+
+            </tr>
+
+        `;
 
         return;
     }
 
+
+    // ======================================
+    // NO RESULTS
+    // ======================================
 
     if (!results || results.length === 0) {
 
         resultTable.innerHTML = `
+
             <tr>
-                <td colspan="3">
+
+                <td
+                    colspan="3"
+                    style="
+                        text-align:center;
+                        padding:30px;
+                        color:#697386;
+                    "
+                >
                     No results have been uploaded yet.
                 </td>
+
             </tr>
+
         `;
 
+
         averageMarks.textContent = "0%";
+
         overallGrade.textContent = "-";
+
+        subjectCount.textContent = "0";
+
+
+        drawChart([], []);
 
         return;
     }
 
 
-    resultTable.innerHTML = "";
+    // ======================================
+    // CALCULATE AVERAGE
+    // ======================================
 
-
-    const marks = [];
+    let totalMarks = 0;
 
 
     results.forEach(result => {
 
-        const score =
-            Number(result.marks);
+        totalMarks += Number(
+            result.marks
+        ) || 0;
+
+    });
 
 
-        if (!Number.isNaN(score)) {
+    const average =
+        totalMarks / results.length;
 
-            marks.push(score);
-        }
+
+    const roundedAverage =
+        Math.round(average * 100) / 100;
+
+
+    const overallCBC =
+        getCBCGrade(average);
+
+
+    // ======================================
+    // UPDATE SUMMARY
+    // ======================================
+
+    averageMarks.textContent =
+        `${roundedAverage}%`;
+
+
+    overallGrade.innerHTML = `
+
+        <span style="
+            font-weight:800;
+        ">
+            ${overallCBC}
+        </span>
+
+        <small style="
+            display:block;
+            margin-top:4px;
+            font-size:11px;
+            color:#697386;
+        ">
+            ${getCBCDescription(overallCBC)}
+        </small>
+
+    `;
+
+
+    subjectCount.textContent =
+        results.length;
+
+
+    // ======================================
+    // RESULTS TABLE
+    // ======================================
+
+    resultTable.innerHTML = "";
+
+
+    results.forEach(result => {
+
+        const marks =
+            Number(result.marks) || 0;
+
+
+        const grade =
+            getCBCGrade(marks);
+
+
+        const description =
+            getCBCDescription(grade);
 
 
         const row =
@@ -327,21 +565,48 @@ async function loadResults(studentId) {
         row.innerHTML = `
 
             <td>
-                ${escapeHTML(
-                    result.subject || "-"
-                )}
+                <strong>
+                    ${result.subject}
+                </strong>
+
+                <small style="
+                    display:block;
+                    color:#697386;
+                    margin-top:3px;
+                ">
+                    ${result.term || ""}
+                    ${result.year || ""}
+                </small>
             </td>
 
-            <td>
-                ${
-                    Number.isNaN(score)
-                        ? "-"
-                        : score + "%"
-                }
-            </td>
 
             <td>
-                ${getGrade(score)}
+                ${marks}%
+            </td>
+
+
+            <td>
+
+                <span style="
+                    display:inline-block;
+                    padding:5px 9px;
+                    border-radius:999px;
+                    background:#eef2ff;
+                    color:#3730a3;
+                    font-size:12px;
+                    font-weight:800;
+                ">
+                    ${grade}
+                </span>
+
+                <small style="
+                    display:block;
+                    color:#697386;
+                    margin-top:4px;
+                ">
+                    ${description}
+                </small>
+
             </td>
 
         `;
@@ -352,65 +617,35 @@ async function loadResults(studentId) {
     });
 
 
-    if (marks.length === 0) {
+    // ======================================
+    // CHART
+    // ======================================
 
-        averageMarks.textContent = "0%";
-        overallGrade.textContent = "-";
-
-        return;
-    }
-
-
-    const total =
-        marks.reduce(
-            (sum, mark) => sum + mark,
-            0
+    const chartSubjects =
+        results.map(
+            result => result.subject
         );
 
 
-    const average =
-        total / marks.length;
+    const chartMarks =
+        results.map(
+            result => Number(result.marks) || 0
+        );
 
 
-    averageMarks.textContent =
-        average.toFixed(1) + "%";
+    drawChart(
+        chartSubjects,
+        chartMarks
+    );
 
-
-    overallGrade.textContent =
-        getGrade(average);
-
-
-    createChart(results);
 }
 
 
 // ==========================================
-// GRADE
+// DRAW PERFORMANCE CHART
 // ==========================================
 
-function getGrade(mark) {
-
-    if (Number.isNaN(mark)) {
-        return "-";
-    }
-
-    if (mark >= 80) return "A";
-    if (mark >= 70) return "B";
-    if (mark >= 60) return "C";
-    if (mark >= 50) return "D";
-
-    return "E";
-}
-
-
-// ==========================================
-// CHART
-// ==========================================
-
-let chart = null;
-
-
-function createChart(results) {
+function drawChart(subjects, marks) {
 
     const canvas =
         document.getElementById(
@@ -418,80 +653,167 @@ function createChart(results) {
         );
 
 
-    if (!canvas || typeof Chart === "undefined") {
+    if (!canvas) {
         return;
     }
 
 
-    if (chart) {
-        chart.destroy();
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
+
+        console.warn(
+            "Chart.js has not loaded."
+        );
+
+        return;
+
     }
 
 
-    chart =
+    if (performanceChart) {
+
+        performanceChart.destroy();
+
+    }
+
+
+    performanceChart =
         new Chart(
-            canvas,
+            canvas.getContext("2d"),
             {
 
                 type: "line",
 
                 data: {
 
-                    labels:
-                        results.map(
-                            item =>
-                                item.subject
-                        ),
+                    labels: subjects,
 
                     datasets: [
 
                         {
+
                             label:
                                 "Marks",
 
                             data:
-                                results.map(
-                                    item =>
-                                        Number(
-                                            item.marks
-                                        ) || 0
-                                ),
+                                marks,
 
-                            tension: 0.35,
+                            tension:
+                                0.3,
 
-                            borderWidth: 3,
+                            borderWidth:
+                                3,
 
-                            pointRadius: 5,
+                            pointRadius:
+                                5,
 
-                            fill: false
+                            fill:
+                                false
+
                         }
 
                     ]
+
                 },
+
 
                 options: {
 
-                    responsive: true,
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
 
                     scales: {
 
                         y: {
 
-                            beginAtZero: true,
+                            min: 0,
 
                             max: 100,
 
+                            ticks: {
+
+                                stepSize: 10
+
+                            },
+
                             title: {
 
-                                display: true,
+                                display:
+                                    true,
 
-                                text: "Marks (%)"
+                                text:
+                                    "Marks (%)"
+
                             }
+
+                        },
+
+                        x: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    "Subjects"
+
+                            }
+
                         }
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            display:
+                                true
+
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label:
+                                    function(
+                                        context
+                                    ) {
+
+                                        const mark =
+                                            context.parsed.y;
+
+                                        const grade =
+                                            getCBCGrade(
+                                                mark
+                                            );
+
+                                        return `
+                                            ${mark}%
+                                            - ${grade}
+                                        `;
+
+                                    }
+
+                            }
+
+                        }
+
                     }
+
                 }
+
             }
         );
+
 }
 
 
@@ -503,7 +825,7 @@ if (logoutButton) {
 
     logoutButton.addEventListener(
         "click",
-        async event => {
+        async function(event) {
 
             event.preventDefault();
 
@@ -529,53 +851,43 @@ if (logoutButton) {
                     "Logout";
 
                 return;
+
             }
 
 
-            window.location.replace(
-                "index.html"
-            );
+            window.location.href =
+                "index.html";
+
         }
     );
+
 }
 
 
 // ==========================================
-// ERROR DISPLAY
+// AUTH STATE
 // ==========================================
 
-function showError(text) {
+supabase.auth.onAuthStateChange(
+    (event, session) => {
 
-    if (profileBox) {
+        if (
+            event ===
+                "SIGNED_OUT" ||
+            !session
+        ) {
 
-        profileBox.innerHTML = `
+            window.location.href =
+                "index.html";
 
-            <div class="dashboard-error">
-                ${escapeHTML(text)}
-            </div>
+        }
 
-        `;
     }
-}
-
-
-// ==========================================
-// HTML SECURITY
-// ==========================================
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+);
 
 
 // ==========================================
 // START
 // ==========================================
 
-initializeStudent();
+loadStudent();
