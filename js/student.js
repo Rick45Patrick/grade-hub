@@ -1,129 +1,106 @@
-// ==========================================
-// GRADE HUB - STUDENT DASHBOARD
-// ==========================================
-
 import { supabase } from "./supabase.js";
 
-
-// ==========================================
-// ELEMENTS
-// ==========================================
-
-const profileBox =
-    document.getElementById("studentProfile");
-
-const resultTable =
-    document.getElementById("resultTable");
-
-const averageMarks =
-    document.getElementById("averageMarks");
-
-const overallGrade =
-    document.getElementById("overallGrade");
-
-const subjectCount =
-    document.getElementById("subjectCount");
-
-const logoutButton =
-    document.getElementById("logout");
+const profileBox = document.getElementById("studentProfile");
+const resultTable = document.getElementById("resultTable");
+const averageMarks = document.getElementById("averageMarks");
+const overallGrade = document.getElementById("overallGrade");
+const subjectCount = document.getElementById("subjectCount");
+const logoutButton = document.getElementById("logout");
 
 
 // ==========================================
-// PAGE MESSAGE
+// AUTHENTICATION
 // ==========================================
 
-function showProfileMessage(message) {
+async function initializeStudent() {
 
-    if (profileBox) {
-        profileBox.textContent = message;
-    }
+    try {
 
-}
-
-
-// ==========================================
-// GET CURRENT USER
-// ==========================================
-
-async function getCurrentUser() {
-
-    const {
-        data,
-        error
-    } = await supabase.auth.getUser();
+        const {
+            data: {
+                session
+            }
+        } = await supabase.auth.getSession();
 
 
-    if (error) {
+        if (!session) {
 
-        console.error(
-            "Authentication error:",
-            error
-        );
+            window.location.replace("index.html");
 
-        return null;
-    }
+            return;
+        }
 
 
-    return data?.user || null;
-}
+        const user = session.user;
 
 
-// ==========================================
-// CHECK STUDENT ROLE
-// ==========================================
-
-async function checkStudentRole(userId) {
-
-    const {
-        data: roles,
-        error
-    } = await supabase
-        .from("user_roles")
-        .select("role, approved")
-        .eq("user_id", userId);
+        console.log("Logged in user:", user.id);
 
 
-    if (error) {
+        // --------------------------------------
+        // Find student record FIRST
+        // --------------------------------------
 
-        console.error(
-            "Role error:",
-            error
-        );
+        const {
+            data: student,
+            error: studentError
+        } = await supabase
+            .from("students")
+            .select(`
+                id,
+                user_id,
+                admission_number,
+                class,
+                optional_subjects
+            `)
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-        return null;
-    }
+
+        if (studentError) {
+
+            console.error(
+                "Student lookup error:",
+                studentError
+            );
+
+            showError(
+                "Unable to load your student account."
+            );
+
+            return;
+        }
 
 
-    /*
-     * Find an approved student role.
-     *
-     * Some existing accounts may have more
-     * than one role, so we don't use .single().
-     */
+        if (!student) {
 
-    const studentRole =
-        (roles || []).find(
-            role =>
-                role.role === "student" &&
-                role.approved !== false
+            console.error(
+                "No student record found for:",
+                user.id
+            );
+
+            showError(
+                "No student record is linked to this account."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "Student record:",
+            student
         );
 
 
-    return studentRole || null;
-}
+        // --------------------------------------
+        // Load profile
+        // --------------------------------------
 
-
-// ==========================================
-// LOAD STUDENT PROFILE
-// ==========================================
-
-async function loadStudentProfile(userId) {
-
-    const {
-        data: profile,
-        error: profileError
-    } =
-        await supabase
+        const {
+            data: profile,
+            error: profileError
+        } = await supabase
             .from("profiles")
             .select(`
                 id,
@@ -131,63 +108,60 @@ async function loadStudentProfile(userId) {
                 username,
                 email
             `)
-            .eq("id", userId)
+            .eq("id", user.id)
             .maybeSingle();
 
 
-    if (profileError) {
+        if (profileError) {
+
+            console.error(
+                "Profile error:",
+                profileError
+            );
+
+        }
+
+
+        // --------------------------------------
+        // Display profile
+        // --------------------------------------
+
+        displayProfile(
+            profile || {},
+            student
+        );
+
+
+        // --------------------------------------
+        // Load results
+        // --------------------------------------
+
+        await loadResults(
+            student.id
+        );
+
+    }
+
+    catch (error) {
 
         console.error(
-            "Profile error:",
-            profileError
+            "Student dashboard error:",
+            error
         );
 
-        throw profileError;
-    }
-
-
-    const {
-        data: student,
-        error: studentError
-    } =
-        await supabase
-            .from("students")
-            .select(`
-                id,
-                admission_number,
-                class,
-                optional_subjects
-            `)
-            .eq("user_id", userId)
-            .maybeSingle();
-
-
-    if (studentError) {
-
-        console.error(
-            "Student error:",
-            studentError
-        );
-
-        throw studentError;
-    }
-
-
-    if (!profile) {
-
-        throw new Error(
-            "Your profile could not be found."
+        showError(
+            error.message ||
+            "Unable to load the student dashboard."
         );
     }
+}
 
 
-    if (!student) {
+// ==========================================
+// DISPLAY PROFILE
+// ==========================================
 
-        throw new Error(
-            "Your student record could not be found."
-        );
-    }
-
+function displayProfile(profile, student) {
 
     const subjects =
         Array.isArray(student.optional_subjects)
@@ -197,55 +171,74 @@ async function loadStudentProfile(userId) {
 
     profileBox.innerHTML = `
 
-        <div class="profile-details">
+        <div class="profile-grid">
 
-            <p>
-                <strong>Name:</strong>
-                ${escapeHTML(profile.full_name || "-")}
-            </p>
+            <div class="profile-item">
+                <span>Name</span>
+                <strong>
+                    ${escapeHTML(
+                        profile.full_name || "-"
+                    )}
+                </strong>
+            </div>
 
-            <p>
-                <strong>Username:</strong>
-                ${escapeHTML(profile.username || "-")}
-            </p>
+            <div class="profile-item">
+                <span>Username</span>
+                <strong>
+                    ${escapeHTML(
+                        profile.username || "-"
+                    )}
+                </strong>
+            </div>
 
-            <p>
-                <strong>Email:</strong>
-                ${escapeHTML(profile.email || "-")}
-            </p>
+            <div class="profile-item">
+                <span>Email</span>
+                <strong>
+                    ${escapeHTML(
+                        profile.email || "-"
+                    )}
+                </strong>
+            </div>
 
-            <p>
-                <strong>Admission:</strong>
-                ${escapeHTML(student.admission_number || "-")}
-            </p>
+            <div class="profile-item">
+                <span>Admission Number</span>
+                <strong>
+                    ${escapeHTML(
+                        student.admission_number || "-"
+                    )}
+                </strong>
+            </div>
 
-            <p>
-                <strong>Class:</strong>
-                ${escapeHTML(student.class || "-")}
-            </p>
+            <div class="profile-item">
+                <span>Class</span>
+                <strong>
+                    ${escapeHTML(
+                        student.class || "-"
+                    )}
+                </strong>
+            </div>
 
-            <p>
-                <strong>Optional Subjects:</strong>
-                ${
-                    subjects.length
-                        ? subjects.map(escapeHTML).join(", ")
-                        : "None"
-                }
-            </p>
+            <div class="profile-item profile-wide">
+                <span>Optional Subjects</span>
+                <strong>
+                    ${
+                        subjects.length
+                            ? subjects
+                                .map(
+                                    escapeHTML
+                                )
+                                .join(", ")
+                            : "None selected"
+                    }
+                </strong>
+            </div>
 
         </div>
-
     `;
 
 
     subjectCount.textContent =
         subjects.length;
-
-
-    return {
-        profile,
-        student
-    };
 }
 
 
@@ -253,94 +246,40 @@ async function loadStudentProfile(userId) {
 // LOAD RESULTS
 // ==========================================
 
-async function loadResults(userId) {
-
-    /*
-     * Results are connected through student_id.
-     */
-
-    const {
-        data: student,
-        error: studentError
-    } =
-        await supabase
-            .from("students")
-            .select("id")
-            .eq("user_id", userId)
-            .maybeSingle();
-
-
-    if (studentError) {
-
-        console.error(
-            "Student lookup error:",
-            studentError
-        );
-
-        return;
-    }
-
-
-    if (!student) {
-
-        resultTable.innerHTML = `
-            <tr>
-                <td colspan="3" class="empty">
-                    Student record not found.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-
-    /*
-     * Try loading the results.
-     *
-     * The query assumes the results table contains:
-     * student_id
-     * subject
-     * marks
-     */
+async function loadResults(studentId) {
 
     const {
         data: results,
-        error: resultError
-    } =
-        await supabase
-            .from("results")
-            .select(`
-                id,
-                subject,
-                marks
-            `)
-            .eq("student_id", student.id)
-            .order("subject");
+        error
+    } = await supabase
+        .from("results")
+        .select(`
+            id,
+            subject,
+            marks
+        `)
+        .eq("student_id", studentId)
+        .order("subject");
 
 
-    if (resultError) {
+    if (error) {
 
         console.error(
             "Results error:",
-            resultError
+            error
         );
 
 
         resultTable.innerHTML = `
             <tr>
-                <td colspan="3" class="empty">
+                <td colspan="3">
                     No results available yet.
                 </td>
             </tr>
         `;
 
-
-        averageMarks.textContent =
-            "0%";
-
-        overallGrade.textContent =
-            "-";
+        averageMarks.textContent = "0%";
+        overallGrade.textContent = "-";
 
         return;
     }
@@ -350,48 +289,35 @@ async function loadResults(userId) {
 
         resultTable.innerHTML = `
             <tr>
-                <td colspan="3" class="empty">
+                <td colspan="3">
                     No results have been uploaded yet.
                 </td>
             </tr>
         `;
 
-
-        averageMarks.textContent =
-            "0%";
-
-        overallGrade.textContent =
-            "-";
+        averageMarks.textContent = "0%";
+        overallGrade.textContent = "-";
 
         return;
     }
 
 
-    // ======================================
-    // DISPLAY RESULTS
-    // ======================================
-
     resultTable.innerHTML = "";
 
 
-    const marksArray = [];
+    const marks = [];
 
 
     results.forEach(result => {
 
-        const marks =
+        const score =
             Number(result.marks);
 
 
-        if (!Number.isNaN(marks)) {
+        if (!Number.isNaN(score)) {
 
-            marksArray.push(marks);
-
+            marks.push(score);
         }
-
-
-        const grade =
-            getGrade(marks);
 
 
         const row =
@@ -401,15 +327,21 @@ async function loadResults(userId) {
         row.innerHTML = `
 
             <td>
-                ${escapeHTML(result.subject || "-")}
+                ${escapeHTML(
+                    result.subject || "-"
+                )}
             </td>
 
             <td>
-                ${Number.isNaN(marks) ? "-" : marks}
+                ${
+                    Number.isNaN(score)
+                        ? "-"
+                        : score + "%"
+                }
             </td>
 
             <td>
-                ${grade}
+                ${getGrade(score)}
             </td>
 
         `;
@@ -420,88 +352,65 @@ async function loadResults(userId) {
     });
 
 
-    // ======================================
-    // AVERAGE
-    // ======================================
+    if (marks.length === 0) {
 
-    if (marksArray.length === 0) {
-
-        averageMarks.textContent =
-            "0%";
-
-        overallGrade.textContent =
-            "-";
+        averageMarks.textContent = "0%";
+        overallGrade.textContent = "-";
 
         return;
     }
 
 
     const total =
-        marksArray.reduce(
+        marks.reduce(
             (sum, mark) => sum + mark,
             0
         );
 
 
     const average =
-        total / marksArray.length;
+        total / marks.length;
 
 
     averageMarks.textContent =
-        `${average.toFixed(1)}%`;
+        average.toFixed(1) + "%";
 
 
     overallGrade.textContent =
         getGrade(average);
 
 
-    // ======================================
-    // GRAPH
-    // ======================================
-
-    createPerformanceChart(results);
-
+    createChart(results);
 }
 
 
 // ==========================================
-// GRADE CALCULATION
+// GRADE
 // ==========================================
 
-function getGrade(marks) {
+function getGrade(mark) {
 
-    const score = Number(marks);
-
-
-    if (Number.isNaN(score)) {
+    if (Number.isNaN(mark)) {
         return "-";
     }
 
-
-    /*
-     * Basic percentage grading.
-     *
-     * We can replace this with the exact
-     * CBC grading system you want later.
-     */
-
-    if (score >= 80) return "A";
-    if (score >= 70) return "B";
-    if (score >= 60) return "C";
-    if (score >= 50) return "D";
+    if (mark >= 80) return "A";
+    if (mark >= 70) return "B";
+    if (mark >= 60) return "C";
+    if (mark >= 50) return "D";
 
     return "E";
 }
 
 
 // ==========================================
-// PERFORMANCE GRAPH
+// CHART
 // ==========================================
 
-let performanceChart = null;
+let chart = null;
 
 
-function createPerformanceChart(results) {
+function createChart(results) {
 
     const canvas =
         document.getElementById(
@@ -509,31 +418,17 @@ function createPerformanceChart(results) {
         );
 
 
-    if (!canvas) {
+    if (!canvas || typeof Chart === "undefined") {
         return;
     }
 
 
-    const labels =
-        results.map(
-            result => result.subject
-        );
-
-
-    const values =
-        results.map(
-            result => Number(result.marks) || 0
-        );
-
-
-    if (performanceChart) {
-
-        performanceChart.destroy();
-
+    if (chart) {
+        chart.destroy();
     }
 
 
-    performanceChart =
+    chart =
         new Chart(
             canvas,
             {
@@ -542,81 +437,61 @@ function createPerformanceChart(results) {
 
                 data: {
 
-                    labels: labels,
+                    labels:
+                        results.map(
+                            item =>
+                                item.subject
+                        ),
 
                     datasets: [
 
                         {
                             label:
-                                "Subject Performance",
+                                "Marks",
 
                             data:
-                                values,
+                                results.map(
+                                    item =>
+                                        Number(
+                                            item.marks
+                                        ) || 0
+                                ),
 
-                            tension:
-                                0.3,
+                            tension: 0.35,
 
-                            fill:
-                                false,
+                            borderWidth: 3,
 
-                            borderWidth:
-                                2,
+                            pointRadius: 5,
 
-                            pointRadius:
-                                5
+                            fill: false
                         }
 
                     ]
-
                 },
 
                 options: {
 
                     responsive: true,
 
-                    maintainAspectRatio:
-                        true,
-
                     scales: {
 
                         y: {
 
-                            beginAtZero:
-                                true,
+                            beginAtZero: true,
 
-                            max:
-                                100,
+                            max: 100,
 
                             title: {
 
-                                display:
-                                    true,
+                                display: true,
 
-                                text:
-                                    "Marks (%)"
-
+                                text: "Marks (%)"
                             }
-
                         }
-
-                    },
-
-                    plugins: {
-
-                        legend: {
-
-                            display:
-                                true
-
-                        }
-
                     }
-
                 }
-
             }
         );
-
 }
 
 
@@ -636,9 +511,6 @@ if (logoutButton) {
             logoutButton.textContent =
                 "Logging out...";
 
-            logoutButton.style.pointerEvents =
-                "none";
-
 
             const {
                 error
@@ -656,9 +528,6 @@ if (logoutButton) {
                 logoutButton.textContent =
                     "Logout";
 
-                logoutButton.style.pointerEvents =
-                    "auto";
-
                 return;
             }
 
@@ -666,91 +535,32 @@ if (logoutButton) {
             window.location.replace(
                 "index.html"
             );
-
         }
     );
-
 }
 
 
 // ==========================================
-// SECURITY / AUTH INITIALIZATION
+// ERROR DISPLAY
 // ==========================================
 
-async function initializeStudentDashboard() {
+function showError(text) {
 
-    try {
+    if (profileBox) {
 
-        const user =
-            await getCurrentUser();
+        profileBox.innerHTML = `
 
+            <div class="dashboard-error">
+                ${escapeHTML(text)}
+            </div>
 
-        if (!user) {
-
-            window.location.replace(
-                "index.html"
-            );
-
-            return;
-        }
-
-
-        const role =
-            await checkStudentRole(
-                user.id
-            );
-
-
-        if (!role) {
-
-            console.error(
-                "No approved student role found."
-            );
-
-
-            await supabase.auth.signOut();
-
-
-            window.location.replace(
-                "index.html"
-            );
-
-            return;
-        }
-
-
-        // Load profile
-        await loadStudentProfile(
-            user.id
-        );
-
-
-        // Load results
-        await loadResults(
-            user.id
-        );
-
+        `;
     }
-
-    catch (error) {
-
-        console.error(
-            "Dashboard initialization error:",
-            error
-        );
-
-
-        showProfileMessage(
-            "Unable to load your account information."
-        );
-
-    }
-
 }
 
 
 // ==========================================
-// HTML ESCAPE
+// HTML SECURITY
 // ==========================================
 
 function escapeHTML(value) {
@@ -768,5 +578,4 @@ function escapeHTML(value) {
 // START
 // ==========================================
 
-initializeStudentDashboard();
-
+initializeStudent();
