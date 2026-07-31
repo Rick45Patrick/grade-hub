@@ -57,16 +57,16 @@
             class="sidebar-link active"
         >
             <span>▦</span>
-            Overview
+            <span>Overview</span>
         </a>
 
 
         <a
-            href="#adminRequests"
+            href="#adminRequestsSection"
             class="sidebar-link"
         >
             <span>♙</span>
-            Admin Requests
+            <span>Admin Requests</span>
         </a>
 
 
@@ -75,7 +75,7 @@
             class="sidebar-link"
         >
             <span>♟</span>
-            Administrators
+            <span>Administrators</span>
         </a>
 
 
@@ -84,7 +84,7 @@
             class="sidebar-link"
         >
             <span>🎓</span>
-            Students
+            <span>Students</span>
         </a>
 
     </nav>
@@ -97,7 +97,7 @@
             class="sidebar-logout"
         >
             <span>↪</span>
-            Sign Out
+            <span>Sign Out</span>
         </button>
 
     </div>
@@ -107,13 +107,15 @@
 
 
 <!-- =========================================
-     MAIN
+     MAIN CONTENT
 ========================================= -->
 
 <main class="admin-main">
 
 
-    <!-- TOP BAR -->
+    <!-- =====================================
+         TOP BAR
+    ====================================== -->
 
     <header class="admin-topbar">
 
@@ -133,6 +135,7 @@
         <div class="topbar-actions">
 
             <button
+                type="button"
                 id="refreshDashboard"
                 class="refresh-button"
             >
@@ -145,11 +148,14 @@
     </header>
 
 
-    <!-- MESSAGE -->
+    <!-- =====================================
+         SYSTEM MESSAGE
+    ====================================== -->
 
     <div
         id="superAdminMessage"
         class="super-admin-message"
+        aria-live="polite"
     ></div>
 
 
@@ -175,6 +181,10 @@
                     System Overview
                 </h2>
 
+                <p>
+                    Manage Grade Hub accounts and access.
+                </p>
+
             </div>
 
         </div>
@@ -183,7 +193,7 @@
         <div class="statistics-grid">
 
 
-            <!-- STUDENTS -->
+            <!-- TOTAL STUDENTS -->
 
             <div class="stat-card">
 
@@ -209,7 +219,7 @@
             </div>
 
 
-            <!-- ADMINS -->
+            <!-- TOTAL ADMINS -->
 
             <div class="stat-card">
 
@@ -260,7 +270,6 @@
 
             </div>
 
-
         </div>
 
     </section>
@@ -272,7 +281,7 @@
     ====================================== -->
 
     <section
-        id="adminRequests"
+        id="adminRequestsSection"
         class="dashboard-section"
     >
 
@@ -335,6 +344,9 @@
 
                     </thead>
 
+
+                    <!-- IMPORTANT:
+                         JavaScript loads requests here -->
 
                     <tbody id="adminRequests">
 
@@ -451,7 +463,7 @@
                 </h2>
 
                 <p>
-                    View and manage student accounts.
+                    View and manage registered students.
                 </p>
 
             </div>
@@ -511,7 +523,10 @@
     </section>
 
 
-    <!-- FOOTER -->
+
+    <!-- =====================================
+         FOOTER
+    ====================================== -->
 
     <footer class="dashboard-footer">
 
@@ -529,6 +544,10 @@
 </main>
 
 
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
 
 <script
     type="module"
