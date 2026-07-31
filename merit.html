@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Grade Hub - Merit List</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
+
+            color: #172033;
+        }
+
+
+        /* ==========================================
+           HEADER
+        ========================================== */
+
+        header {
+            min-height: 72px;
+
+            padding: 0 30px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            background: #111827;
+
+            color: white;
+
+            box-shadow:
+                0 4px 18px
+                rgba(15, 23, 42, .12);
+        }
+
+
+        header h1 {
+            margin: 0;
+
+            font-size: 21px;
+
+            font-weight: 800;
+        }
+
+
+        header nav {
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+
+        header nav a {
+            color: #dbeafe;
+
+            text-decoration: none;
+
+            padding: 9px 13px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        header nav a:hover {
+            background: #1f2937;
+
+            color: white;
+        }
+
+
+        /* ==========================================
+           PAGE
+        ========================================== */
+
+        .merit-page {
+            width:
+                min(
+                    1200px,
+                    calc(100% - 32px)
+                );
+
+            margin:
+                30px auto 50px;
+        }
+
+
+        .page-heading {
+            margin-bottom: 22px;
+        }
+
+
+        .page-heading h2 {
+            margin: 0 0 6px;
+
+            font-size: 29px;
+
+            letter-spacing: -.6px;
+        }
+
+
+        .page-heading p {
+            margin: 0;
+
+            color: #697386;
+
+            font-size: 15px;
+        }
+
+
+        /* ==========================================
+           SUMMARY
+        ========================================== */
+
+        .summary-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+
+            margin-bottom: 22px;
+        }
+
+
+        .summary-card {
+            background: white;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 16px;
+
+            padding: 19px;
+
+            box-shadow:
+                0 7px 20px
+                rgba(15, 23, 42, .05);
+        }
+
+
+        .summary-card span {
+            display: block;
+
+            color: #697386;
+
+            font-size: 13px;
+
+            font-weight: 600;
+        }
+
+
+        .summary-card strong {
+            display: block;
+
+            margin-top: 6px;
+
+            font-size: 27px;
+        }
+
+
+        /* ==========================================
+           CONTROLS
+        ========================================== */
+
+        .control-card {
+            background: white;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 16px;
+
+            padding: 18px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 7px 20px
+                rgba(15, 23, 42, .04);
+        }
+
+
+        .controls {
+            display: grid;
+
+            grid-template-columns:
+                2fr 1fr 1fr 1fr auto;
+
+            gap: 10px;
+
+            align-items: end;
+        }
+
+
+        .control label {
+            display: block;
+
+            margin-bottom: 6px;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: #475569;
+        }
+
+
+        .control input,
+        .control select {
+            width: 100%;
+
+            padding: 11px 12px;
+
+            border:
+                1px solid #d9deea;
+
+            border-radius: 9px;
+
+            background: white;
+
+            font: inherit;
+
+            outline: none;
+        }
+
+
+        .control input:focus,
+        .control select:focus {
+            border-color: #4f46e5;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .1);
+        }
+
+
+        .refresh-btn {
+            border: 0;
+
+            border-radius: 9px;
+
+            padding:
+                11px 16px;
+
+            background: #4f46e5;
+
+            color: white;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .refresh-btn:hover {
+            background: #4338ca;
+        }
+
+
+        /* ==========================================
+           TABLE CARD
+        ========================================== */
+
+        .table-card {
+            background: white;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 17px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, .055);
+        }
+
+
+        .table-header {
+            padding: 20px;
+
+            border-bottom:
+                1px solid #e5e9f2;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+        }
+
+
+        .table-header h3 {
+            margin: 0;
+
+            font-size: 18px;
+        }
+
+
+        .table-header p {
+            margin: 4px 0 0;
+
+            color: #697386;
+
+            font-size: 13px;
+        }
+
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 900px;
+        }
+
+
+        th {
+            text-align: left;
+
+            padding: 14px 16px;
+
+            background: #f8fafc;
+
+            color: #475569;
+
+            font-size: 12px;
+
+            text-transform: uppercase;
+
+            letter-spacing: .3px;
+
+            border-bottom:
+                1px solid #e5e9f2;
+        }
+
+
+        td {
+            padding: 14px 16px;
+
+            border-bottom:
+                1px solid #eef1f6;
+
+            font-size: 14px;
+        }
+
+
+        tbody tr:hover {
+            background: #fafbff;
+        }
+
+
+        /* ==========================================
+           POSITION
+        ========================================== */
+
+        .position {
+            width: 42px;
+
+            height: 42px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 10px;
+
+            background: #eef2ff;
+
+            color: #3730a3;
+
+            font-weight: 900;
+        }
+
+
+        .position.top {
+            background: #fef3c7;
+
+            color: #92400e;
+        }
+
+
+        /* ==========================================
+           CBC BADGES
+        ========================================== */
+
+        .cbc-badge {
+            display: inline-block;
+
+            padding:
+                6px 10px;
+
+            border-radius: 999px;
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            background: #eef2ff;
+
+            color: #3730a3;
+        }
+
+
+        .cbc-description {
+            display: block;
+
+            margin-top: 4px;
+
+            color: #697386;
+
+            font-size: 11px;
+        }
+
+
+        /* ==========================================
+           EMPTY / LOADING
+        ========================================== */
+
+        .empty-row {
+            text-align: center;
+
+            padding: 35px !important;
+
+            color: #697386;
+        }
+
+
+        .message {
+            display: none;
+
+            padding: 12px 14px;
+
+            margin-bottom: 18px;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        .message.show {
+            display: block;
+        }
+
+
+        .message.error {
+            background: #fef2f2;
+
+            color: #991b1b;
+        }
+
+
+        .message.success {
+            background: #f0fdf4;
+
+            color: #166534;
+        }
+
+
+        /* ==========================================
+           RESPONSIVE
+        ========================================== */
+
+        @media (max-width: 900px) {
+
+            .controls {
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+
+            .search-control {
+                grid-column:
+                    1 / -1;
+            }
+
+
+            .summary-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            header {
+                padding: 14px 18px;
+
+                flex-direction: column;
+
+                align-items: flex-start;
+            }
+
+
+            header nav {
+                width: 100%;
+            }
+
+
+            header nav a {
+                background: #1f2937;
+            }
+
+
+            .merit-page {
+                width:
+                    calc(100% - 20px);
+
+                margin-top: 20px;
+            }
+
+
+            .controls {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .search-control {
+                grid-column:
+                    auto;
+            }
+
+
+            .refresh-btn {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>
+        Grade Hub
+    </h1>
+
+
+    <nav>
+
+        <a href="admin.html">
+            Dashboard
+        </a>
+
+        <a href="superadmin.html">
+            Super Admin
+        </a>
+
+        <a href="#" id="logout">
+            Logout
+        </a>
+
+    </nav>
+
+</header>
+
+
+
+<main class="merit-page">
+
+
+    <div class="page-heading">
+
+        <h2>
+            Learner Merit List
+        </h2>
+
+        <p>
+            Ranked academic performance of all registered learners.
+        </p>
+
+    </div>
+
+
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+
+
+    <!-- ==========================================
+         SUMMARY
+    =========================================== -->
+
+    <section class="summary-grid">
+
+
+        <div class="summary-card">
+
+            <span>
+                Learners Ranked
+            </span>
+
+            <strong id="learnerCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Highest Average
+            </span>
+
+            <strong id="highestAverage">
+                0%
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Top Learner
+            </span>
+
+            <strong
+                id="topLearner"
+                style="font-size:20px;"
+            >
+                -
+            </strong>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ==========================================
+         FILTERS
+    =========================================== -->
+
+    <section class="control-card">
+
+
+        <div class="controls">
+
+
+            <div class="control search-control">
+
+                <label for="search">
+                    Search Learner
+                </label>
+
+                <input
+                    type="search"
+                    id="search"
+                    placeholder="Name or admission number..."
+                >
+
+            </div>
+
+
+
+            <div class="control">
+
+                <label for="classFilter">
+                    Class
+                </label>
+
+                <select id="classFilter">
+
+                    <option value="all">
+                        All Classes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="control">
+
+                <label for="termFilter">
+                    Term
+                </label>
+
+                <select id="termFilter">
+
+                    <option value="all">
+                        All Terms
+                    </option>
+
+                    <option value="Term 1">
+                        Term 1
+                    </option>
+
+                    <option value="Term 2">
+                        Term 2
+                    </option>
+
+                    <option value="Term 3">
+                        Term 3
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="control">
+
+                <label for="yearFilter">
+                    Year
+                </label>
+
+                <select id="yearFilter">
+
+                    <option value="all">
+                        All Years
+                    </option>
+
+                    <option value="2026">
+                        2026
+                    </option>
+
+                    <option value="2025">
+                        2025
+                    </option>
+
+                    <option value="2024">
+                        2024
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <button
+                id="refreshButton"
+                class="refresh-btn"
+                type="button"
+            >
+                Refresh
+            </button>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ==========================================
+         MERIT TABLE
+    =========================================== -->
+
+    <section class="table-card">
+
+
+        <div class="table-header">
+
+            <div>
+
+                <h3>
+                    School Merit List
+                </h3>
+
+                <p>
+                    Learners are ranked by average marks.
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="table-container">
+
+
+            <table>
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Position
+                        </th>
+
+                        <th>
+                            Admission
+                        </th>
+
+                        <th>
+                            Learner
+                        </th>
+
+                        <th>
+                            Class
+                        </th>
+
+                        <th>
+                            Subjects
+                        </th>
+
+                        <th>
+                            Average
+                        </th>
+
+                        <th>
+                            CBC Grade
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="meritTable">
+
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            class="empty-row"
+                        >
+                            Loading merit list...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+
+<script
+    type="module"
+    src="js/merit.js"
+></script>
+
+
+</body>
+
+</html>
