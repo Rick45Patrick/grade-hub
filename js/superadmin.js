@@ -1,47 +1,22 @@
+```javascript
 import { supabase } from "./supabase.js";
 
 
 /* =========================================================
-   SUPER ADMIN DASHBOARD
+   SUPER ADMIN
 ========================================================= */
 
+document.addEventListener("DOMContentLoaded", async () => {
 
-const requestTable =
-    document.getElementById("adminRequests");
+    const authorized = await verifySuperAdmin();
 
-
-const approvedAdminTable =
-    document.getElementById("approvedAdmins");
-
-
-const studentTable =
-    document.getElementById("studentTable");
-
-
-const message =
-    document.getElementById("superAdminMessage");
-
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        const authorized =
-            await verifySuperAdmin();
-
-        if (!authorized) {
-            return;
-        }
-
-
-        await loadDashboard();
-
+    if (!authorized) {
+        return;
     }
-);
+
+    await loadDashboard();
+
+});
 
 
 /* =========================================================
@@ -50,140 +25,127 @@ document.addEventListener(
 
 async function verifySuperAdmin() {
 
-    const {
-        data: sessionData,
-        error: sessionError
-    } =
+    const { data, error } =
         await supabase.auth.getSession();
 
+    if (error || !data.session) {
 
-    if (
-        sessionError ||
-        !sessionData.session
-    ) {
-
-        window.location.href =
-            "index.html";
+        window.location.href = "index.html";
 
         return false;
     }
 
-
-    const user =
-        sessionData.session.user;
-
+    const user = data.session.user;
 
     const {
         data: roles,
-        error
-    } =
-        await supabase
-            .from("user_roles")
-            .select(
-                "role, approved"
-            )
-            .eq(
-                "user_id",
-                user.id
-            );
+        error: roleError
+    } = await supabase
+        .from("user_roles")
+        .select("role, approved")
+        .eq("user_id", user.id);
 
+    if (roleError) {
 
-    if (error) {
-
-        console.error(error);
+        console.error(roleError);
 
         showMessage(
-            "Unable to verify administrator permissions.",
+            roleError.message,
             "error"
         );
 
         return false;
     }
 
-
     const isSuperAdmin =
-        roles?.some(
-            item =>
-                item.role ===
-                    "super_admin" &&
-                item.approved === true
+        roles?.some(role =>
+            role.role === "super_admin" &&
+            role.approved === true
         );
-
 
     if (!isSuperAdmin) {
 
         await supabase.auth.signOut();
 
-        window.location.href =
-            "index.html";
+        window.location.href = "index.html";
 
         return false;
     }
-
 
     return true;
 }
 
 
 /* =========================================================
-   LOAD EVERYTHING
+   LOAD DASHBOARD
 ========================================================= */
 
 async function loadDashboard() {
 
-    await Promise.all([
-        loadAdminRequests(),
-        loadApprovedAdmins(),
-        loadStudents(),
-        loadStatistics()
-    ]);
+    await loadAdminRequests();
+
+    await loadApprovedAdmins();
+
+    await loadStudents();
+
+    await loadStatistics();
 
 }
 
 
 /* =========================================================
-   ADMIN REQUESTS
+   LOAD ADMIN REQUESTS
 ========================================================= */
 
 async function loadAdminRequests() {
 
-    if (!requestTable) {
+    const table =
+        document.getElementById("adminRequests");
+
+    if (!table) {
         return;
     }
+
+    table.innerHTML = `
+        <tr>
+            <td colspan="6">
+                Loading requests...
+            </td>
+        </tr>
+    `;
 
 
     const {
         data,
         error
-    } =
-        await supabase
-            .from("admin_requests")
-            .select(
-                "id, user_id, full_name, email, username, status, created_at"
-            )
-            .eq(
-                "status",
-                "pending"
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
+    } = await supabase
+        .from("admin_requests")
+        .select(`
+            id,
+            user_id,
+            full_name,
+            email,
+            username,
+            status,
+            created_at
+        `)
+        .eq("status", "pending")
+        .order("created_at", {
+            ascending: false
+        });
 
 
     if (error) {
 
         console.error(
-            "Admin request error:",
+            "Could not load admin requests:",
             error
         );
 
-        requestTable.innerHTML = `
+        table.innerHTML = `
             <tr>
                 <td colspan="6">
-                    Unable to load administrator requests.
+                    ${escapeHTML(error.message)}
                 </td>
             </tr>
         `;
@@ -192,17 +154,14 @@ async function loadAdminRequests() {
     }
 
 
-    requestTable.innerHTML = "";
+    if (!data || data.length === 0) {
 
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
-        requestTable.innerHTML = `
+        table.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state">
+                <td
+                    colspan="6"
+                    class="empty-state"
+                >
                     No pending administrator requests.
                 </td>
             </tr>
@@ -210,6 +169,9 @@ async function loadAdminRequests() {
 
         return;
     }
+
+
+    table.innerHTML = "";
 
 
     data.forEach(request => {
@@ -221,19 +183,27 @@ async function loadAdminRequests() {
         row.innerHTML = `
 
             <td>
-                ${escapeHTML(request.full_name)}
+                ${escapeHTML(
+                    request.full_name
+                )}
             </td>
 
             <td>
-                ${escapeHTML(request.username)}
+                ${escapeHTML(
+                    request.username
+                )}
             </td>
 
             <td>
-                ${escapeHTML(request.email)}
+                ${escapeHTML(
+                    request.email
+                )}
             </td>
 
             <td>
-                ${formatDate(request.created_at)}
+                ${formatDate(
+                    request.created_at
+                )}
             </td>
 
             <td>
@@ -245,38 +215,41 @@ async function loadAdminRequests() {
             <td>
 
                 <button
+                    type="button"
                     class="btn approve-btn"
-                    data-id="${request.id}"
+                    data-request-id="${request.id}"
                 >
                     Approve
                 </button>
 
                 <button
+                    type="button"
                     class="btn reject-btn"
-                    data-id="${request.id}"
+                    data-request-id="${request.id}"
                 >
                     Reject
                 </button>
 
             </td>
+
         `;
 
 
-        requestTable.appendChild(row);
+        table.appendChild(row);
 
     });
 
 
-    document
+    table
         .querySelectorAll(".approve-btn")
         .forEach(button => {
 
             button.addEventListener(
                 "click",
-                () => {
+                async () => {
 
-                    approveAdmin(
-                        button.dataset.id,
+                    await approveAdmin(
+                        button.dataset.requestId,
                         button
                     );
 
@@ -286,16 +259,16 @@ async function loadAdminRequests() {
         });
 
 
-    document
+    table
         .querySelectorAll(".reject-btn")
         .forEach(button => {
 
             button.addEventListener(
                 "click",
-                () => {
+                async () => {
 
-                    rejectAdmin(
-                        button.dataset.id,
+                    await rejectAdmin(
+                        button.dataset.requestId,
                         button
                     );
 
@@ -316,9 +289,20 @@ async function approveAdmin(
     button
 ) {
 
+    if (!requestId) {
+
+        showMessage(
+            "Missing administrator request ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
     const confirmed =
-        confirm(
-            "Approve this administrator account?"
+        window.confirm(
+            "Approve this administrator request?"
         );
 
 
@@ -333,30 +317,47 @@ async function approveAdmin(
         "Approving...";
 
 
+    console.log(
+        "Approving request:",
+        requestId
+    );
+
+
     const {
         data,
         error
-    } =
-        await supabase.rpc(
-            "approve_admin_request",
-            {
-                request_id:
-                    requestId
-            }
-        );
+    } = await supabase.rpc(
+        "approve_admin_request",
+        {
+            request_id: requestId
+        }
+    );
+
+
+    console.log(
+        "Approval result:",
+        data
+    );
+
+    console.log(
+        "Approval error:",
+        error
+    );
 
 
     if (error) {
 
         console.error(
-            "Approval error:",
+            "Approval failed:",
             error
         );
 
+
         showMessage(
-            error.message,
+            `Approval failed: ${error.message}`,
             "error"
         );
+
 
         button.disabled = false;
 
@@ -374,7 +375,17 @@ async function approveAdmin(
     );
 
 
-    await loadDashboard();
+    /*
+       Reload the request list.
+       The approved request should disappear
+       because its status is no longer pending.
+    */
+
+    await loadAdminRequests();
+
+    await loadApprovedAdmins();
+
+    await loadStatistics();
 
 }
 
@@ -388,8 +399,19 @@ async function rejectAdmin(
     button
 ) {
 
+    if (!requestId) {
+
+        showMessage(
+            "Missing administrator request ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
     const confirmed =
-        confirm(
+        window.confirm(
             "Reject this administrator request?"
         );
 
@@ -408,27 +430,27 @@ async function rejectAdmin(
     const {
         data,
         error
-    } =
-        await supabase.rpc(
-            "reject_admin_request",
-            {
-                request_id:
-                    requestId
-            }
-        );
+    } = await supabase.rpc(
+        "reject_admin_request",
+        {
+            request_id: requestId
+        }
+    );
 
 
     if (error) {
 
         console.error(
-            "Rejection error:",
+            "Rejection failed:",
             error
         );
 
+
         showMessage(
-            error.message,
+            `Rejection failed: ${error.message}`,
             "error"
         );
+
 
         button.disabled = false;
 
@@ -446,7 +468,9 @@ async function rejectAdmin(
     );
 
 
-    await loadDashboard();
+    await loadAdminRequests();
+
+    await loadStatistics();
 
 }
 
@@ -457,7 +481,12 @@ async function rejectAdmin(
 
 async function loadApprovedAdmins() {
 
-    if (!approvedAdminTable) {
+    const table =
+        document.getElementById(
+            "approvedAdmins"
+        );
+
+    if (!table) {
         return;
     }
 
@@ -465,20 +494,13 @@ async function loadApprovedAdmins() {
     const {
         data: roles,
         error: roleError
-    } =
-        await supabase
-            .from("user_roles")
-            .select(
-                "user_id, approved"
-            )
-            .eq(
-                "role",
-                "admin"
-            )
-            .eq(
-                "approved",
-                true
-            );
+    } = await supabase
+        .from("user_roles")
+        .select(
+            "user_id, approved"
+        )
+        .eq("role", "admin")
+        .eq("approved", true);
 
 
     if (roleError) {
@@ -487,21 +509,28 @@ async function loadApprovedAdmins() {
             roleError
         );
 
+        table.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    ${escapeHTML(
+                        roleError.message
+                    )}
+                </td>
+            </tr>
+        `;
+
         return;
     }
 
 
-    approvedAdminTable.innerHTML = "";
+    if (!roles || roles.length === 0) {
 
-
-    if (
-        !roles ||
-        roles.length === 0
-    ) {
-
-        approvedAdminTable.innerHTML = `
+        table.innerHTML = `
             <tr>
-                <td colspan="5">
+                <td
+                    colspan="5"
+                    class="empty-state"
+                >
                     No approved administrators.
                 </td>
             </tr>
@@ -513,24 +542,19 @@ async function loadApprovedAdmins() {
 
     const userIds =
         roles.map(
-            role =>
-                role.user_id
+            role => role.user_id
         );
 
 
     const {
         data: profiles,
         error: profileError
-    } =
-        await supabase
-            .from("profiles")
-            .select(
-                "id, full_name, username, email"
-            )
-            .in(
-                "id",
-                userIds
-            );
+    } = await supabase
+        .from("profiles")
+        .select(
+            "id, full_name, username, email"
+        )
+        .in("id", userIds);
 
 
     if (profileError) {
@@ -543,7 +567,27 @@ async function loadApprovedAdmins() {
     }
 
 
-    profiles.forEach(profile => {
+    const profileMap =
+        new Map(
+            (profiles || []).map(
+                profile => [
+                    profile.id,
+                    profile
+                ]
+            )
+        );
+
+
+    table.innerHTML = "";
+
+
+    roles.forEach(role => {
+
+        const profile =
+            profileMap.get(
+                role.user_id
+            );
+
 
         const row =
             document.createElement("tr");
@@ -552,15 +596,24 @@ async function loadApprovedAdmins() {
         row.innerHTML = `
 
             <td>
-                ${escapeHTML(profile.full_name)}
+                ${escapeHTML(
+                    profile?.full_name ||
+                    "Unknown"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(profile.username)}
+                ${escapeHTML(
+                    profile?.username ||
+                    "—"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(profile.email)}
+                ${escapeHTML(
+                    profile?.email ||
+                    "—"
+                )}
             </td>
 
             <td>
@@ -570,25 +623,24 @@ async function loadApprovedAdmins() {
             </td>
 
             <td>
-
                 <button
+                    type="button"
                     class="btn remove-admin-btn"
-                    data-id="${profile.id}"
+                    data-user-id="${role.user_id}"
                 >
                     Remove Access
                 </button>
-
             </td>
 
         `;
 
 
-        approvedAdminTable.appendChild(row);
+        table.appendChild(row);
 
     });
 
 
-    document
+    table
         .querySelectorAll(
             ".remove-admin-btn"
         )
@@ -599,7 +651,7 @@ async function loadApprovedAdmins() {
                 () => {
 
                     removeAdmin(
-                        button.dataset.id,
+                        button.dataset.userId,
                         button
                     );
 
@@ -612,82 +664,17 @@ async function loadApprovedAdmins() {
 
 
 /* =========================================================
-   REMOVE ADMIN
-========================================================= */
-
-async function removeAdmin(
-    userId,
-    button
-) {
-
-    const confirmed =
-        confirm(
-            "Remove administrator access from this account?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    button.disabled = true;
-
-    button.textContent =
-        "Removing...";
-
-
-    const {
-        error
-    } =
-        await supabase.rpc(
-            "remove_admin_access",
-            {
-                target_user_id:
-                    userId
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Remove admin error:",
-            error
-        );
-
-        showMessage(
-            error.message,
-            "error"
-        );
-
-        button.disabled = false;
-
-        button.textContent =
-            "Remove Access";
-
-        return;
-    }
-
-
-    showMessage(
-        "Administrator access removed.",
-        "success"
-    );
-
-
-    await loadDashboard();
-
-}
-
-
-/* =========================================================
-   LOAD STUDENTS
+   STUDENTS
 ========================================================= */
 
 async function loadStudents() {
 
-    if (!studentTable) {
+    const table =
+        document.getElementById(
+            "studentTable"
+        );
+
+    if (!table) {
         return;
     }
 
@@ -695,32 +682,35 @@ async function loadStudents() {
     const {
         data,
         error
-    } =
-        await supabase
-            .from("students")
-            .select(`
-                id,
-                user_id,
-                admission_number,
-                class,
-                optional_subjects
-            `)
-            .order(
-                "admission_number"
-            );
+    } = await supabase
+        .from("students")
+        .select(`
+            id,
+            user_id,
+            admission_number,
+            class,
+            optional_subjects
+        `)
+        .order(
+            "admission_number",
+            {
+                ascending: true
+            }
+        );
 
 
     if (error) {
 
         console.error(
-            "Student error:",
             error
         );
 
-        studentTable.innerHTML = `
+        table.innerHTML = `
             <tr>
                 <td colspan="6">
-                    Unable to load students.
+                    ${escapeHTML(
+                        error.message
+                    )}
                 </td>
             </tr>
         `;
@@ -729,17 +719,14 @@ async function loadStudents() {
     }
 
 
-    studentTable.innerHTML = "";
+    if (!data || data.length === 0) {
 
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
-        studentTable.innerHTML = `
+        table.innerHTML = `
             <tr>
-                <td colspan="6">
+                <td
+                    colspan="6"
+                    class="empty-state"
+                >
                     No students registered.
                 </td>
             </tr>
@@ -758,16 +745,15 @@ async function loadStudents() {
 
     const {
         data: profiles
-    } =
-        await supabase
-            .from("profiles")
-            .select(
-                "id, full_name, username"
-            )
-            .in(
-                "id",
-                userIds
-            );
+    } = await supabase
+        .from("profiles")
+        .select(
+            "id, full_name, username"
+        )
+        .in(
+            "id",
+            userIds
+        );
 
 
     const profileMap =
@@ -781,6 +767,9 @@ async function loadStudents() {
         );
 
 
+    table.innerHTML = "";
+
+
     data.forEach(student => {
 
         const profile =
@@ -789,14 +778,14 @@ async function loadStudents() {
             );
 
 
-        const optionalSubjects =
+        const subjects =
             Array.isArray(
                 student.optional_subjects
             )
                 ? student.optional_subjects.join(
                     ", "
                 )
-                : "None";
+                : "—";
 
 
         const row =
@@ -826,7 +815,7 @@ async function loadStudents() {
 
             <td>
                 ${escapeHTML(
-                    optionalSubjects
+                    subjects
                 )}
             </td>
 
@@ -838,26 +827,25 @@ async function loadStudents() {
             </td>
 
             <td>
-
                 <button
+                    type="button"
                     class="btn delete-student-btn"
-                    data-id="${student.id}"
-                    data-user="${student.user_id}"
+                    data-student-id="${student.id}"
+                    data-user-id="${student.user_id}"
                 >
                     Delete
                 </button>
-
             </td>
 
         `;
 
 
-        studentTable.appendChild(row);
+        table.appendChild(row);
 
     });
 
 
-    document
+    table
         .querySelectorAll(
             ".delete-student-btn"
         )
@@ -868,8 +856,8 @@ async function loadStudents() {
                 () => {
 
                     deleteStudent(
-                        button.dataset.id,
-                        button.dataset.user,
+                        button.dataset.studentId,
+                        button.dataset.userId,
                         button
                     );
 
@@ -877,6 +865,167 @@ async function loadStudents() {
             );
 
         });
+
+}
+
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+async function loadStatistics() {
+
+    const totalStudents =
+        document.getElementById(
+            "totalStudents"
+        );
+
+
+    const totalAdmins =
+        document.getElementById(
+            "totalAdmins"
+        );
+
+
+    const pendingAdmins =
+        document.getElementById(
+            "pendingAdmins"
+        );
+
+
+    if (totalStudents) {
+
+        const {
+            count
+        } = await supabase
+            .from("students")
+            .select(
+                "id",
+                {
+                    count: "exact",
+                    head: true
+                }
+            );
+
+        totalStudents.textContent =
+            count ?? 0;
+    }
+
+
+    if (totalAdmins) {
+
+        const {
+            count
+        } = await supabase
+            .from("user_roles")
+            .select(
+                "user_id",
+                {
+                    count: "exact",
+                    head: true
+                }
+            )
+            .eq(
+                "role",
+                "admin"
+            )
+            .eq(
+                "approved",
+                true
+            );
+
+        totalAdmins.textContent =
+            count ?? 0;
+    }
+
+
+    if (pendingAdmins) {
+
+        const {
+            count
+        } = await supabase
+            .from("admin_requests")
+            .select(
+                "id",
+                {
+                    count: "exact",
+                    head: true
+                }
+            )
+            .eq(
+                "status",
+                "pending"
+            );
+
+        pendingAdmins.textContent =
+            count ?? 0;
+    }
+
+}
+
+
+/* =========================================================
+   REMOVE ADMIN
+========================================================= */
+
+async function removeAdmin(
+    userId,
+    button
+) {
+
+    const confirmed =
+        window.confirm(
+            "Remove administrator access from this account?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "Removing...";
+
+
+    const {
+        error
+    } = await supabase.rpc(
+        "remove_admin_access",
+        {
+            target_user_id:
+                userId
+        }
+    );
+
+
+    if (error) {
+
+        showMessage(
+            `Unable to remove administrator: ${error.message}`,
+            "error"
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            "Remove Access";
+
+        return;
+    }
+
+
+    showMessage(
+        "Administrator access removed.",
+        "success"
+    );
+
+
+    await loadApprovedAdmins();
+
+    await loadStatistics();
 
 }
 
@@ -892,8 +1041,8 @@ async function deleteStudent(
 ) {
 
     const confirmed =
-        confirm(
-            "Delete this student and their results? This action cannot be undone."
+        window.confirm(
+            "Delete this student and their account? This action cannot be undone."
         );
 
 
@@ -910,28 +1059,22 @@ async function deleteStudent(
 
     const {
         error
-    } =
-        await supabase.rpc(
-            "delete_student_account",
-            {
-                student_record_id:
-                    studentId,
+    } = await supabase.rpc(
+        "delete_student_account",
+        {
+            student_record_id:
+                studentId,
 
-                target_user_id:
-                    userId
-            }
-        );
+            target_user_id:
+                userId
+        }
+    );
 
 
     if (error) {
 
-        console.error(
-            "Delete student error:",
-            error
-        );
-
         showMessage(
-            error.message,
+            `Unable to delete student: ${error.message}`,
             "error"
         );
 
@@ -950,114 +1093,9 @@ async function deleteStudent(
     );
 
 
-    await loadDashboard();
+    await loadStudents();
 
-}
-
-
-/* =========================================================
-   STATISTICS
-========================================================= */
-
-async function loadStatistics() {
-
-    const totalStudentsElement =
-        document.getElementById(
-            "totalStudents"
-        );
-
-
-    const totalAdminsElement =
-        document.getElementById(
-            "totalAdmins"
-        );
-
-
-    const pendingAdminsElement =
-        document.getElementById(
-            "pendingAdmins"
-        );
-
-
-    if (
-        totalStudentsElement
-    ) {
-
-        const {
-            count
-        } =
-            await supabase
-                .from("students")
-                .select(
-                    "id",
-                    {
-                        count: "exact",
-                        head: true
-                    }
-                );
-
-
-        totalStudentsElement.textContent =
-            count ?? 0;
-    }
-
-
-    if (
-        totalAdminsElement
-    ) {
-
-        const {
-            count
-        } =
-            await supabase
-                .from("user_roles")
-                .select(
-                    "id",
-                    {
-                        count: "exact",
-                        head: true
-                    }
-                )
-                .eq(
-                    "role",
-                    "admin"
-                )
-                .eq(
-                    "approved",
-                    true
-                );
-
-
-        totalAdminsElement.textContent =
-            count ?? 0;
-    }
-
-
-    if (
-        pendingAdminsElement
-    ) {
-
-        const {
-            count
-        } =
-            await supabase
-                .from("admin_requests")
-                .select(
-                    "id",
-                    {
-                        count: "exact",
-                        head: true
-                    }
-                )
-                .eq(
-                    "status",
-                    "pending"
-                );
-
-
-        pendingAdminsElement.textContent =
-            count ?? 0;
-    }
+    await loadStatistics();
 
 }
 
@@ -1108,10 +1146,16 @@ if (refreshButton) {
             refreshButton.disabled =
                 true;
 
+            refreshButton.textContent =
+                "↻ Loading...";
+
             await loadDashboard();
 
             refreshButton.disabled =
                 false;
+
+            refreshButton.textContent =
+                "↻ Refresh";
 
         }
     );
@@ -1128,7 +1172,13 @@ function showMessage(
     type = "success"
 ) {
 
-    if (!message) {
+    const element =
+        document.getElementById(
+            "superAdminMessage"
+        );
+
+
+    if (!element) {
 
         alert(text);
 
@@ -1136,32 +1186,32 @@ function showMessage(
     }
 
 
-    message.textContent =
+    element.textContent =
         text;
 
 
-    message.className =
+    element.className =
         `super-admin-message ${type}`;
 
 
     setTimeout(
         () => {
 
-            message.textContent =
+            element.textContent =
                 "";
 
-            message.className =
+            element.className =
                 "super-admin-message";
 
         },
-        5000
+        6000
     );
 
 }
 
 
 /* =========================================================
-   DATE FORMAT
+   DATE
 ========================================================= */
 
 function formatDate(
@@ -1173,22 +1223,21 @@ function formatDate(
     }
 
 
-    return new Date(
-        date
-    ).toLocaleDateString(
-        "en-KE",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
+    return new Date(date)
+        .toLocaleDateString(
+            "en-KE",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
 
 }
 
 
 /* =========================================================
-   HTML SECURITY
+   HTML ESCAPE
 ========================================================= */
 
 function escapeHTML(
@@ -1199,32 +1248,16 @@ function escapeHTML(
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
 
 
     return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
+```
