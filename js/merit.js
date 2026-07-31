@@ -1,5 +1,6 @@
 // ==========================================
-// GRADE HUB - MERIT LIST WITH POINTS
+// GRADE HUB - MERIT LIST
+// DYNAMIC CBC GRADING + POINTS
 // ==========================================
 
 import { supabase } from "./supabase.js";
@@ -44,111 +45,355 @@ let allLearners = [];
 
 
 // ==========================================
-// CBC GRADE
+// DEFAULT GRADING
 // ==========================================
+// Used only if the grading configuration
+// cannot be loaded from Supabase.
 
-function getCBCGrade(marks) {
+const DEFAULT_GRADING = [
+    {
+        grade: "EE1",
+        min_marks: 90,
+        max_marks: 100,
+        points: 8,
+        description: "Exceeding Expectations"
+    },
 
-    marks = Number(marks);
+    {
+        grade: "EE2",
+        min_marks: 80,
+        max_marks: 89,
+        points: 7,
+        description: "Exceeding Expectations"
+    },
 
-    if (marks >= 90) return "EE1";
-    if (marks >= 80) return "EE2";
-    if (marks >= 70) return "ME1";
-    if (marks >= 60) return "ME2";
-    if (marks >= 50) return "AE1";
-    if (marks >= 40) return "AE2";
-    if (marks >= 30) return "BE1";
+    {
+        grade: "ME1",
+        min_marks: 70,
+        max_marks: 79,
+        points: 6,
+        description: "Meeting Expectations"
+    },
 
-    return "BE2";
-}
+    {
+        grade: "ME2",
+        min_marks: 60,
+        max_marks: 69,
+        points: 5,
+        description: "Meeting Expectations"
+    },
 
+    {
+        grade: "AE1",
+        min_marks: 50,
+        max_marks: 59,
+        points: 4,
+        description: "Approaching Expectations"
+    },
 
-// ==========================================
-// CBC DESCRIPTION
-// ==========================================
+    {
+        grade: "AE2",
+        min_marks: 40,
+        max_marks: 49,
+        points: 3,
+        description: "Approaching Expectations"
+    },
 
-function getCBCDescription(grade) {
+    {
+        grade: "BE1",
+        min_marks: 30,
+        max_marks: 39,
+        points: 2,
+        description: "Below Expectations"
+    },
 
-    switch (grade) {
-
-        case "EE1":
-        case "EE2":
-            return "Exceeding Expectations";
-
-        case "ME1":
-        case "ME2":
-            return "Meeting Expectations";
-
-        case "AE1":
-        case "AE2":
-            return "Approaching Expectations";
-
-        case "BE1":
-        case "BE2":
-            return "Below Expectations";
-
-        default:
-            return "-";
+    {
+        grade: "BE2",
+        min_marks: 0,
+        max_marks: 29,
+        points: 1,
+        description: "Below Expectations"
     }
-}
+];
 
 
-// ==========================================
-// POINTS
-// ==========================================
-
-function getPoints(marks) {
-
-    const grade =
-        getCBCGrade(marks);
-
-
-    switch (grade) {
-
-        case "EE1":
-            return 8;
-
-        case "EE2":
-            return 7;
-
-        case "ME1":
-            return 6;
-
-        case "ME2":
-            return 5;
-
-        case "AE1":
-            return 4;
-
-        case "AE2":
-            return 3;
-
-        case "BE1":
-            return 2;
-
-        case "BE2":
-            return 1;
-
-        default:
-            return 0;
-    }
-}
+// Current grading configuration
+let gradingSystem = [];
 
 
 // ==========================================
 // MESSAGE
 // ==========================================
 
-function showMessage(
-    text,
-    type = "error"
-) {
+function showMessage(text, type = "error") {
 
     message.textContent = text;
 
     message.className =
         `message show ${type}`;
+}
 
+
+// ==========================================
+// HTML SAFETY
+// ==========================================
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+// ==========================================
+// FORMAT AVERAGE
+// ==========================================
+
+function formatAverage(value) {
+
+    return Math.round(
+        Number(value) * 100
+    ) / 100;
+}
+
+
+// ==========================================
+// LOAD GRADING SYSTEM
+// ==========================================
+//
+// IMPORTANT:
+// Change "grading_system" below ONLY if the
+// table you created in Supabase has a
+// different name.
+//
+// Expected columns:
+//
+// grade
+// min_marks
+// max_marks
+// points
+// description
+//
+// ==========================================
+
+async function loadGradingSystem() {
+
+    const {
+        data,
+        error
+    } = await supabase
+
+        .from("grading_system")
+
+        .select(`
+            grade,
+            min_marks,
+            max_marks,
+            points,
+            description
+        `)
+
+        .order(
+            "min_marks",
+            {
+                ascending: false
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            "Grading system error:",
+            error
+        );
+
+
+        console.warn(
+            "Using default CBC grading."
+        );
+
+
+        gradingSystem =
+            DEFAULT_GRADING;
+
+
+        return;
+    }
+
+
+    if (
+        !data ||
+        data.length === 0
+    ) {
+
+        console.warn(
+            "No grading configuration found. Using defaults."
+        );
+
+
+        gradingSystem =
+            DEFAULT_GRADING;
+
+
+        return;
+    }
+
+
+    gradingSystem =
+        data.map(row => ({
+
+            grade:
+                row.grade,
+
+            min_marks:
+                Number(
+                    row.min_marks
+                ),
+
+            max_marks:
+                Number(
+                    row.max_marks
+                ),
+
+            points:
+                Number(
+                    row.points
+                ),
+
+            description:
+                row.description ||
+                ""
+
+        }));
+
+
+    console.log(
+        "Grading system loaded:",
+        gradingSystem
+    );
+}
+
+
+// ==========================================
+// GET CBC GRADE
+// ==========================================
+
+function getCBCGrade(marks) {
+
+    marks =
+        Number(marks);
+
+
+    const grade =
+        gradingSystem.find(
+            item =>
+                marks >=
+                    item.min_marks &&
+
+                marks <=
+                    item.max_marks
+        );
+
+
+    if (grade) {
+
+        return grade.grade;
+
+    }
+
+
+    return "-";
+}
+
+
+// ==========================================
+// GET CBC DESCRIPTION
+// ==========================================
+
+function getCBCDescription(grade) {
+
+    const item =
+        gradingSystem.find(
+            grading =>
+                grading.grade ===
+                grade
+        );
+
+
+    if (item) {
+
+        return item.description;
+
+    }
+
+
+    return "-";
+}
+
+
+// ==========================================
+// GET POINTS
+// ==========================================
+
+function getPoints(marks) {
+
+    marks =
+        Number(marks);
+
+
+    const item =
+        gradingSystem.find(
+            grade =>
+                marks >=
+                    grade.min_marks &&
+
+                marks <=
+                    grade.max_marks
+        );
+
+
+    if (item) {
+
+        return Number(
+            item.points
+        ) || 0;
+
+    }
+
+
+    return 0;
 }
 
 
@@ -161,7 +406,8 @@ async function checkAdmin() {
     const {
         data,
         error
-    } = await supabase.auth.getUser();
+    } =
+        await supabase.auth.getUser();
 
 
     if (
@@ -180,18 +426,19 @@ async function checkAdmin() {
     const {
         data: roles,
         error: roleError
-    } = await supabase
+    } =
+        await supabase
 
-        .from("user_roles")
+            .from("user_roles")
 
-        .select(
-            "role, approved"
-        )
+            .select(
+                "role, approved"
+            )
 
-        .eq(
-            "user_id",
-            data.user.id
-        );
+            .eq(
+                "user_id",
+                data.user.id
+            );
 
 
     if (roleError) {
@@ -200,9 +447,11 @@ async function checkAdmin() {
             roleError
         );
 
+
         showMessage(
             "Unable to verify account permissions."
         );
+
 
         return false;
     }
@@ -212,6 +461,7 @@ async function checkAdmin() {
         (roles || []).find(
             role =>
                 role.approved === true &&
+
                 (
                     role.role === "admin" ||
                     role.role === "super_admin"
@@ -247,7 +497,6 @@ async function loadLearners() {
                 class="empty-row"
             >
                 Loading learners...
-
             </td>
 
         </tr>
@@ -265,26 +514,43 @@ async function loadLearners() {
 
 
     // ======================================
+    // LOAD GRADING SYSTEM FIRST
+    // ======================================
+
+    await loadGradingSystem();
+
+
+    // ======================================
     // STUDENTS
     // ======================================
 
     const {
         data: students,
         error: studentError
-    } = await supabase
+    } =
+        await supabase
 
-        .from("students")
+            .from("students")
 
-        .select(`
-            id,
-            user_id,
-            admission_number,
-            class,
-            profiles(
-                full_name,
-                username
-            )
-        `);
+            .select(`
+
+                id,
+
+                user_id,
+
+                admission_number,
+
+                class,
+
+                profiles(
+
+                    full_name,
+
+                    username
+
+                )
+
+            `);
 
 
     if (studentError) {
@@ -293,9 +559,11 @@ async function loadLearners() {
             studentError
         );
 
+
         showMessage(
             studentError.message
         );
+
 
         return;
     }
@@ -308,17 +576,24 @@ async function loadLearners() {
     const {
         data: results,
         error: resultError
-    } = await supabase
+    } =
+        await supabase
 
-        .from("results")
+            .from("results")
 
-        .select(`
-            student_id,
-            subject,
-            marks,
-            term,
-            year
-        `);
+            .select(`
+
+                student_id,
+
+                subject,
+
+                marks,
+
+                term,
+
+                year
+
+            `);
 
 
     if (resultError) {
@@ -327,9 +602,11 @@ async function loadLearners() {
             resultError
         );
 
+
         showMessage(
             resultError.message
         );
+
 
         return;
     }
@@ -342,7 +619,7 @@ async function loadLearners() {
     allLearners = [];
 
 
-    students.forEach(
+    (students || []).forEach(
         student => {
 
             const studentResults =
@@ -357,7 +634,9 @@ async function loadLearners() {
                 Array.isArray(
                     student.profiles
                 )
+
                     ? student.profiles[0]
+
                     : student.profiles;
 
 
@@ -394,7 +673,6 @@ async function loadLearners() {
     populateClasses();
 
     renderMeritList();
-
 }
 
 
@@ -476,12 +754,16 @@ function populateClasses() {
     const classes =
         [
             ...new Set(
+
                 allLearners
+
                     .map(
                         learner =>
                             learner.className
                     )
+
                     .filter(Boolean)
+
             )
         ];
 
@@ -506,11 +788,14 @@ function populateClasses() {
                     "option"
                 );
 
+
             option.value =
                 className;
 
+
             option.textContent =
                 className;
+
 
             classFilter.appendChild(
                 option
@@ -518,12 +803,11 @@ function populateClasses() {
 
         }
     );
-
 }
 
 
 // ==========================================
-// GET FILTERED LEARNERS
+// FILTER LEARNERS
 // ==========================================
 
 function getFilteredLearners() {
@@ -549,30 +833,32 @@ function getFilteredLearners() {
     return allLearners.filter(
         learner => {
 
-            // SEARCH
-
             const matchesSearch =
                 !searchValue ||
 
                 learner.name
                     .toLowerCase()
-                    .includes(searchValue) ||
+                    .includes(
+                        searchValue
+                    ) ||
 
                 learner.admission
                     .toLowerCase()
-                    .includes(searchValue);
+                    .includes(
+                        searchValue
+                    );
 
 
             if (!matchesSearch) {
+
                 return false;
             }
 
 
-            // CLASS
-
             if (
                 selectedClass !==
                 "all" &&
+
                 learner.className !==
                 selectedClass
             ) {
@@ -580,8 +866,6 @@ function getFilteredLearners() {
                 return false;
             }
 
-
-            // TERM/YEAR
 
             let relevantResults =
                 learner.results;
@@ -598,7 +882,6 @@ function getFilteredLearners() {
                             result.term ===
                             selectedTerm
                     );
-
             }
 
 
@@ -617,37 +900,26 @@ function getFilteredLearners() {
                                 selectedYear
                             )
                     );
-
             }
 
 
             if (
-                (
-                    selectedTerm !==
-                    "all"
-                ) ||
-                (
-                    selectedYear !==
-                    "all"
-                )
+                selectedTerm !== "all" ||
+                selectedYear !== "all"
             ) {
 
                 if (
-                    relevantResults.length ===
-                    0
+                    relevantResults.length === 0
                 ) {
 
                     return false;
                 }
-
             }
 
 
             return true;
-
         }
     );
-
 }
 
 
@@ -692,7 +964,6 @@ function renderMeritList() {
                                 result.term ===
                                 selectedTerm
                         );
-
                 }
 
 
@@ -711,7 +982,6 @@ function renderMeritList() {
                                     selectedYear
                                 )
                         );
-
                 }
 
 
@@ -741,18 +1011,12 @@ function renderMeritList() {
                         relevantResults.length
 
                 };
-
             }
         );
 
 
     // ======================================
     // RANKING
-    // ======================================
-    //
-    // 1. Highest total points first
-    // 2. Highest average as tiebreaker
-    //
     // ======================================
 
     learners.sort(
@@ -767,7 +1031,6 @@ function renderMeritList() {
                     b.totalPoints -
                     a.totalPoints
                 );
-
             }
 
 
@@ -775,7 +1038,6 @@ function renderMeritList() {
                 b.rankingAverage -
                 a.rankingAverage
             );
-
         }
     );
 
@@ -802,14 +1064,16 @@ function renderMeritList() {
         topLearner.textContent =
             learners[0].name;
 
-    } else {
+    }
+
+    else {
 
         highestAverage.textContent =
             "0%";
 
+
         topLearner.textContent =
             "-";
-
     }
 
 
@@ -829,6 +1093,7 @@ function renderMeritList() {
                     colspan="8"
                     class="empty-row"
                 >
+
                     No learners match
                     the selected filters.
 
@@ -977,6 +1242,7 @@ function renderMeritList() {
 
                     </strong>
 
+
                     <small style="
                         color:#697386;
                         display:block;
@@ -993,7 +1259,9 @@ function renderMeritList() {
 
                     <span class="cbc-badge">
 
-                        ${grade}
+                        ${escapeHTML(
+                            grade
+                        )}
 
                     </span>
 
@@ -1002,7 +1270,9 @@ function renderMeritList() {
                         class="cbc-description"
                     >
 
-                        ${description}
+                        ${escapeHTML(
+                            description
+                        )}
 
                     </span>
 
@@ -1014,59 +1284,8 @@ function renderMeritList() {
             meritTable.appendChild(
                 row
             );
-
         }
     );
-
-}
-
-
-// ==========================================
-// FORMAT AVERAGE
-// ==========================================
-
-function formatAverage(value) {
-
-    return Math.round(
-        Number(value) * 100
-    ) / 100;
-
-}
-
-
-// ==========================================
-// ESCAPE HTML
-// ==========================================
-
-function escapeHTML(value) {
-
-    return String(value)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
 }
 
 
@@ -1098,9 +1317,38 @@ yearFilter.addEventListener(
 );
 
 
+// ==========================================
+// REFRESH
+// ==========================================
+
 refreshButton.addEventListener(
     "click",
-    loadLearners
+    async () => {
+
+        refreshButton.disabled =
+            true;
+
+
+        refreshButton.textContent =
+            "Refreshing...";
+
+
+        try {
+
+            await loadLearners();
+
+        }
+
+        finally {
+
+            refreshButton.disabled =
+                false;
+
+
+            refreshButton.textContent =
+                "Refresh";
+        }
+    }
 );
 
 
@@ -1122,7 +1370,6 @@ document
 
             window.location.href =
                 "index.html";
-
         }
     );
 
