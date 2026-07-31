@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 
 const logoutButton = document.getElementById("logoutButton");
@@ -844,4 +843,3 @@ async function loadDashboard() {
 ========================= */
 
 loadDashboard();
-```
