@@ -5,11 +5,524 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Grade Hub - Student Dashboard</title>
 
 <link rel="stylesheet" href="css/style.css">
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    margin: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #f8fafc
+        );
+
+    color: #172033;
+
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+/* ==========================================
+   HEADER
+========================================== */
+
+header {
+
+    min-height: 72px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding:
+        15px
+        5%;
+
+    background: #111827;
+
+    color: white;
+
+    box-shadow:
+        0 4px 18px
+        rgba(15,23,42,.12);
+}
+
+
+header h1 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+
+nav {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+nav a {
+
+    color: #cbd5e1;
+
+    text-decoration: none;
+
+    padding:
+        9px
+        13px;
+
+    border-radius: 9px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    transition: .2s;
+}
+
+
+nav a:hover {
+
+    color: white;
+
+    background: #1f2937;
+}
+
+
+#logout {
+
+    color: #fecaca;
+
+}
+
+
+#logout:hover {
+
+    background: #7f1d1d;
+
+    color: white;
+}
+
+
+/* ==========================================
+   DASHBOARD
+========================================== */
+
+.dashboard {
+
+    width: min(
+        1150px,
+        92%
+    );
+
+    margin:
+        35px
+        auto;
+
+}
+
+
+/* ==========================================
+   CARDS
+========================================== */
+
+.card {
+
+    background: white;
+
+    border:
+        1px solid
+        #e5e9f2;
+
+    border-radius: 18px;
+
+    padding: 24px;
+
+    margin-bottom: 24px;
+
+    box-shadow:
+        0 8px 28px
+        rgba(15,23,42,.06);
+}
+
+
+.card h2 {
+
+    margin:
+        0 0 18px;
+
+    font-size: 20px;
+}
+
+
+/* ==========================================
+   PROFILE
+========================================== */
+
+.profile-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 15px;
+}
+
+
+.profile-item {
+
+    padding: 16px;
+
+    background: #f8fafc;
+
+    border:
+        1px solid
+        #e5e9f2;
+
+    border-radius: 12px;
+}
+
+
+.profile-item span {
+
+    display: block;
+
+    color: #697386;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    margin-bottom: 6px;
+
+    text-transform: uppercase;
+}
+
+
+.profile-item strong {
+
+    font-size: 15px;
+
+    color: #172033;
+
+    word-break: break-word;
+}
+
+
+.profile-wide {
+
+    grid-column:
+        1 / -1;
+}
+
+
+.dashboard-error {
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    background: #fef2f2;
+
+    color: #991b1b;
+
+    border:
+        1px solid
+        #fecaca;
+}
+
+
+/* ==========================================
+   STAT CARDS
+========================================== */
+
+.cards {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 18px;
+
+    margin-bottom: 24px;
+}
+
+
+.stat-card {
+
+    background: white;
+
+    border:
+        1px solid
+        #e5e9f2;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    box-shadow:
+        0 8px 28px
+        rgba(15,23,42,.06);
+}
+
+
+.stat-card h3 {
+
+    margin: 0;
+
+    color: #697386;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.stat-card p {
+
+    margin:
+        10px
+        0
+        0;
+
+    color: #4f46e5;
+
+    font-size: 30px;
+
+    font-weight: 900;
+}
+
+
+/* ==========================================
+   TABLE
+========================================== */
+
+.table-container {
+
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 550px;
+}
+
+
+th,
+td {
+
+    padding:
+        14px
+        16px;
+
+    text-align: left;
+
+    border-bottom:
+        1px solid
+        #e5e9f2;
+
+    font-size: 14px;
+}
+
+
+th {
+
+    background: #f8fafc;
+
+    color: #475569;
+
+    font-weight: 800;
+}
+
+
+td {
+
+    color: #334155;
+}
+
+
+tbody tr:hover {
+
+    background: #f8fafc;
+}
+
+
+.empty {
+
+    text-align: center;
+
+    color: #697386;
+
+    padding: 30px;
+}
+
+
+/* ==========================================
+   CHART
+========================================== */
+
+#performanceChart {
+
+    width: 100%;
+
+    max-height: 400px;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (
+    max-width: 750px
+) {
+
+    header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding:
+            16px
+            5%;
+    }
+
+
+    nav {
+
+        width: 100%;
+    }
+
+
+    nav a {
+
+        flex: 1;
+
+        text-align: center;
+    }
+
+
+    .dashboard {
+
+        width: 94%;
+
+        margin:
+            20px
+            auto;
+    }
+
+
+    .cards {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .profile-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .profile-wide {
+
+        grid-column:
+            auto;
+    }
+
+
+    .card {
+
+        padding: 18px;
+
+        border-radius: 14px;
+    }
+
+}
+
+
+@media (
+    max-width: 450px
+) {
+
+    header h1 {
+
+        font-size: 19px;
+    }
+
+
+    .stat-card p {
+
+        font-size: 26px;
+    }
+
+
+    .card h2 {
+
+        font-size: 18px;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -19,23 +532,22 @@
 
 <header>
 
-<h1>
-Student Dashboard
-</h1>
+    <h1>
+        Grade Hub Student
+    </h1>
 
 
-<nav>
+    <nav>
 
-<a href="student.html">
-Results
-</a>
+        <a href="student.html">
+            Results
+        </a>
 
-<a href="#" id="logout">
-Logout
-</a>
+        <a href="#" id="logout">
+            Logout
+        </a>
 
-</nav>
-
+    </nav>
 
 </header>
 
@@ -44,187 +556,158 @@ Logout
 <section class="dashboard">
 
 
+    <!-- PROFILE -->
 
-<!-- PROFILE CARD -->
+    <div class="card">
 
-<div class="card">
+        <h2>
+            Student Profile
+        </h2>
 
+        <div id="studentProfile">
 
-<h2>
-Student Profile
-</h2>
+            Loading profile...
 
+        </div>
 
-<div id="studentProfile">
+    </div>
 
-Loading profile...
 
-</div>
 
+    <!-- SUMMARY -->
 
-</div>
+    <div class="cards">
 
 
+        <div class="stat-card">
 
+            <h3>
+                Average Marks
+            </h3>
 
-<br>
+            <p id="averageMarks">
+                0%
+            </p>
 
+        </div>
 
 
+        <div class="stat-card">
 
-<!-- SUMMARY CARDS -->
+            <h3>
+                Overall Grade
+            </h3>
 
-<div class="cards">
+            <p id="overallGrade">
+                -
+            </p>
 
+        </div>
 
 
-<div class="stat-card">
+        <div class="stat-card">
 
-<h3>
-Average Marks
-</h3>
+            <h3>
+                Optional Subjects
+            </h3>
 
-<p id="averageMarks">
-0%
-</p>
+            <p id="subjectCount">
+                0
+            </p>
 
+        </div>
 
-</div>
 
+    </div>
 
 
 
-<div class="stat-card">
+    <!-- RESULTS -->
 
-<h3>
-CBC Grade
-</h3>
+    <div class="card">
 
-<p id="overallGrade">
--
-</p>
+        <h2>
+            My Results
+        </h2>
 
 
-</div>
+        <div class="table-container">
 
+            <table>
 
+                <thead>
 
-<div class="stat-card">
+                    <tr>
 
-<h3>
-Subjects
-</h3>
+                        <th>
+                            Subject
+                        </th>
 
-<p id="subjectCount">
-0
-</p>
+                        <th>
+                            Marks
+                        </th>
 
+                        <th>
+                            Grade
+                        </th>
 
-</div>
+                    </tr>
 
+                </thead>
 
 
-</div>
+                <tbody id="resultTable">
 
+                    <tr>
 
+                        <td
+                            colspan="3"
+                            class="empty"
+                        >
+                            Loading results...
+                        </td>
 
+                    </tr>
 
+                </tbody>
 
-<!-- RESULTS TABLE -->
+            </table>
 
+        </div>
 
-<div class="card">
+    </div>
 
 
-<h2>
-My Results
-</h2>
 
+    <!-- GRAPH -->
 
+    <div class="card">
 
-<div class="table-container">
+        <h2>
+            Performance Analysis
+        </h2>
 
 
-<table>
+        <canvas
+            id="performanceChart"
+        ></canvas>
 
-
-<thead>
-
-<tr>
-
-<th>
-Subject
-</th>
-
-
-<th>
-Marks
-</th>
-
-
-<th>
-Grade
-</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody id="resultTable">
-
-
-</tbody>
-
-
-</table>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-<br>
-
-
-
-
-<!-- GRAPH -->
-
-
-<div class="card">
-
-
-<h2>
-Performance Analysis
-</h2>
-
-
-<canvas id="performanceChart"></canvas>
-
-
-</div>
-
+    </div>
 
 
 </section>
 
 
 
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js"
+></script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script type="module" src="js/student.js"></script>
+<script
+    type="module"
+    src="js/student.js"
+></script>
 
 
 </body>
