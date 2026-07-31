@@ -3,13 +3,671 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>Grade Hub - Upload Results</title>
+    <title>Grade Hub - Upload Results</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        /* ==========================================
+           GRADE HUB UPLOAD PAGE
+        ========================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
+
+            color: #172033;
+        }
+
+
+        /* ==========================================
+           HEADER
+        ========================================== */
+
+        header {
+            min-height: 72px;
+
+            padding:
+                0 30px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            background: #111827;
+
+            color: white;
+
+            box-shadow:
+                0 4px 18px
+                rgba(15, 23, 42, .12);
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 20;
+        }
+
+
+        header h1 {
+            margin: 0;
+
+            font-size: 21px;
+
+            font-weight: 800;
+
+            letter-spacing: -.3px;
+        }
+
+
+        header nav {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+
+        header nav a {
+            text-decoration: none;
+
+            color: #dbeafe;
+
+            padding:
+                9px 13px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition:
+                background .2s,
+                color .2s;
+        }
+
+
+        header nav a:hover {
+            background: #1f2937;
+
+            color: white;
+        }
+
+
+        /* ==========================================
+           MAIN
+        ========================================== */
+
+        .upload-page {
+            width: min(
+                1050px,
+                calc(100% - 32px)
+            );
+
+            margin:
+                30px auto
+                50px;
+        }
+
+
+        .page-heading {
+            margin-bottom: 22px;
+        }
+
+
+        .page-heading h2 {
+            margin: 0 0 6px;
+
+            font-size: 28px;
+
+            letter-spacing: -.6px;
+        }
+
+
+        .page-heading p {
+            margin: 0;
+
+            color: #697386;
+
+            font-size: 15px;
+        }
+
+
+        /* ==========================================
+           CARDS
+        ========================================== */
+
+        .upload-card {
+            background: white;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 18px;
+
+            padding: 24px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, .055);
+        }
+
+
+        .card-heading {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .card-icon {
+            width: 42px;
+
+            height: 42px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 11px;
+
+            background: #eef2ff;
+
+            color: #4f46e5;
+
+            font-weight: 900;
+
+            font-size: 17px;
+        }
+
+
+        .card-heading h3 {
+            margin: 0;
+
+            font-size: 18px;
+        }
+
+
+        .card-heading p {
+            margin: 3px 0 0;
+
+            color: #697386;
+
+            font-size: 13px;
+        }
+
+
+        /* ==========================================
+           STUDENT INFORMATION
+        ========================================== */
+
+        #studentInfo {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 12px;
+        }
+
+
+        .student-detail {
+            background: #f8fafc;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 12px;
+
+            padding: 15px;
+        }
+
+
+        .student-detail span {
+            display: block;
+
+            color: #697386;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            margin-bottom: 5px;
+
+            text-transform: uppercase;
+
+            letter-spacing: .4px;
+        }
+
+
+        .student-detail strong {
+            font-size: 15px;
+
+            color: #172033;
+        }
+
+
+        /* ==========================================
+           FORM
+        ========================================== */
+
+        .subject-section {
+            margin-top: 25px;
+        }
+
+
+        .subject-section:first-of-type {
+            margin-top: 0;
+        }
+
+
+        .subject-section h3 {
+            margin:
+                0 0 14px;
+
+            font-size: 16px;
+
+            color: #172033;
+        }
+
+
+        .subject-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 15px;
+        }
+
+
+        .subject-box {
+            padding: 16px;
+
+            background: #f8fafc;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 13px;
+        }
+
+
+        .subject-box label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            color: #334155;
+        }
+
+
+        .subject-box input,
+        .form-control,
+        .subject-name {
+            width: 100%;
+
+            padding:
+                11px 12px;
+
+            border:
+                1px solid #d9deea;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #172033;
+
+            font: inherit;
+
+            outline: none;
+
+            transition:
+                border .2s,
+                box-shadow .2s;
+        }
+
+
+        .subject-box input:focus,
+        .form-control:focus,
+        .subject-name:focus {
+            border-color: #4f46e5;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .10);
+        }
+
+
+        .subject-name {
+            margin-bottom: 9px;
+
+            background: #f1f5f9;
+
+            font-weight: 700;
+
+            color: #475569;
+
+            cursor: not-allowed;
+        }
+
+
+        /* ==========================================
+           OPTIONAL SUBJECT
+        ========================================== */
+
+        .optional-box {
+            background:
+                linear-gradient(
+                    135deg,
+                    #fafaff,
+                    #f8fafc
+                );
+        }
+
+
+        .optional-title {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 10px;
+
+            margin-bottom: 10px;
+        }
+
+
+        .optional-title span {
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: #4f46e5;
+
+            background: #eef2ff;
+
+            padding:
+                4px 8px;
+
+            border-radius: 999px;
+        }
+
+
+        /* ==========================================
+           ACADEMIC DETAILS
+        ========================================== */
+
+        .academic-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 15px;
+
+            margin-top: 25px;
+        }
+
+
+        .academic-field label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+
+        .academic-field select,
+        .academic-field input {
+            width: 100%;
+
+            padding:
+                12px;
+
+            border:
+                1px solid #d9deea;
+
+            border-radius: 9px;
+
+            background: white;
+
+            font: inherit;
+
+            outline: none;
+        }
+
+
+        .academic-field select:focus,
+        .academic-field input:focus {
+            border-color: #4f46e5;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .1);
+        }
+
+
+        /* ==========================================
+           SAVE BUTTON
+        ========================================== */
+
+        .form-actions {
+            margin-top: 25px;
+
+            display: flex;
+
+            justify-content: flex-end;
+        }
+
+
+        .save-button {
+            border: 0;
+
+            border-radius: 10px;
+
+            padding:
+                13px 22px;
+
+            background: #4f46e5;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 5px 14px
+                rgba(79, 70, 229, .22);
+
+            transition:
+                transform .15s,
+                background .2s;
+        }
+
+
+        .save-button:hover {
+            background: #4338ca;
+
+            transform:
+                translateY(-1px);
+        }
+
+
+        .save-button:disabled {
+            opacity: .6;
+
+            cursor: not-allowed;
+
+            transform: none;
+        }
+
+
+        /* ==========================================
+           MESSAGE
+        ========================================== */
+
+        #message {
+            display: none;
+
+            margin-top: 18px;
+
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        /* ==========================================
+           RESPONSIVE
+        ========================================== */
+
+        @media (max-width: 750px) {
+
+            header {
+                padding:
+                    14px 18px;
+
+                flex-direction: column;
+
+                align-items: flex-start;
+
+                position: relative;
+            }
+
+
+            header nav {
+                width: 100%;
+            }
+
+
+            header nav a {
+                background: #1f2937;
+            }
+
+
+            .upload-page {
+                width:
+                    calc(100% - 22px);
+
+                margin:
+                    20px auto
+                    35px;
+            }
+
+
+            .upload-card {
+                padding: 18px;
+            }
+
+
+            #studentInfo {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .subject-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .academic-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .form-actions {
+                justify-content:
+                    stretch;
+            }
+
+
+            .save-button {
+                width: 100%;
+            }
+
+        }
+
+
+        @media (max-width: 430px) {
+
+            .page-heading h2 {
+                font-size: 23px;
+            }
+
+
+            .upload-card {
+                padding: 15px;
+            }
+
+
+            header h1 {
+                font-size: 18px;
+            }
+
+        }
+
+    </style>
 
 </head>
 
@@ -19,255 +677,445 @@
 
 <header>
 
-<h1>
-Upload Student Results
-</h1>
+    <h1>
+        Grade Hub
+    </h1>
 
 
-<nav>
+    <nav>
 
-<a href="admin.html">
-Back Dashboard
-</a>
+        <a href="admin.html">
+            Back Dashboard
+        </a>
 
-<a href="#" id="logout">
-Logout
-</a>
 
-</nav>
+        <a href="#" id="logout">
+            Logout
+        </a>
 
+    </nav>
 
 </header>
 
 
 
-<section class="dashboard">
+<main class="upload-page">
 
 
-<div class="card">
+    <div class="page-heading">
 
+        <h2>
+            Upload Student Results
+        </h2>
 
-<h2>
-Student Information
-</h2>
+        <p>
+            Enter and save academic results for the selected student.
+        </p>
 
+    </div>
 
-<div id="studentInfo">
 
-Loading student...
 
-</div>
+    <!-- ==========================================
+         STUDENT INFORMATION
+    =========================================== -->
 
+    <section class="upload-card">
 
 
-</div>
+        <div class="card-heading">
 
+            <div class="card-icon">
+                S
+            </div>
 
+            <div>
 
+                <h3>
+                    Student Information
+                </h3>
 
-<br>
+                <p>
+                    Confirm the student before entering results.
+                </p>
 
+            </div>
 
+        </div>
 
-<div class="card">
 
+        <div id="studentInfo">
 
-<h2>
-Enter Marks
-</h2>
+            <div class="student-detail">
 
+                <span>
+                    Student
+                </span>
 
+                <strong>
+                    Loading...
+                </strong>
 
-<form id="resultForm">
+            </div>
 
+        </div>
 
-<h3>
-Compulsory Subjects
-</h3>
 
+    </section>
 
-<label>
-Mathematics
-</label>
 
-<input 
-type="number"
-id="mathematics"
-min="0"
-max="100"
-required>
 
+    <!-- ==========================================
+         RESULTS FORM
+    =========================================== -->
 
+    <section class="upload-card">
 
-<label>
-English
-</label>
 
-<input 
-type="number"
-id="english"
-min="0"
-max="100"
-required>
+        <div class="card-heading">
 
+            <div class="card-icon">
+                R
+            </div>
 
+            <div>
 
-<label>
-Kiswahili
-</label>
+                <h3>
+                    Enter Marks
+                </h3>
 
-<input 
-type="number"
-id="kiswahili"
-min="0"
-max="100"
-required>
+                <p>
+                    Enter marks between 0 and 100.
+                </p>
 
+            </div>
 
+        </div>
 
-<label>
-CSL
-</label>
 
-<input 
-type="number"
-id="csl"
-min="0"
-max="100"
-required>
 
+        <form id="resultForm">
 
 
+            <!-- COMPULSORY -->
 
+            <div class="subject-section">
 
-<h3>
-Optional Subjects
-</h3>
+                <h3>
+                    Compulsory Subjects
+                </h3>
 
 
+                <div class="subject-grid">
 
-<label>
-Optional Subject 1
-</label>
 
-<input
-type="text"
-id="optionalName1"
-readonly>
+                    <div class="subject-box">
 
+                        <label for="mathematics">
+                            Mathematics
+                        </label>
 
+                        <input
+                            type="number"
+                            id="mathematics"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                            required
+                        >
 
-<input 
-type="number"
-id="optionalMark1"
-min="0"
-max="100">
+                    </div>
 
 
 
+                    <div class="subject-box">
 
+                        <label for="english">
+                            English
+                        </label>
 
-<label>
-Optional Subject 2
-</label>
+                        <input
+                            type="number"
+                            id="english"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                            required
+                        >
 
-<input
-type="text"
-id="optionalName2"
-readonly>
+                    </div>
 
 
 
-<input 
-type="number"
-id="optionalMark2"
-min="0"
-max="100">
+                    <div class="subject-box">
 
+                        <label for="kiswahili">
+                            Kiswahili
+                        </label>
 
+                        <input
+                            type="number"
+                            id="kiswahili"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                            required
+                        >
 
+                    </div>
 
 
-<label>
-Optional Subject 3
-</label>
 
-<input
-type="text"
-id="optionalName3"
-readonly>
+                    <div class="subject-box">
 
+                        <label for="csl">
+                            CSL
+                        </label>
 
+                        <input
+                            type="number"
+                            id="csl"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                            required
+                        >
 
-<input 
-type="number"
-id="optionalMark3"
-min="0"
-max="100">
+                    </div>
 
 
+                </div>
 
+            </div>
 
 
-<label>
-Term
-</label>
 
-<select id="term">
+            <!-- OPTIONAL -->
 
-<option>
-Term 1
-</option>
+            <div class="subject-section">
 
-<option>
-Term 2
-</option>
+                <h3>
+                    Optional Subjects
+                </h3>
 
-<option>
-Term 3
-</option>
 
-</select>
+                <div class="subject-grid">
 
 
+                    <div class="subject-box optional-box">
 
+                        <div class="optional-title">
 
-<label>
-Year
-</label>
+                            <label>
+                                Optional Subject 1
+                            </label>
 
-<input
-type="number"
-id="year"
-value="2026">
+                            <span>
+                                Subject
+                            </span>
 
+                        </div>
 
 
+                        <input
+                            type="text"
+                            id="optionalName1"
+                            class="subject-name"
+                            readonly
+                            placeholder="Loading subject..."
+                        >
 
 
-<button type="submit">
+                        <input
+                            type="number"
+                            id="optionalMark1"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                        >
 
-Save Results
+                    </div>
 
-</button>
 
 
-</form>
+                    <div class="subject-box optional-box">
 
+                        <div class="optional-title">
 
+                            <label>
+                                Optional Subject 2
+                            </label>
 
-<p id="message"></p>
+                            <span>
+                                Subject
+                            </span>
 
+                        </div>
 
 
-</div>
+                        <input
+                            type="text"
+                            id="optionalName2"
+                            class="subject-name"
+                            readonly
+                            placeholder="Loading subject..."
+                        >
 
 
-</section>
+                        <input
+                            type="number"
+                            id="optionalMark2"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                        >
 
+                    </div>
 
 
-<script type="module" src="js/upload.js"></script>
+
+                    <div class="subject-box optional-box">
+
+                        <div class="optional-title">
+
+                            <label>
+                                Optional Subject 3
+                            </label>
+
+                            <span>
+                                Subject
+                            </span>
+
+                        </div>
+
+
+                        <input
+                            type="text"
+                            id="optionalName3"
+                            class="subject-name"
+                            readonly
+                            placeholder="Loading subject..."
+                        >
+
+
+                        <input
+                            type="number"
+                            id="optionalMark3"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="Enter marks"
+                        >
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ACADEMIC DETAILS -->
+
+            <div class="subject-section">
+
+                <h3>
+                    Academic Period
+                </h3>
+
+
+                <div class="academic-grid">
+
+
+                    <div class="academic-field">
+
+                        <label for="term">
+                            Term
+                        </label>
+
+
+                        <select id="term">
+
+                            <option value="Term 1">
+                                Term 1
+                            </option>
+
+                            <option value="Term 2">
+                                Term 2
+                            </option>
+
+                            <option value="Term 3">
+                                Term 3
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <div class="academic-field">
+
+                        <label for="year">
+                            Year
+                        </label>
+
+
+                        <input
+                            type="number"
+                            id="year"
+                            value="2026"
+                            min="2020"
+                            max="2100"
+                        >
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ACTION -->
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="save-button"
+                >
+                    Save Results
+                </button>
+
+            </div>
+
+
+        </form>
+
+
+        <p id="message"></p>
+
+
+    </section>
+
+
+</main>
+
+
+
+<script
+    type="module"
+    src="js/upload.js"
+></script>
 
 
 </body>
