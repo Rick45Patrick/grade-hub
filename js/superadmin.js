@@ -1,780 +1,328 @@
-```javascript
 import { supabase } from "./supabase.js";
 
+const $ = (id) => document.getElementById(id);
 
-// ============================================
-// START
-// ============================================
+document.addEventListener("DOMContentLoaded", init);
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function init() {
+  setupEvents();
 
-    setupLogout();
-    setupRefresh();
+  const { data, error } = await supabase.auth.getSession();
 
-    const { data, error } =
-        await supabase.auth.getSession();
+  if (error) {
+    showMessage("Could not read your session: " + error.message, "error");
+    return;
+  }
 
-    if (error) {
-        console.error("Session error:", error);
-        return;
-    }
+  if (!data.session) {
+    location.href = "index.html";
+    return;
+  }
 
-    if (!data.session) {
-        window.location.href = "index.html";
-        return;
-    }
+  const allowed = await checkSuperAdmin(data.session.user.id);
+  if (!allowed) return;
 
-    console.log("Super Admin logged in:", data.session.user.id);
-
-    loadAdminRequests();
-    loadStudents();
-    loadStatistics();
-});
-
-
-// ============================================
-// LOGOUT
-// ============================================
-
-function setupLogout() {
-
-    const button =
-        document.getElementById("logoutButton");
-
-    if (!button) {
-        console.error("logoutButton not found");
-        return;
-    }
-
-    button.addEventListener("click", async () => {
-
-        console.log("Signing out...");
-
-        const { error } =
-            await supabase.auth.signOut();
-
-        if (error) {
-
-            console.error(
-                "Logout error:",
-                error
-            );
-
-            alert(
-                "Logout failed: " +
-                error.message
-            );
-
-            return;
-        }
-
-        window.location.href =
-            "index.html";
-    });
+  await refreshAll();
 }
 
+async function checkSuperAdmin(userId) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role, approved")
+    .eq("user_id", userId);
 
-// ============================================
-// REFRESH
-// ============================================
+  if (error) {
+    console.error("Role check:", error);
+    showMessage("Could not verify your account role: " + error.message, "error");
+    return false;
+  }
 
-function setupRefresh() {
+  const ok = (data || []).some(
+    row => row.role === "super_admin" && row.approved === true
+  );
 
-    const button =
-        document.getElementById(
-            "refreshDashboard"
-        );
+  if (!ok) {
+    showMessage("This account does not have Super Admin access.", "error");
+    return false;
+  }
 
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        () => {
-
-            loadAdminRequests();
-            loadStudents();
-            loadStatistics();
-
-        }
-    );
+  return true;
 }
 
-
-// ============================================
-// ADMIN REQUESTS
-// ============================================
-
-async function loadAdminRequests() {
-
-    const table =
-        document.getElementById(
-            "adminRequests"
-        );
-
-    if (!table) {
-
-        console.error(
-            "adminRequests element not found"
-        );
-
-        return;
-    }
-
-    table.innerHTML =
-        "<tr><td colspan='6'>Loading...</td></tr>";
-
-
-    const { data, error } =
-        await supabase
-            .from("admin_requests")
-            .select("*")
-            .eq("status", "pending")
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Admin request error:",
-            error
-        );
-
-        table.innerHTML =
-            `<tr>
-                <td colspan="6">
-                    Error: ${escapeHTML(error.message)}
-                </td>
-            </tr>`;
-
-        return;
-    }
-
-
-    console.log(
-        "Admin requests:",
-        data
-    );
-
-
-    if (!data || data.length === 0) {
-
-        table.innerHTML =
-            `<tr>
-                <td colspan="6">
-                    No pending administrator requests.
-                </td>
-            </tr>`;
-
-        return;
-    }
-
-
-    table.innerHTML = "";
-
-
-    data.forEach(request => {
-
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>
-                ${escapeHTML(
-                    request.full_name || "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    request.username || "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    request.email || "—"
-                )}
-            </td>
-
-            <td>
-                ${formatDate(
-                    request.created_at
-                )}
-            </td>
-
-            <td>
-                <span class="status pending">
-                    Pending
-                </span>
-            </td>
-
-            <td>
-
-                <button
-                    class="approve-btn"
-                    data-id="${request.id}"
-                >
-                    Approve
-                </button>
-
-                <button
-                    class="reject-btn"
-                    data-id="${request.id}"
-                >
-                    Reject
-                </button>
-
-            </td>
-        `;
-
-
-        table.appendChild(row);
-    });
-
-
-    document
-        .querySelectorAll(".approve-btn")
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    approveRequest(
-                        button.dataset.id
-                    );
-
-                }
-            );
-
-        });
-
-
-    document
-        .querySelectorAll(".reject-btn")
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    rejectRequest(
-                        button.dataset.id
-                    );
-
-                }
-            );
-
-        });
+function setupEvents() {
+  $("logoutButton")?.addEventListener("click", logout);
+  $("refreshDashboard")?.addEventListener("click", refreshAll);
 }
 
+async function logout() {
+  const button = $("logoutButton");
+  if (button) button.disabled = true;
 
-// ============================================
-// APPROVE
-// ============================================
+  const { error } = await supabase.auth.signOut();
 
-async function approveRequest(requestId) {
+  if (error) {
+    if (button) button.disabled = false;
+    showMessage("Sign out failed: " + error.message, "error");
+    return;
+  }
 
-    const confirmed =
-        confirm(
-            "Approve this administrator request?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    console.log(
-        "Approving:",
-        requestId
-    );
-
-
-    const { data, error } =
-        await supabase.rpc(
-            "approve_admin_request",
-            {
-                request_id: requestId
-            }
-        );
-
-
-    console.log(
-        "Approval response:",
-        data
-    );
-
-    console.log(
-        "Approval error:",
-        error
-    );
-
-
-    if (error) {
-
-        alert(
-            "Approval failed:\n\n" +
-            error.message
-        );
-
-        return;
-    }
-
-
-    alert(
-        "Administrator approved successfully."
-    );
-
-
-    await loadAdminRequests();
-    await loadStudents();
-    await loadStatistics();
+  location.replace("index.html");
 }
 
-
-// ============================================
-// REJECT
-// ============================================
-
-async function rejectRequest(requestId) {
-
-    const confirmed =
-        confirm(
-            "Reject this administrator request?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    const { data, error } =
-        await supabase.rpc(
-            "reject_admin_request",
-            {
-                request_id: requestId
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Reject error:",
-            error
-        );
-
-        alert(
-            "Rejection failed:\n\n" +
-            error.message
-        );
-
-        return;
-    }
-
-
-    alert(
-        "Request rejected."
-    );
-
-
-    await loadAdminRequests();
-    await loadStatistics();
+async function refreshAll() {
+  await Promise.all([
+    loadRequests(),
+    loadAdmins(),
+    loadStudents(),
+    loadStats()
+  ]);
 }
 
+async function loadRequests() {
+  const body = $("adminRequests");
+  if (!body) return;
 
-// ============================================
-// STUDENTS
-// ============================================
+  body.innerHTML = `<tr><td colspan="6" class="sa-empty">Loading...</td></tr>`;
+
+  const { data, error } = await supabase
+    .from("admin_requests")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("admin_requests:", error);
+    body.innerHTML = `<tr><td colspan="6" class="sa-empty">Unable to load requests: ${esc(error.message)}</td></tr>`;
+    return;
+  }
+
+  if (!data?.length) {
+    body.innerHTML = `<tr><td colspan="6" class="sa-empty">No pending administrator requests.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = data.map(r => `
+    <tr>
+      <td>${esc(r.full_name)}</td>
+      <td>${esc(r.username)}</td>
+      <td>${esc(r.email)}</td>
+      <td>${date(r.created_at)}</td>
+      <td><span class="sa-status pending">Pending</span></td>
+      <td>
+        <button class="sa-btn approve" data-approve="${escAttr(r.id)}">Approve</button>
+        <button class="sa-btn reject" data-reject="${escAttr(r.id)}">Reject</button>
+      </td>
+    </tr>
+  `).join("");
+
+  body.querySelectorAll("[data-approve]").forEach(btn => {
+    btn.addEventListener("click", () => approve(btn.dataset.approve, btn));
+  });
+
+  body.querySelectorAll("[data-reject]").forEach(btn => {
+    btn.addEventListener("click", () => reject(btn.dataset.reject, btn));
+  });
+}
+
+async function approve(requestId, button) {
+  if (!confirm("Approve this administrator request?")) return;
+
+  button.disabled = true;
+  button.textContent = "Approving...";
+
+  const { data, error } = await supabase.rpc("approve_admin_request", {
+    request_id: requestId
+  });
+
+  console.log("approve_admin_request response:", { data, error });
+
+  if (error) {
+    button.disabled = false;
+    button.textContent = "Approve";
+    showMessage(`Approval failed (${error.code || "RPC"}): ${error.message}`, "error");
+    return;
+  }
+
+  showMessage(data || "Administrator approved successfully.", "success");
+  await refreshAll();
+}
+
+async function reject(requestId, button) {
+  if (!confirm("Reject this administrator request?")) return;
+
+  button.disabled = true;
+  button.textContent = "Rejecting...";
+
+  const { data, error } = await supabase.rpc("reject_admin_request", {
+    request_id: requestId
+  });
+
+  console.log("reject_admin_request response:", { data, error });
+
+  if (error) {
+    button.disabled = false;
+    button.textContent = "Reject";
+    showMessage(`Rejection failed (${error.code || "RPC"}): ${error.message}`, "error");
+    return;
+  }
+
+  showMessage(data || "Request rejected.", "success");
+  await refreshAll();
+}
+
+async function loadAdmins() {
+  const body = $("approvedAdmins");
+  if (!body) return;
+
+  const { data: roles, error } = await supabase
+    .from("user_roles")
+    .select("user_id, role, approved")
+    .eq("role", "admin")
+    .eq("approved", true);
+
+  if (error) {
+    console.error("user_roles:", error);
+    body.innerHTML = `<tr><td colspan="4" class="sa-empty">${esc(error.message)}</td></tr>`;
+    return;
+  }
+
+  if (!roles?.length) {
+    body.innerHTML = `<tr><td colspan="4" class="sa-empty">No approved administrators.</td></tr>`;
+    return;
+  }
+
+  const ids = roles.map(x => x.user_id);
+  const { data: profiles, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, email")
+    .in("id", ids);
+
+  if (profileError) {
+    console.error("profiles:", profileError);
+    body.innerHTML = `<tr><td colspan="4" class="sa-empty">${esc(profileError.message)}</td></tr>`;
+    return;
+  }
+
+  const map = new Map((profiles || []).map(p => [p.id, p]));
+
+  body.innerHTML = roles.map(r => {
+    const p = map.get(r.user_id) || {};
+    return `
+      <tr>
+        <td>${esc(p.full_name)}</td>
+        <td>${esc(p.username)}</td>
+        <td>${esc(p.email)}</td>
+        <td><span class="sa-status approved">Approved</span></td>
+      </tr>
+    `;
+  }).join("");
+}
 
 async function loadStudents() {
+  const body = $("studentTable");
+  if (!body) return;
 
-    const table =
-        document.getElementById(
-            "studentTable"
-        );
+  body.innerHTML = `<tr><td colspan="5" class="sa-empty">Loading...</td></tr>`;
 
-    if (!table) {
+  const { data: students, error } = await supabase
+    .from("students")
+    .select("*")
+    .order("admission_number", { ascending: true });
 
-        console.error(
-            "studentTable not found"
-        );
+  if (error) {
+    console.error("students:", error);
+    body.innerHTML = `<tr><td colspan="5" class="sa-empty">Unable to load students: ${esc(error.message)}</td></tr>`;
+    return;
+  }
 
-        return;
+  if (!students?.length) {
+    body.innerHTML = `<tr><td colspan="5" class="sa-empty">No students registered.</td></tr>`;
+    return;
+  }
+
+  const ids = students.map(s => s.user_id).filter(Boolean);
+  let profiles = [];
+
+  if (ids.length) {
+    const result = await supabase
+      .from("profiles")
+      .select("id, full_name, username")
+      .in("id", ids);
+
+    if (result.error) {
+      console.error("student profiles:", result.error);
+    } else {
+      profiles = result.data || [];
     }
+  }
 
+  const map = new Map(profiles.map(p => [p.id, p]));
 
-    table.innerHTML =
-        "<tr><td colspan='6'>Loading students...</td></tr>";
+  body.innerHTML = students.map(s => {
+    const p = map.get(s.user_id) || {};
+    const subjects = Array.isArray(s.optional_subjects)
+      ? s.optional_subjects.join(", ")
+      : (s.optional_subjects || "—");
 
-
-    const { data, error } =
-        await supabase
-            .from("students")
-            .select("*")
-            .order(
-                "admission_number",
-                {
-                    ascending: true
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Student error:",
-            error
-        );
-
-        table.innerHTML =
-            `<tr>
-                <td colspan="6">
-                    Error: ${escapeHTML(error.message)}
-                </td>
-            </tr>`;
-
-        return;
-    }
-
-
-    console.log(
-        "Students:",
-        data
-    );
-
-
-    if (!data || data.length === 0) {
-
-        table.innerHTML =
-            `<tr>
-                <td colspan="6">
-                    No students registered.
-                </td>
-            </tr>`;
-
-        return;
-    }
-
-
-    table.innerHTML = "";
-
-
-    const userIds =
-        data
-            .map(student => student.user_id)
-            .filter(Boolean);
-
-
-    let profiles = [];
-
-
-    if (userIds.length > 0) {
-
-        const result =
-            await supabase
-                .from("profiles")
-                .select(
-                    "id, full_name, username"
-                )
-                .in(
-                    "id",
-                    userIds
-                );
-
-
-        if (result.error) {
-
-            console.error(
-                "Profile error:",
-                result.error
-            );
-
-        } else {
-
-            profiles =
-                result.data || [];
-        }
-    }
-
-
-    data.forEach(student => {
-
-        const profile =
-            profiles.find(
-                p =>
-                    p.id ===
-                    student.user_id
-            );
-
-
-        let subjects = "—";
-
-
-        if (
-            Array.isArray(
-                student.optional_subjects
-            )
-        ) {
-
-            subjects =
-                student.optional_subjects.join(
-                    ", "
-                );
-
-        } else if (
-            student.optional_subjects
-        ) {
-
-            subjects =
-                String(
-                    student.optional_subjects
-                );
-        }
-
-
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>
-                ${escapeHTML(
-                    student.admission_number ||
-                    "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    profile?.full_name ||
-                    "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    student.class ||
-                    "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(subjects)}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    profile?.username ||
-                    "—"
-                )}
-            </td>
-
-            <td>
-                <button
-                    class="delete-student-btn"
-                    data-id="${student.id}"
-                >
-                    Delete
-                </button>
-            </td>
-
-        `;
-
-
-        table.appendChild(row);
-    });
+    return `
+      <tr>
+        <td>${esc(s.admission_number)}</td>
+        <td>${esc(p.full_name)}</td>
+        <td>${esc(s.class)}</td>
+        <td>${esc(subjects)}</td>
+        <td>${esc(p.username)}</td>
+      </tr>
+    `;
+  }).join("");
 }
 
+async function loadStats() {
+  const [students, admins, pending] = await Promise.all([
+    supabase.from("students").select("id", { count: "exact", head: true }),
+    supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "admin").eq("approved", true),
+    supabase.from("admin_requests").select("id", { count: "exact", head: true }).eq("status", "pending")
+  ]);
 
-// ============================================
-// STATISTICS
-// ============================================
+  $("totalStudents").textContent = students.count ?? 0;
+  $("totalAdmins").textContent = admins.count ?? 0;
+  $("pendingAdmins").textContent = pending.count ?? 0;
 
-async function loadStatistics() {
-
-    const students =
-        await supabase
-            .from("students")
-            .select(
-                "id",
-                {
-                    count: "exact",
-                    head: true
-                }
-            );
-
-
-    const admins =
-        await supabase
-            .from("user_roles")
-            .select(
-                "user_id",
-                {
-                    count: "exact",
-                    head: true
-                }
-            )
-            .eq(
-                "role",
-                "admin"
-            )
-            .eq(
-                "approved",
-                true
-            );
-
-
-    const pending =
-        await supabase
-            .from("admin_requests")
-            .select(
-                "id",
-                {
-                    count: "exact",
-                    head: true
-                }
-            )
-            .eq(
-                "status",
-                "pending"
-            );
-
-
-    const totalStudents =
-        document.getElementById(
-            "totalStudents"
-        );
-
-
-    const totalAdmins =
-        document.getElementById(
-            "totalAdmins"
-        );
-
-
-    const pendingAdmins =
-        document.getElementById(
-            "pendingAdmins"
-        );
-
-
-    if (totalStudents) {
-
-        totalStudents.textContent =
-            students.count || 0;
-    }
-
-
-    if (totalAdmins) {
-
-        totalAdmins.textContent =
-            admins.count || 0;
-    }
-
-
-    if (pendingAdmins) {
-
-        pendingAdmins.textContent =
-            pending.count || 0;
-    }
-
-
-    if (students.error) {
-
-        console.error(
-            "Student count error:",
-            students.error
-        );
-
-    }
-
-
-    if (admins.error) {
-
-        console.error(
-            "Admin count error:",
-            admins.error
-        );
-
-    }
-
-
-    if (pending.error) {
-
-        console.error(
-            "Pending count error:",
-            pending.error
-        );
-
-    }
+  if (students.error) console.error("student count:", students.error);
+  if (admins.error) console.error("admin count:", admins.error);
+  if (pending.error) console.error("pending count:", pending.error);
 }
 
+function showMessage(text, type = "success") {
+  const box = $("saMessage");
+  if (!box) return;
 
-// ============================================
-// HELPERS
-// ============================================
+  box.textContent = text;
+  box.className = `sa-message show ${type}`;
 
-function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+  clearTimeout(showMessage.timer);
+  showMessage.timer = setTimeout(() => {
+    box.className = "sa-message";
+    box.textContent = "";
+  }, 7000);
 }
 
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-
-    return new Date(value)
-        .toLocaleDateString(
-            "en-KE",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            }
-        );
+function date(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-KE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
 }
-```
+
+function esc(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#039;"
+  }[c]));
+}
+
+function escAttr(value) {
+  return esc(value);
+}
