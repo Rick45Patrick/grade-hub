@@ -1,3 +1,7 @@
+// ==========================================
+// GRADE HUB - STUDENT RESULTS
+// ==========================================
+
 import { supabase } from "./supabase.js";
 
 
@@ -5,11 +9,11 @@ import { supabase } from "./supabase.js";
 // ELEMENTS
 // ==========================================
 
-const message =
-    document.getElementById("message");
-
 const studentName =
     document.getElementById("studentName");
+
+const studentUsername =
+    document.getElementById("studentUsername");
 
 const admissionNumber =
     document.getElementById("admissionNumber");
@@ -17,14 +21,14 @@ const admissionNumber =
 const studentClass =
     document.getElementById("studentClass");
 
-const studentUsername =
-    document.getElementById("studentUsername");
+const currentPeriod =
+    document.getElementById("currentPeriod");
 
 const subjectCount =
     document.getElementById("subjectCount");
 
-const average =
-    document.getElementById("average");
+const averageMark =
+    document.getElementById("averageMark");
 
 const totalPoints =
     document.getElementById("totalPoints");
@@ -41,22 +45,32 @@ const termFilter =
 const yearFilter =
     document.getElementById("yearFilter");
 
+const resultMode =
+    document.getElementById("resultMode");
+
 const refreshButton =
     document.getElementById("refreshButton");
 
-const logoutButton =
-    document.getElementById("logoutButton");
+const message =
+    document.getElementById("message");
+
+const chartCanvas =
+    document.getElementById("performanceChart");
 
 
 // ==========================================
 // DATA
 // ==========================================
 
+let currentUser = null;
+
 let currentStudent = null;
 
 let allResults = [];
 
 let gradingSystem = [];
+
+let performanceChart = null;
 
 
 // ==========================================
@@ -65,14 +79,11 @@ let gradingSystem = [];
 
 function showMessage(
     text,
-    type = "error"
+    type = "info"
 ) {
 
-    if (!message) {
-        return;
-    }
-
-    message.textContent = text;
+    message.textContent =
+        text;
 
     message.className =
         `message show ${type}`;
@@ -80,15 +91,7 @@ function showMessage(
 }
 
 
-// ==========================================
-// CLEAR MESSAGE
-// ==========================================
-
-function clearMessage() {
-
-    if (!message) {
-        return;
-    }
+function hideMessage() {
 
     message.textContent = "";
 
@@ -99,7 +102,7 @@ function clearMessage() {
 
 
 // ==========================================
-// HTML ESCAPE
+// HTML SAFETY
 // ==========================================
 
 function escapeHTML(value) {
@@ -112,6 +115,7 @@ function escapeHTML(value) {
         return "";
 
     }
+
 
     return String(value)
 
@@ -144,13 +148,14 @@ function escapeHTML(value) {
 
 
 // ==========================================
-// FORMAT NUMBER
+// FORMAT MARK
 // ==========================================
 
-function formatNumber(value) {
+function formatMark(value) {
 
     const number =
         Number(value);
+
 
     if (
         Number.isNaN(number)
@@ -160,6 +165,7 @@ function formatNumber(value) {
 
     }
 
+
     return Math.round(
         number * 100
     ) / 100;
@@ -168,55 +174,72 @@ function formatNumber(value) {
 
 
 // ==========================================
-// GET LOGGED IN USER
+// CHECK LOGIN
 // ==========================================
 
-async function getLoggedInUser() {
+async function checkLogin() {
 
-    const {
-        data,
-        error
-    } =
-        await supabase.auth.getUser();
+    try {
 
-
-    if (error) {
-
-        console.error(
-            "Authentication error:",
+        const {
+            data,
             error
-        );
+        } =
+            await supabase.auth.getUser();
 
-        throw new Error(
-            "Unable to verify your login."
-        );
+
+        if (error) {
+
+            console.error(
+                "Authentication error:",
+                error
+            );
+
+            return null;
+
+        }
+
+
+        if (
+            !data ||
+            !data.user
+        ) {
+
+            return null;
+
+        }
+
+
+        return data.user;
 
     }
 
+    catch (error) {
 
-    if (
-        !data ||
-        !data.user
-    ) {
-
-        window.location.href =
-            "index.html";
+        console.error(
+            "Login check failed:",
+            error
+        );
 
         return null;
 
     }
 
-
-    return data.user;
-
 }
 
 
 // ==========================================
-// LOAD STUDENT
+// LOAD CURRENT STUDENT
 // ==========================================
 
-async function loadStudent(user) {
+async function loadStudent() {
+
+    if (!currentUser) {
+
+        return null;
+
+    }
+
 
     const {
         data,
@@ -230,12 +253,19 @@ async function loadStudent(user) {
                 id,
                 user_id,
                 admission_number,
-                class
+                class,
+                optional_subjects,
+                profiles(
+                    id,
+                    full_name,
+                    username,
+                    email
+                )
             `)
 
             .eq(
                 "user_id",
-                user.id
+                currentUser.id
             )
 
             .maybeSingle();
@@ -269,146 +299,36 @@ async function loadStudent(user) {
         data;
 
 
-    return data;
+    const profile =
+        Array.isArray(
+            data.profiles
+        )
+            ? data.profiles[0]
+            : data.profiles;
 
-}
-
-
-// ==========================================
-// LOAD PROFILE
-// ==========================================
-
-async function loadProfile(user) {
-
-    const {
-        data,
-        error
-    } =
-        await supabase
-
-            .from("profiles")
-
-            .select(`
-                id,
-                full_name,
-                username,
-                email
-            `)
-
-            .eq(
-                "id",
-                user.id
-            )
-
-            .maybeSingle();
-
-
-    if (error) {
-
-        console.error(
-            "Profile query error:",
-            error
-        );
-
-        /*
-         * Profile is not essential enough
-         * to stop the whole results page.
-         */
-
-        return null;
-
-    }
-
-
-    return data;
-
-}
-
-
-// ==========================================
-// DISPLAY STUDENT
-// ==========================================
-
-function displayStudent(
-    student,
-    profile
-) {
 
     studentName.textContent =
         profile?.full_name ||
-        "Learner";
+        "Student";
 
-    admissionNumber.textContent =
-        student.admission_number ||
-        "—";
-
-    studentClass.textContent =
-        student.class ||
-        "—";
 
     studentUsername.textContent =
-        profile?.username ||
+        profile?.username
+            ? "@" + profile.username
+            : profile?.email || "Student account";
+
+
+    admissionNumber.textContent =
+        data.admission_number ||
         "—";
 
-}
+
+    studentClass.textContent =
+        data.class ||
+        "—";
 
 
-// ==========================================
-// LOAD RESULTS
-// ==========================================
-
-async function loadResults(studentId) {
-
-    const {
-        data,
-        error
-    } =
-        await supabase
-
-            .from("results")
-
-            .select(`
-                id,
-                student_id,
-                subject,
-                marks,
-                term,
-                year
-            `)
-
-            .eq(
-                "student_id",
-                studentId
-            )
-
-            .order(
-                "year",
-                {
-                    ascending: false
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Results query error:",
-            error
-        );
-
-        throw new Error(
-            "Could not load your results: " +
-            error.message
-        );
-
-    }
-
-
-    allResults =
-        data || [];
-
-
-    populateYears();
+    return data;
 
 }
 
@@ -446,7 +366,7 @@ async function loadGradingSystem() {
     if (error) {
 
         console.error(
-            "Grading system query error:",
+            "Grading system error:",
             error
         );
 
@@ -459,22 +379,31 @@ async function loadGradingSystem() {
 
 
     gradingSystem =
-        data || [];
+        (data || []).map(
+            grade => ({
 
+                ...grade,
 
-    /*
-     * If Super Admin has not configured
-     * any grades, don't leave the page
-     * stuck on loading.
-     */
+                min_mark:
+                    Number(
+                        grade.min_mark
+                    ),
+
+                points:
+                    Number(
+                        grade.points
+                    )
+
+            })
+        );
+
 
     if (
         gradingSystem.length === 0
     ) {
 
-        showMessage(
-            "No grading system has been configured by the Super Admin.",
-            "info"
+        throw new Error(
+            "No grading system has been configured by the administrator."
         );
 
     }
@@ -486,84 +415,71 @@ async function loadGradingSystem() {
 
 
 // ==========================================
-// FIND GRADE
+// LOAD RESULTS
 // ==========================================
 
-function getGradeForMarks(marks) {
+async function loadResults() {
 
-    const numericMarks =
-        Number(marks);
+    if (!currentStudent) {
 
-
-    if (
-        Number.isNaN(numericMarks)
-    ) {
-
-        return {
-
-            grade: "-",
-
-            points: 0,
-
-            description: "-"
-
-        };
+        return;
 
     }
 
 
-    /*
-     * gradingSystem is sorted from
-     * highest min_mark to lowest.
-     *
-     * Example:
-     *
-     * 90 EE1
-     * 80 EE2
-     * 70 ME1
-     * ...
-     */
+    const {
+        data,
+        error
+    } =
+        await supabase
 
-    const matchingGrade =
-        gradingSystem.find(
-            grade =>
-                numericMarks >=
-                Number(
-                    grade.min_mark
-                )
+            .from("results")
+
+            .select(`
+                student_id,
+                subject,
+                marks,
+                term,
+                year
+            `)
+
+            .eq(
+                "student_id",
+                currentStudent.id
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Results query error:",
+            error
+        );
+
+        throw new Error(
+            "Could not load your results: " +
+            error.message
+        );
+
+    }
+
+
+    allResults =
+        (data || []).map(
+            result => ({
+
+                ...result,
+
+                marks:
+                    Number(
+                        result.marks
+                    ) || 0
+
+            })
         );
 
 
-    if (!matchingGrade) {
-
-        return {
-
-            grade: "-",
-
-            points: 0,
-
-            description: "No grading level"
-
-        };
-
-    }
-
-
-    return {
-
-        grade:
-            matchingGrade.grade,
-
-        points:
-            Number(
-                matchingGrade.points
-            ) || 0,
-
-        description:
-            matchingGrade.description ||
-            "-"
-
-    };
+    populateYears();
 
 }
 
@@ -574,28 +490,28 @@ function getGradeForMarks(marks) {
 
 function populateYears() {
 
-    const currentValue =
+    const selectedYear =
         yearFilter.value;
 
 
     const years =
         [
             ...new Set(
+
                 allResults
+
                     .map(
                         result =>
                             result.year
                     )
+
                     .filter(
                         year =>
                             year !== null &&
                             year !== undefined &&
                             year !== ""
                     )
-                    .map(
-                        year =>
-                            String(year)
-                    )
+
             )
         ];
 
@@ -624,11 +540,14 @@ function populateYears() {
                     "option"
                 );
 
+
             option.value =
-                year;
+                String(year);
+
 
             option.textContent =
-                year;
+                String(year);
+
 
             yearFilter.appendChild(
                 option
@@ -639,15 +558,100 @@ function populateYears() {
 
 
     if (
-        years.includes(
-            currentValue
+        years.some(
+            year =>
+                String(year) ===
+                selectedYear
         )
     ) {
 
         yearFilter.value =
-            currentValue;
+            selectedYear;
 
     }
+
+}
+
+
+// ==========================================
+// GET GRADE FOR MARK
+// ==========================================
+
+function getGradeForMark(marks) {
+
+    const numericMark =
+        Number(marks);
+
+
+    if (
+        gradingSystem.length === 0
+    ) {
+
+        return {
+
+            grade: "—",
+
+            points: 0,
+
+            description: "No grading system"
+
+        };
+
+    }
+
+
+    const matchingGrade =
+        gradingSystem.find(
+            grade =>
+                numericMark >=
+                Number(
+                    grade.min_mark
+                )
+        );
+
+
+    if (!matchingGrade) {
+
+        const lowest =
+            gradingSystem[
+                gradingSystem.length - 1
+            ];
+
+
+        return {
+
+            grade:
+                lowest?.grade || "—",
+
+            points:
+                Number(
+                    lowest?.points
+                ) || 0,
+
+            description:
+                lowest?.description ||
+                "—"
+
+        };
+
+    }
+
+
+    return {
+
+        grade:
+            matchingGrade.grade,
+
+        points:
+            Number(
+                matchingGrade.points
+            ) || 0,
+
+        description:
+            matchingGrade.description ||
+            "—"
+
+    };
 
 }
 
@@ -671,28 +675,38 @@ function getFilteredResults() {
 
             if (
                 selectedTerm !==
-                "all" &&
-                result.term !==
-                selectedTerm
+                "all"
             ) {
 
-                return false;
+                if (
+                    result.term !==
+                    selectedTerm
+                ) {
+
+                    return false;
+
+                }
 
             }
 
 
             if (
                 selectedYear !==
-                "all" &&
-                String(
-                    result.year
-                ) !==
-                String(
-                    selectedYear
-                )
+                "all"
             ) {
 
-                return false;
+                if (
+                    String(
+                        result.year
+                    ) !==
+                    String(
+                        selectedYear
+                    )
+                ) {
+
+                    return false;
+
+                }
 
             }
 
@@ -709,9 +723,7 @@ function getFilteredResults() {
 // CALCULATE AVERAGE
 // ==========================================
 
-function calculateAverage(
-    results
-) {
+function calculateAverage(results) {
 
     if (
         !results ||
@@ -723,46 +735,27 @@ function calculateAverage(
     }
 
 
-    let total = 0;
+    const total =
+        results.reduce(
+            (
+                sum,
+                result
+            ) => {
 
-    let count = 0;
+                return sum +
+                    (
+                        Number(
+                            result.marks
+                        ) || 0
+                    );
 
-
-    results.forEach(
-        result => {
-
-            const marks =
-                Number(
-                    result.marks
-                );
-
-
-            if (
-                !Number.isNaN(
-                    marks
-                )
-            ) {
-
-                total += marks;
-
-                count++;
-
-            }
-
-        }
-    );
+            },
+            0
+        );
 
 
-    if (
-        count === 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    return total / count;
+    return total /
+        results.length;
 
 }
 
@@ -771,45 +764,62 @@ function calculateAverage(
 // CALCULATE POINTS
 // ==========================================
 
-function calculateTotalPoints(
-    results
-) {
+function calculateTotalPoints(results) {
 
-    let total = 0;
+    if (
+        !results ||
+        results.length === 0
+    ) {
+
+        return 0;
+
+    }
 
 
-    results.forEach(
-        result => {
+    return results.reduce(
+        (
+            total,
+            result
+        ) => {
 
             const grade =
-                getGradeForMarks(
+                getGradeForMark(
                     result.marks
                 );
 
 
-            total +=
+            return total +
                 Number(
                     grade.points
-                ) || 0;
+                );
 
-        }
+        },
+        0
     );
-
-
-    return total;
 
 }
 
 
 // ==========================================
-// RENDER SUMMARY
+// CALCULATE OVERALL GRADE
 // ==========================================
 
-function renderSummary(
-    results
-) {
+function getOverallGrade(average) {
 
-    const avg =
+    return getGradeForMark(
+        average
+    );
+
+}
+
+
+// ==========================================
+// UPDATE SUMMARY
+// ==========================================
+
+function updateSummary(results) {
+
+    const average =
         calculateAverage(
             results
         );
@@ -821,9 +831,9 @@ function renderSummary(
         );
 
 
-    const overall =
-        getGradeForMarks(
-            avg
+    const grade =
+        getOverallGrade(
+            average
         );
 
 
@@ -831,8 +841,10 @@ function renderSummary(
         results.length;
 
 
-    average.textContent =
-        `${formatNumber(avg)}%`;
+    averageMark.textContent =
+        `${formatMark(
+            average
+        )}%`;
 
 
     totalPoints.textContent =
@@ -840,27 +852,57 @@ function renderSummary(
 
 
     overallGrade.textContent =
-        overall.grade || "-";
+        grade.grade ||
+        "—";
+
+
+    if (
+        termFilter.value === "all" &&
+        yearFilter.value === "all"
+    ) {
+
+        currentPeriod.textContent =
+            "All Results";
+
+    }
+
+    else if (
+        termFilter.value !== "all" &&
+        yearFilter.value !== "all"
+    ) {
+
+        currentPeriod.textContent =
+            `${termFilter.value} • ${yearFilter.value}`;
+
+    }
+
+    else if (
+        termFilter.value !== "all"
+    ) {
+
+        currentPeriod.textContent =
+            termFilter.value;
+
+    }
+
+    else {
+
+        currentPeriod.textContent =
+            yearFilter.value;
+
+    }
 
 }
 
 
 // ==========================================
-// RENDER RESULTS
+// RENDER RESULTS TABLE
 // ==========================================
 
-function renderResults() {
-
-    const results =
-        getFilteredResults();
-
-
-    renderSummary(
-        results
-    );
-
+function renderResultsTable(results) {
 
     if (
+        !results ||
         results.length === 0
     ) {
 
@@ -869,12 +911,12 @@ function renderResults() {
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="empty-row"
                 >
 
-                    No results found for
-                    the selected filters.
+                    No results found
+                    for the selected filters.
 
                 </td>
 
@@ -887,12 +929,32 @@ function renderResults() {
     }
 
 
+    /*
+     * Sort subjects alphabetically.
+     */
+
+    const sortedResults =
+        [...results].sort(
+            (
+                a,
+                b
+            ) =>
+                String(
+                    a.subject || ""
+                ).localeCompare(
+                    String(
+                        b.subject || ""
+                    )
+                )
+        );
+
+
     resultsTable.innerHTML =
-        results.map(
+        sortedResults.map(
             result => {
 
                 const grade =
-                    getGradeForMarks(
+                    getGradeForMark(
                         result.marks
                     );
 
@@ -917,20 +979,20 @@ function renderResults() {
 
                         <td>
 
-                            <strong>
+                            <span class="mark">
 
-                                ${formatNumber(
+                                ${formatMark(
                                     result.marks
-                                )}
+                                )}%
 
-                            </strong>
+                            </span>
 
                         </td>
 
 
                         <td>
 
-                            <span class="grade-badge">
+                            <span class="cbc-badge">
 
                                 ${escapeHTML(
                                     grade.grade
@@ -938,10 +1000,12 @@ function renderResults() {
 
                             </span>
 
+                        </td>
 
-                            <span
-                                class="grade-description"
-                            >
+
+                        <td>
+
+                            <span class="cbc-description">
 
                                 ${escapeHTML(
                                     grade.description
@@ -954,11 +1018,11 @@ function renderResults() {
 
                         <td>
 
-                            <strong>
+                            <span class="points">
 
                                 ${grade.points}
 
-                            </strong>
+                            </span>
 
                         </td>
 
@@ -993,30 +1057,351 @@ function renderResults() {
 
 
 // ==========================================
+// PREPARE GRAPH DATA
+// ==========================================
+
+function prepareGraphData(results) {
+
+    /*
+     * If there are duplicate records for the same
+     * subject, calculate the average for that subject.
+     */
+
+    const subjectMap =
+        new Map();
+
+
+    results.forEach(
+        result => {
+
+            const subject =
+                String(
+                    result.subject ||
+                    "Unknown"
+                );
+
+
+            if (
+                !subjectMap.has(
+                    subject
+                )
+            ) {
+
+                subjectMap.set(
+                    subject,
+                    []
+                );
+
+            }
+
+
+            subjectMap
+                .get(subject)
+                .push(
+                    Number(
+                        result.marks
+                    ) || 0
+                );
+
+        }
+    );
+
+
+    const subjects =
+        Array.from(
+            subjectMap.keys()
+        ).sort();
+
+
+    const marks =
+        subjects.map(
+            subject => {
+
+                const values =
+                    subjectMap.get(
+                        subject
+                    );
+
+
+                if (
+                    values.length === 0
+                ) {
+
+                    return 0;
+
+                }
+
+
+                const total =
+                    values.reduce(
+                        (
+                            sum,
+                            value
+                        ) =>
+                            sum + value,
+                        0
+                    );
+
+
+                return Math.round(
+                    (
+                        total /
+                        values.length
+                    ) * 100
+                ) / 100;
+
+            }
+        );
+
+
+    return {
+
+        subjects,
+
+        marks
+
+    };
+
+}
+
+
+// ==========================================
+// CREATE / UPDATE GRAPH
+// ==========================================
+
+function renderPerformanceChart(results) {
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
+
+        console.error(
+            "Chart.js has not loaded."
+        );
+
+        return;
+
+    }
+
+
+    const graphData =
+        prepareGraphData(
+            results
+        );
+
+
+    if (
+        performanceChart
+    ) {
+
+        performanceChart.destroy();
+
+        performanceChart =
+            null;
+
+    }
+
+
+    performanceChart =
+        new Chart(
+            chartCanvas,
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels:
+                        graphData.subjects,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Marks (%)",
+
+                            data:
+                                graphData.marks,
+
+                            tension:
+                                0.3,
+
+                            fill:
+                                false,
+
+                            pointRadius:
+                                5,
+
+                            pointHoverRadius:
+                                7
+
+                        }
+
+                    ]
+
+                },
+
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    interaction: {
+
+                        intersect:
+                            false,
+
+                        mode:
+                            "index"
+
+                    },
+
+
+                    scales: {
+
+                        y: {
+
+                            min:
+                                0,
+
+                            max:
+                                100,
+
+                            ticks: {
+
+                                callback:
+                                    function(value) {
+
+                                        return value +
+                                            "%";
+
+                                    }
+
+                            },
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    "Marks"
+
+                            }
+
+                        },
+
+
+                        x: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    "Subjects"
+
+                            }
+
+                        }
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            display:
+                                true
+
+                        },
+
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label:
+                                    function(context) {
+
+                                        return (
+                                            " Marks: " +
+                                            context.parsed.y +
+                                            "%"
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+}
+
+
+// ==========================================
+// RENDER EVERYTHING
+// ==========================================
+
+function renderPage() {
+
+    const results =
+        getFilteredResults();
+
+
+    updateSummary(
+        results
+    );
+
+
+    renderResultsTable(
+        results
+    );
+
+
+    renderPerformanceChart(
+        results
+    );
+
+}
+
+
+// ==========================================
 // LOAD EVERYTHING
 // ==========================================
 
-async function loadStudentDashboard() {
+async function loadStudentPage() {
 
     try {
 
-        clearMessage();
+        refreshButton.disabled =
+            true;
 
+        refreshButton.textContent =
+            "Loading...";
 
-        /*
-         * IMPORTANT:
-         *
-         * Replace "Loading results..."
-         * immediately so the page cannot
-         * remain stuck indefinitely.
-         */
 
         resultsTable.innerHTML = `
 
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="empty-row"
                 >
 
@@ -1029,69 +1414,64 @@ async function loadStudentDashboard() {
         `;
 
 
+        showMessage(
+            "Loading your academic information...",
+            "info"
+        );
+
+
         /*
-         * 1. Check login
+         * STEP 1
+         * Check authentication.
          */
 
-        const user =
-            await getLoggedInUser();
+        currentUser =
+            await checkLogin();
 
 
-        if (!user) {
+        if (!currentUser) {
+
+            window.location.href =
+                "index.html";
+
             return;
+
         }
 
 
         /*
-         * 2. Load student record
+         * STEP 2
+         * Find student.
          */
 
-        const student =
-            await loadStudent(
-                user
-            );
+        await loadStudent();
 
 
         /*
-         * 3. Load profile
-         */
-
-        const profile =
-            await loadProfile(
-                user
-            );
-
-
-        displayStudent(
-            student,
-            profile
-        );
-
-
-        /*
-         * 4. Load results
-         */
-
-        await loadResults(
-            student.id
-        );
-
-
-        /*
-         * 5. Load current grading system
-         *
-         * This is the important part:
-         * the grades are NOT hard-coded.
+         * STEP 3
+         * Load grading configuration.
          */
 
         await loadGradingSystem();
 
 
         /*
-         * 6. Render page
+         * STEP 4
+         * Load results.
          */
 
-        renderResults();
+        await loadResults();
+
+
+        /*
+         * STEP 5
+         * Render page.
+         */
+
+        renderPage();
+
+
+        hideMessage();
 
 
     }
@@ -1099,7 +1479,7 @@ async function loadStudentDashboard() {
     catch (error) {
 
         console.error(
-            "Student dashboard error:",
+            "Student page error:",
             error
         );
 
@@ -1109,11 +1489,11 @@ async function loadStudentDashboard() {
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="empty-row"
                 >
 
-                    Unable to load results.
+                    Unable to load your results.
 
                 </td>
 
@@ -1130,22 +1510,87 @@ async function loadStudentDashboard() {
 
     }
 
+    finally {
+
+        refreshButton.disabled =
+            false;
+
+        refreshButton.textContent =
+            "Refresh";
+
+    }
+
 }
 
 
 // ==========================================
-// FILTER EVENTS
+// TERM FILTER
 // ==========================================
 
 termFilter.addEventListener(
     "change",
-    renderResults
+    function() {
+
+        renderPage();
+
+    }
 );
 
 
+// ==========================================
+// YEAR FILTER
+// ==========================================
+
 yearFilter.addEventListener(
     "change",
-    renderResults
+    function() {
+
+        renderPage();
+
+    }
+);
+
+
+// ==========================================
+// RESULT MODE
+// ==========================================
+
+resultMode.addEventListener(
+    "change",
+    function() {
+
+        const mode =
+            resultMode.value;
+
+
+        /*
+         * Currently the page always keeps
+         * the performance graph visible.
+         *
+         * The mode can be extended later
+         * without changing the database logic.
+         */
+
+        if (
+            mode === "subjects"
+        ) {
+
+            renderPage();
+
+            return;
+
+        }
+
+
+        if (
+            mode === "summary"
+        ) {
+
+            renderPage();
+
+        }
+
+    }
 );
 
 
@@ -1155,30 +1600,9 @@ yearFilter.addEventListener(
 
 refreshButton.addEventListener(
     "click",
-    async () => {
+    async function() {
 
-        refreshButton.disabled =
-            true;
-
-        refreshButton.textContent =
-            "Refreshing...";
-
-
-        try {
-
-            await loadStudentDashboard();
-
-        }
-
-        finally {
-
-            refreshButton.disabled =
-                false;
-
-            refreshButton.textContent =
-                "Refresh";
-
-        }
+        await loadStudentPage();
 
     }
 );
@@ -1188,62 +1612,101 @@ refreshButton.addEventListener(
 // LOGOUT
 // ==========================================
 
-logoutButton.addEventListener(
-    "click",
-    async () => {
+document
+    .getElementById("logout")
+    .addEventListener(
+        "click",
+        async function(event) {
 
-        const confirmed =
-            window.confirm(
-                "Are you sure you want to sign out?"
-            );
+            event.preventDefault();
 
 
-        if (!confirmed) {
-            return;
+            const confirmed =
+                window.confirm(
+                    "Are you sure you want to sign out?"
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            try {
+
+                this.textContent =
+                    "Signing out...";
+
+                this.style.pointerEvents =
+                    "none";
+
+
+                const {
+                    error
+                } =
+                    await supabase.auth.signOut();
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                window.location.href =
+                    "index.html";
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+
+                showMessage(
+                    "Sign out failed: " +
+                    error.message,
+                    "error"
+                );
+
+
+                this.textContent =
+                    "Logout";
+
+                this.style.pointerEvents =
+                    "";
+
+            }
+
         }
+    );
 
 
-        logoutButton.disabled =
-            true;
+// ==========================================
+// AUTH STATE LISTENER
+// ==========================================
 
-        logoutButton.textContent =
-            "Signing out...";
+supabase.auth.onAuthStateChange(
+    (
+        event,
+        session
+    ) => {
 
+        if (
+            event ===
+            "SIGNED_OUT"
+        ) {
 
-        const {
-            error
-        } =
-            await supabase.auth.signOut();
-
-
-        if (error) {
-
-            console.error(
-                "Logout error:",
-                error
-            );
-
-
-            showMessage(
-                "Logout failed: " +
-                error.message,
-                "error"
-            );
-
-
-            logoutButton.disabled =
-                false;
-
-            logoutButton.textContent =
-                "Logout";
-
-            return;
+            window.location.href =
+                "index.html";
 
         }
-
-
-        window.location.href =
-            "index.html";
 
     }
 );
@@ -1253,4 +1716,4 @@ logoutButton.addEventListener(
 // START
 // ==========================================
 
-loadStudentDashboard();
+loadStudentPage();
