@@ -1,7 +1,3 @@
-// ==========================================
-// GRADE HUB - STUDENT RESULTS
-// ==========================================
-
 import { supabase } from "./supabase.js";
 
 
@@ -21,17 +17,8 @@ const admissionNumber =
 const studentClass =
     document.getElementById("studentClass");
 
-const username =
-    document.getElementById("username");
-
-const termFilter =
-    document.getElementById("termFilter");
-
-const yearFilter =
-    document.getElementById("yearFilter");
-
-const refreshButton =
-    document.getElementById("refreshButton");
+const studentUsername =
+    document.getElementById("studentUsername");
 
 const subjectCount =
     document.getElementById("subjectCount");
@@ -48,15 +35,22 @@ const overallGrade =
 const resultsTable =
     document.getElementById("resultsTable");
 
-const logout =
-    document.getElementById("logout");
+const termFilter =
+    document.getElementById("termFilter");
+
+const yearFilter =
+    document.getElementById("yearFilter");
+
+const refreshButton =
+    document.getElementById("refreshButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
 
 
 // ==========================================
-// STATE
+// DATA
 // ==========================================
-
-let currentUser = null;
 
 let currentStudent = null;
 
@@ -74,6 +68,10 @@ function showMessage(
     type = "error"
 ) {
 
+    if (!message) {
+        return;
+    }
+
     message.textContent = text;
 
     message.className =
@@ -83,7 +81,25 @@ function showMessage(
 
 
 // ==========================================
-// HTML SAFETY
+// CLEAR MESSAGE
+// ==========================================
+
+function clearMessage() {
+
+    if (!message) {
+        return;
+    }
+
+    message.textContent = "";
+
+    message.className =
+        "message";
+
+}
+
+
+// ==========================================
+// HTML ESCAPE
 // ==========================================
 
 function escapeHTML(value) {
@@ -128,13 +144,21 @@ function escapeHTML(value) {
 
 
 // ==========================================
-// FORMAT AVERAGE
+// FORMAT NUMBER
 // ==========================================
 
-function formatAverage(value) {
+function formatNumber(value) {
 
     const number =
-        Number(value) || 0;
+        Number(value);
+
+    if (
+        Number.isNaN(number)
+    ) {
+
+        return "0";
+
+    }
 
     return Math.round(
         number * 100
@@ -144,10 +168,10 @@ function formatAverage(value) {
 
 
 // ==========================================
-// CHECK LOGIN
+// GET LOGGED IN USER
 // ==========================================
 
-async function checkLogin() {
+async function getLoggedInUser() {
 
     const {
         data,
@@ -163,7 +187,9 @@ async function checkLogin() {
             error
         );
 
-        return null;
+        throw new Error(
+            "Unable to verify your login."
+        );
 
     }
 
@@ -172,6 +198,9 @@ async function checkLogin() {
         !data ||
         !data.user
     ) {
+
+        window.location.href =
+            "index.html";
 
         return null;
 
@@ -187,7 +216,7 @@ async function checkLogin() {
 // LOAD STUDENT
 // ==========================================
 
-async function loadStudent() {
+async function loadStudent(user) {
 
     const {
         data,
@@ -201,13 +230,12 @@ async function loadStudent() {
                 id,
                 user_id,
                 admission_number,
-                class,
-                optional_subjects
+                class
             `)
 
             .eq(
                 "user_id",
-                currentUser.id
+                user.id
             )
 
             .maybeSingle();
@@ -216,11 +244,14 @@ async function loadStudent() {
     if (error) {
 
         console.error(
-            "Student loading error:",
+            "Student query error:",
             error
         );
 
-        throw error;
+        throw new Error(
+            "Could not load your student account: " +
+            error.message
+        );
 
     }
 
@@ -228,7 +259,7 @@ async function loadStudent() {
     if (!data) {
 
         throw new Error(
-            "No student profile is linked to this account."
+            "No student record is linked to this account."
         );
 
     }
@@ -238,13 +269,20 @@ async function loadStudent() {
         data;
 
 
-    // ======================================
-    // LOAD PROFILE
-    // ======================================
+    return data;
+
+}
+
+
+// ==========================================
+// LOAD PROFILE
+// ==========================================
+
+async function loadProfile(user) {
 
     const {
-        data: profile,
-        error: profileError
+        data,
+        error
     } =
         await supabase
 
@@ -259,39 +297,57 @@ async function loadStudent() {
 
             .eq(
                 "id",
-                currentUser.id
+                user.id
             )
 
             .maybeSingle();
 
 
-    if (profileError) {
+    if (error) {
 
         console.error(
-            "Profile loading error:",
-            profileError
+            "Profile query error:",
+            error
         );
+
+        /*
+         * Profile is not essential enough
+         * to stop the whole results page.
+         */
+
+        return null;
 
     }
 
+
+    return data;
+
+}
+
+
+// ==========================================
+// DISPLAY STUDENT
+// ==========================================
+
+function displayStudent(
+    student,
+    profile
+) {
 
     studentName.textContent =
         profile?.full_name ||
         "Learner";
 
-
-    username.textContent =
-        profile?.username ||
-        "—";
-
-
     admissionNumber.textContent =
-        currentStudent.admission_number ||
+        student.admission_number ||
         "—";
-
 
     studentClass.textContent =
-        currentStudent.class ||
+        student.class ||
+        "—";
+
+    studentUsername.textContent =
+        profile?.username ||
         "—";
 
 }
@@ -301,24 +357,7 @@ async function loadStudent() {
 // LOAD RESULTS
 // ==========================================
 
-async function loadResults() {
-
-    resultsTable.innerHTML = `
-
-        <tr>
-
-            <td
-                colspan="8"
-                class="empty-row"
-            >
-                Loading results...
-
-            </td>
-
-        </tr>
-
-    `;
-
+async function loadResults(studentId) {
 
     const {
         data,
@@ -339,7 +378,7 @@ async function loadResults() {
 
             .eq(
                 "student_id",
-                currentStudent.id
+                studentId
             )
 
             .order(
@@ -353,11 +392,14 @@ async function loadResults() {
     if (error) {
 
         console.error(
-            "Results loading error:",
+            "Results query error:",
             error
         );
 
-        throw error;
+        throw new Error(
+            "Could not load your results: " +
+            error.message
+        );
 
     }
 
@@ -367,9 +409,6 @@ async function loadResults() {
 
 
     populateYears();
-
-
-    renderResults();
 
 }
 
@@ -407,11 +446,14 @@ async function loadGradingSystem() {
     if (error) {
 
         console.error(
-            "Grading system error:",
+            "Grading system query error:",
             error
         );
 
-        throw error;
+        throw new Error(
+            "Could not load the grading system: " +
+            error.message
+        );
 
     }
 
@@ -421,47 +463,49 @@ async function loadGradingSystem() {
 
 
     /*
-     * If the grading table is empty,
-     * don't silently use an old grading
-     * configuration.
+     * If Super Admin has not configured
+     * any grades, don't leave the page
+     * stuck on loading.
      */
 
     if (
         gradingSystem.length === 0
     ) {
 
-        throw new Error(
-            "The grading system has not been configured by the Super Admin."
+        showMessage(
+            "No grading system has been configured by the Super Admin.",
+            "info"
         );
 
     }
+
+
+    return gradingSystem;
 
 }
 
 
 // ==========================================
-// GET GRADE
+// FIND GRADE
 // ==========================================
 
-function getGrade(marks) {
+function getGradeForMarks(marks) {
 
     const numericMarks =
         Number(marks);
 
 
     if (
-        Number.isNaN(
-            numericMarks
-        )
+        Number.isNaN(numericMarks)
     ) {
 
         return {
 
-            grade: "—",
+            grade: "-",
 
             points: 0,
 
-            description: "No grade"
+            description: "-"
 
         };
 
@@ -469,31 +513,36 @@ function getGrade(marks) {
 
 
     /*
-     * The first grading level whose
-     * minimum mark is <= the student's
-     * marks is the correct grade.
+     * gradingSystem is sorted from
+     * highest min_mark to lowest.
+     *
+     * Example:
+     *
+     * 90 EE1
+     * 80 EE2
+     * 70 ME1
+     * ...
      */
 
-    const grading =
+    const matchingGrade =
         gradingSystem.find(
-            item =>
+            grade =>
                 numericMarks >=
                 Number(
-                    item.min_mark
+                    grade.min_mark
                 )
         );
 
 
-    if (!grading) {
+    if (!matchingGrade) {
 
         return {
 
-            grade: "—",
+            grade: "-",
 
             points: 0,
 
-            description:
-                "No grading level"
+            description: "No grading level"
 
         };
 
@@ -503,16 +552,16 @@ function getGrade(marks) {
     return {
 
         grade:
-            grading.grade,
+            matchingGrade.grade,
 
         points:
             Number(
-                grading.points
+                matchingGrade.points
             ) || 0,
 
         description:
-            grading.description ||
-            ""
+            matchingGrade.description ||
+            "-"
 
     };
 
@@ -533,21 +582,16 @@ function populateYears() {
         [
             ...new Set(
                 allResults
-
                     .map(
                         result =>
                             result.year
                     )
-
                     .filter(
                         year =>
-                            year !==
-                            null &&
-                            year !==
-                            undefined &&
+                            year !== null &&
+                            year !== undefined &&
                             year !== ""
                     )
-
                     .map(
                         year =>
                             String(year)
@@ -617,6 +661,7 @@ function getFilteredResults() {
     const selectedTerm =
         termFilter.value;
 
+
     const selectedYear =
         yearFilter.value;
 
@@ -626,38 +671,28 @@ function getFilteredResults() {
 
             if (
                 selectedTerm !==
-                "all"
+                "all" &&
+                result.term !==
+                selectedTerm
             ) {
 
-                if (
-                    result.term !==
-                    selectedTerm
-                ) {
-
-                    return false;
-
-                }
+                return false;
 
             }
 
 
             if (
                 selectedYear !==
-                "all"
+                "all" &&
+                String(
+                    result.year
+                ) !==
+                String(
+                    selectedYear
+                )
             ) {
 
-                if (
-                    String(
-                        result.year
-                    ) !==
-                    String(
-                        selectedYear
-                    )
-                ) {
-
-                    return false;
-
-                }
+                return false;
 
             }
 
@@ -718,7 +753,9 @@ function calculateAverage(
     );
 
 
-    if (count === 0) {
+    if (
+        count === 0
+    ) {
 
         return 0;
 
@@ -744,15 +781,15 @@ function calculateTotalPoints(
     results.forEach(
         result => {
 
-            const grading =
-                getGrade(
+            const grade =
+                getGradeForMarks(
                     result.marks
                 );
 
 
             total +=
                 Number(
-                    grading.points
+                    grade.points
                 ) || 0;
 
         }
@@ -760,6 +797,50 @@ function calculateTotalPoints(
 
 
     return total;
+
+}
+
+
+// ==========================================
+// RENDER SUMMARY
+// ==========================================
+
+function renderSummary(
+    results
+) {
+
+    const avg =
+        calculateAverage(
+            results
+        );
+
+
+    const points =
+        calculateTotalPoints(
+            results
+        );
+
+
+    const overall =
+        getGradeForMarks(
+            avg
+        );
+
+
+    subjectCount.textContent =
+        results.length;
+
+
+    average.textContent =
+        `${formatNumber(avg)}%`;
+
+
+    totalPoints.textContent =
+        points;
+
+
+    overallGrade.textContent =
+        overall.grade || "-";
 
 }
 
@@ -774,49 +855,10 @@ function renderResults() {
         getFilteredResults();
 
 
-    // ======================================
-    // SUMMARY
-    // ======================================
+    renderSummary(
+        results
+    );
 
-    subjectCount.textContent =
-        results.length;
-
-
-    const studentAverage =
-        calculateAverage(
-            results
-        );
-
-
-    average.textContent =
-        `${formatAverage(
-            studentAverage
-        )}%`;
-
-
-    const points =
-        calculateTotalPoints(
-            results
-        );
-
-
-    totalPoints.textContent =
-        points;
-
-
-    const overall =
-        getGrade(
-            studentAverage
-        );
-
-
-    overallGrade.textContent =
-        overall.grade;
-
-
-    // ======================================
-    // EMPTY
-    // ======================================
 
     if (
         results.length === 0
@@ -827,10 +869,12 @@ function renderResults() {
             <tr>
 
                 <td
-                    colspan="8"
+                    colspan="6"
                     class="empty-row"
                 >
-                    No results found for the selected filters.
+
+                    No results found for
+                    the selected filters.
 
                 </td>
 
@@ -843,159 +887,211 @@ function renderResults() {
     }
 
 
-    // ======================================
-    // TABLE
-    // ======================================
+    resultsTable.innerHTML =
+        results.map(
+            result => {
 
-    resultsTable.innerHTML = "";
-
-
-    results.forEach(
-        (result, index) => {
-
-            const grading =
-                getGrade(
-                    result.marks
-                );
+                const grade =
+                    getGradeForMarks(
+                        result.marks
+                    );
 
 
-            const row =
-                document.createElement(
-                    "tr"
-                );
+                return `
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+
+                                ${escapeHTML(
+                                    result.subject ||
+                                    "Unknown Subject"
+                                )}
+
+                            </strong>
+
+                        </td>
 
 
-            row.innerHTML = `
+                        <td>
 
-                <td>
-                    ${index + 1}
-                </td>
+                            <strong>
 
+                                ${formatNumber(
+                                    result.marks
+                                )}
 
-                <td>
+                            </strong>
 
-                    <strong>
-                        ${escapeHTML(
-                            result.subject ||
-                            "—"
-                        )}
-                    </strong>
-
-                </td>
+                        </td>
 
 
-                <td>
+                        <td>
 
-                    <strong>
+                            <span class="grade-badge">
 
-                        ${escapeHTML(
-                            formatAverage(
-                                result.marks
-                            )
-                        )}
+                                ${escapeHTML(
+                                    grade.grade
+                                )}
 
-                    </strong>
-
-                    %
-
-                </td>
+                            </span>
 
 
-                <td>
+                            <span
+                                class="grade-description"
+                            >
 
-                    <span class="grade-badge">
+                                ${escapeHTML(
+                                    grade.description
+                                )}
 
-                        ${escapeHTML(
-                            grading.grade
-                        )}
+                            </span>
 
-                    </span>
-
-                </td>
-
-
-                <td>
-
-                    <span class="description">
-
-                        ${escapeHTML(
-                            grading.description
-                        )}
-
-                    </span>
-
-                </td>
+                        </td>
 
 
-                <td>
+                        <td>
 
-                    <span class="points">
+                            <strong>
 
-                        ${grading.points}
+                                ${grade.points}
 
-                    </span>
+                            </strong>
 
-                </td>
-
-
-                <td>
-
-                    ${escapeHTML(
-                        result.term ||
-                        "—"
-                    )}
-
-                </td>
+                        </td>
 
 
-                <td>
+                        <td>
 
-                    ${escapeHTML(
-                        result.year ||
-                        "—"
-                    )}
+                            ${escapeHTML(
+                                result.term ||
+                                "—"
+                            )}
 
-                </td>
-
-            `;
+                        </td>
 
 
-            resultsTable.appendChild(
-                row
-            );
+                        <td>
 
-        }
-    );
+                            ${escapeHTML(
+                                result.year ||
+                                "—"
+                            )}
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        ).join("");
 
 }
 
 
 // ==========================================
-// REFRESH
+// LOAD EVERYTHING
 // ==========================================
 
-async function refreshPage() {
-
-    refreshButton.disabled =
-        true;
-
-    refreshButton.textContent =
-        "Refreshing...";
-
+async function loadStudentDashboard() {
 
     try {
 
-        await loadStudent();
+        clearMessage();
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Replace "Loading results..."
+         * immediately so the page cannot
+         * remain stuck indefinitely.
+         */
+
+        resultsTable.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="empty-row"
+                >
+
+                    Loading results...
+
+                </td>
+
+            </tr>
+
+        `;
+
+
+        /*
+         * 1. Check login
+         */
+
+        const user =
+            await getLoggedInUser();
+
+
+        if (!user) {
+            return;
+        }
+
+
+        /*
+         * 2. Load student record
+         */
+
+        const student =
+            await loadStudent(
+                user
+            );
+
+
+        /*
+         * 3. Load profile
+         */
+
+        const profile =
+            await loadProfile(
+                user
+            );
+
+
+        displayStudent(
+            student,
+            profile
+        );
+
+
+        /*
+         * 4. Load results
+         */
+
+        await loadResults(
+            student.id
+        );
+
+
+        /*
+         * 5. Load current grading system
+         *
+         * This is the important part:
+         * the grades are NOT hard-coded.
+         */
 
         await loadGradingSystem();
 
-        await loadResults();
 
+        /*
+         * 6. Render page
+         */
 
-        showMessage(
-            "Results updated successfully.",
-            "success"
-        );
+        renderResults();
 
 
     }
@@ -1003,26 +1099,34 @@ async function refreshPage() {
     catch (error) {
 
         console.error(
-            "Refresh error:",
+            "Student dashboard error:",
             error
         );
 
 
+        resultsTable.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="empty-row"
+                >
+
+                    Unable to load results.
+
+                </td>
+
+            </tr>
+
+        `;
+
+
         showMessage(
             error.message ||
-            "Unable to load results.",
+            "Something went wrong while loading your results.",
             "error"
         );
-
-    }
-
-    finally {
-
-        refreshButton.disabled =
-            false;
-
-        refreshButton.textContent =
-            "Refresh";
 
     }
 
@@ -1046,12 +1150,37 @@ yearFilter.addEventListener(
 
 
 // ==========================================
-// REFRESH BUTTON
+// REFRESH
 // ==========================================
 
 refreshButton.addEventListener(
     "click",
-    refreshPage
+    async () => {
+
+        refreshButton.disabled =
+            true;
+
+        refreshButton.textContent =
+            "Refreshing...";
+
+
+        try {
+
+            await loadStudentDashboard();
+
+        }
+
+        finally {
+
+            refreshButton.disabled =
+                false;
+
+            refreshButton.textContent =
+                "Refresh";
+
+        }
+
+    }
 );
 
 
@@ -1059,12 +1188,9 @@ refreshButton.addEventListener(
 // LOGOUT
 // ==========================================
 
-logout.addEventListener(
+logoutButton.addEventListener(
     "click",
-    async event => {
-
-        event.preventDefault();
-
+    async () => {
 
         const confirmed =
             window.confirm(
@@ -1077,11 +1203,10 @@ logout.addEventListener(
         }
 
 
-        logout.disabled =
+        logoutButton.disabled =
             true;
 
-
-        logout.textContent =
+        logoutButton.textContent =
             "Signing out...";
 
 
@@ -1100,16 +1225,16 @@ logout.addEventListener(
 
 
             showMessage(
-                "Sign out failed: " +
+                "Logout failed: " +
                 error.message,
                 "error"
             );
 
 
-            logout.disabled =
+            logoutButton.disabled =
                 false;
 
-            logout.textContent =
+            logoutButton.textContent =
                 "Logout";
 
             return;
@@ -1125,122 +1250,7 @@ logout.addEventListener(
 
 
 // ==========================================
-// INITIALIZE
-// ==========================================
-
-async function initialize() {
-
-    try {
-
-        resultsTable.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="8"
-                    class="empty-row"
-                >
-                    Loading student account...
-
-                </td>
-
-            </tr>
-
-        `;
-
-
-        // ----------------------------------
-        // LOGIN
-        // ----------------------------------
-
-        currentUser =
-            await checkLogin();
-
-
-        if (!currentUser) {
-
-            window.location.href =
-                "index.html";
-
-            return;
-
-        }
-
-
-        // ----------------------------------
-        // STUDENT
-        // ----------------------------------
-
-        await loadStudent();
-
-
-        // ----------------------------------
-        // GRADING SYSTEM
-        // ----------------------------------
-        //
-        // IMPORTANT:
-        // This reads the current grading
-        // configuration from the same
-        // grading_system table used by
-        // Super Admin.
-        //
-        // ----------------------------------
-
-        await loadGradingSystem();
-
-
-        // ----------------------------------
-        // RESULTS
-        // ----------------------------------
-
-        await loadResults();
-
-
-        console.log(
-            "Student page initialized successfully."
-        );
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Student page error:",
-            error
-        );
-
-
-        resultsTable.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="8"
-                    class="empty-row"
-                >
-                    Unable to load results.
-
-                </td>
-
-            </tr>
-
-        `;
-
-
-        showMessage(
-            error.message ||
-            "Unable to load student results.",
-            "error"
-        );
-
-    }
-
-}
-
-
-// ==========================================
 // START
 // ==========================================
 
-initialize();
+loadStudentDashboard();
