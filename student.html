@@ -12,11 +12,6 @@
 
     <title>Grade Hub - Student Results</title>
 
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
     <style>
 
         * {
@@ -25,6 +20,7 @@
 
         body {
             margin: 0;
+
             font-family:
                 Inter,
                 system-ui,
@@ -43,21 +39,26 @@
             color: #172033;
         }
 
+
         /* ==========================================
            HEADER
         ========================================== */
 
         header {
             min-height: 72px;
+
             padding: 0 30px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             gap: 20px;
 
             background: #111827;
+
             color: white;
 
             box-shadow:
@@ -65,20 +66,29 @@
                 rgba(15, 23, 42, .12);
         }
 
+
         header h1 {
             margin: 0;
+
             font-size: 21px;
+
             font-weight: 800;
         }
 
+
         header nav {
             display: flex;
+
             align-items: center;
+
             gap: 8px;
         }
 
-        header nav a {
+
+        header nav a,
+        header nav button {
             color: #dbeafe;
+
             text-decoration: none;
 
             padding: 9px 13px;
@@ -86,13 +96,26 @@
             border-radius: 9px;
 
             font-size: 14px;
+
             font-weight: 600;
+
+            border: 0;
+
+            background: transparent;
+
+            cursor: pointer;
+
+            font-family: inherit;
         }
 
-        header nav a:hover {
+
+        header nav a:hover,
+        header nav button:hover {
             background: #1f2937;
+
             color: white;
         }
+
 
         /* ==========================================
            PAGE
@@ -105,12 +128,15 @@
                     calc(100% - 32px)
                 );
 
-            margin: 30px auto 50px;
+            margin:
+                30px auto 50px;
         }
+
 
         .page-heading {
             margin-bottom: 22px;
         }
+
 
         .page-heading h2 {
             margin: 0 0 6px;
@@ -120,6 +146,7 @@
             letter-spacing: -.6px;
         }
 
+
         .page-heading p {
             margin: 0;
 
@@ -128,6 +155,7 @@
             font-size: 15px;
         }
 
+
         /* ==========================================
            MESSAGE
         ========================================== */
@@ -135,7 +163,7 @@
         .message {
             display: none;
 
-            padding: 12px 14px;
+            padding: 13px 15px;
 
             margin-bottom: 18px;
 
@@ -146,25 +174,47 @@
             font-weight: 600;
         }
 
+
         .message.show {
             display: block;
         }
 
+
         .message.error {
             background: #fef2f2;
+
             color: #991b1b;
+
+            border:
+                1px solid #fecaca;
         }
+
 
         .message.success {
             background: #f0fdf4;
+
             color: #166534;
+
+            border:
+                1px solid #bbf7d0;
         }
 
+
+        .message.info {
+            background: #eff6ff;
+
+            color: #1e40af;
+
+            border:
+                1px solid #bfdbfe;
+        }
+
+
         /* ==========================================
-           PROFILE CARD
+           STUDENT PROFILE CARD
         ========================================== */
 
-        .profile-card {
+        .student-card {
             background: white;
 
             border:
@@ -181,16 +231,30 @@
                 rgba(15, 23, 42, .05);
         }
 
-        .profile-grid {
+
+        .student-info {
             display: grid;
 
             grid-template-columns:
                 repeat(4, 1fr);
 
-            gap: 18px;
+            gap: 15px;
         }
 
-        .profile-item span {
+
+        .info-box {
+            padding: 15px;
+
+            border-radius: 12px;
+
+            background: #f8fafc;
+
+            border:
+                1px solid #e5e9f2;
+        }
+
+
+        .info-box span {
             display: block;
 
             color: #697386;
@@ -202,9 +266,11 @@
             margin-bottom: 5px;
         }
 
-        .profile-item strong {
+
+        .info-box strong {
             font-size: 16px;
         }
+
 
         /* ==========================================
            SUMMARY
@@ -221,6 +287,7 @@
             margin-bottom: 22px;
         }
 
+
         .summary-card {
             background: white;
 
@@ -236,6 +303,7 @@
                 rgba(15, 23, 42, .05);
         }
 
+
         .summary-card span {
             display: block;
 
@@ -246,6 +314,7 @@
             font-weight: 600;
         }
 
+
         .summary-card strong {
             display: block;
 
@@ -253,6 +322,7 @@
 
             font-size: 27px;
         }
+
 
         /* ==========================================
            CONTROLS
@@ -275,6 +345,7 @@
                 rgba(15, 23, 42, .04);
         }
 
+
         .controls {
             display: grid;
 
@@ -285,6 +356,7 @@
 
             align-items: end;
         }
+
 
         .control label {
             display: block;
@@ -297,6 +369,7 @@
 
             color: #475569;
         }
+
 
         .control select {
             width: 100%;
@@ -315,6 +388,7 @@
             outline: none;
         }
 
+
         .control select:focus {
             border-color: #4f46e5;
 
@@ -322,6 +396,7 @@
                 0 0 0 3px
                 rgba(79, 70, 229, .1);
         }
+
 
         .refresh-btn {
             border: 0;
@@ -340,15 +415,24 @@
             cursor: pointer;
         }
 
+
         .refresh-btn:hover {
             background: #4338ca;
         }
 
+
+        .refresh-btn:disabled {
+            opacity: .6;
+
+            cursor: not-allowed;
+        }
+
+
         /* ==========================================
-           RESULTS
+           RESULTS CARD
         ========================================== */
 
-        .results-card {
+        .table-card {
             background: white;
 
             border:
@@ -363,20 +447,29 @@
                 rgba(15, 23, 42, .055);
         }
 
-        .results-header {
+
+        .table-header {
             padding: 20px;
 
             border-bottom:
                 1px solid #e5e9f2;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
         }
 
-        .results-header h3 {
+
+        .table-header h3 {
             margin: 0;
 
             font-size: 18px;
         }
 
-        .results-header p {
+
+        .table-header p {
             margin: 4px 0 0;
 
             color: #697386;
@@ -384,9 +477,11 @@
             font-size: 13px;
         }
 
+
         .table-container {
             overflow-x: auto;
         }
+
 
         table {
             width: 100%;
@@ -395,6 +490,7 @@
 
             min-width: 800px;
         }
+
 
         th {
             text-align: left;
@@ -415,6 +511,7 @@
                 1px solid #e5e9f2;
         }
 
+
         td {
             padding: 14px 16px;
 
@@ -424,9 +521,11 @@
             font-size: 14px;
         }
 
+
         tbody tr:hover {
             background: #fafbff;
         }
+
 
         /* ==========================================
            GRADE BADGE
@@ -436,20 +535,21 @@
             display: inline-block;
 
             padding:
-                6px 10px;
+                6px 11px;
 
             border-radius: 999px;
-
-            font-size: 12px;
-
-            font-weight: 800;
 
             background: #eef2ff;
 
             color: #3730a3;
+
+            font-size: 12px;
+
+            font-weight: 800;
         }
 
-        .description {
+
+        .grade-description {
             display: block;
 
             margin-top: 4px;
@@ -459,11 +559,6 @@
             font-size: 11px;
         }
 
-        .points {
-            font-weight: 800;
-
-            color: #3730a3;
-        }
 
         /* ==========================================
            EMPTY
@@ -472,10 +567,11 @@
         .empty-row {
             text-align: center;
 
-            padding: 35px !important;
+            padding: 40px !important;
 
             color: #697386;
         }
+
 
         /* ==========================================
            RESPONSIVE
@@ -483,26 +579,19 @@
 
         @media (max-width: 900px) {
 
+            .student-info {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+
             .summary-grid {
                 grid-template-columns:
-                    1fr 1fr;
-            }
-
-            .profile-grid {
-                grid-template-columns:
-                    1fr 1fr;
-            }
-
-            .controls {
-                grid-template-columns:
-                    1fr 1fr;
-            }
-
-            .refresh-btn {
-                width: 100%;
+                    repeat(2, 1fr);
             }
 
         }
+
 
         @media (max-width: 600px) {
 
@@ -514,13 +603,17 @@
                 align-items: flex-start;
             }
 
+
             header nav {
                 width: 100%;
             }
 
-            header nav a {
+
+            header nav a,
+            header nav button {
                 background: #1f2937;
             }
+
 
             .student-page {
                 width:
@@ -529,19 +622,27 @@
                 margin-top: 20px;
             }
 
+
+            .student-info {
+                grid-template-columns:
+                    1fr;
+            }
+
+
             .summary-grid {
                 grid-template-columns:
                     1fr;
             }
 
-            .profile-grid {
-                grid-template-columns:
-                    1fr;
-            }
 
             .controls {
                 grid-template-columns:
                     1fr;
+            }
+
+
+            .refresh-btn {
+                width: 100%;
             }
 
         }
@@ -567,13 +668,12 @@
             Home
         </a>
 
-        <a href="student.html">
-            Results
-        </a>
-
-        <a href="#" id="logout">
+        <button
+            id="logoutButton"
+            type="button"
+        >
             Logout
-        </a>
+        </button>
 
     </nav>
 
@@ -591,7 +691,7 @@
         </h2>
 
         <p>
-            View your marks, CBC grades and performance points.
+            View your marks, grades and points.
         </p>
 
     </div>
@@ -606,15 +706,14 @@
 
 
     <!-- ==========================================
-         PROFILE
+         STUDENT INFORMATION
     =========================================== -->
 
-    <section class="profile-card">
+    <section class="student-card">
 
-        <div class="profile-grid">
+        <div class="student-info">
 
-
-            <div class="profile-item">
+            <div class="info-box">
 
                 <span>
                     Learner
@@ -627,114 +726,43 @@
             </div>
 
 
-            <div class="profile-item">
+            <div class="info-box">
 
                 <span>
                     Admission Number
                 </span>
 
                 <strong id="admissionNumber">
-                    —
+                    Loading...
                 </strong>
 
             </div>
 
 
-            <div class="profile-item">
+            <div class="info-box">
 
                 <span>
                     Class
                 </span>
 
                 <strong id="studentClass">
-                    —
+                    Loading...
                 </strong>
 
             </div>
 
 
-            <div class="profile-item">
+            <div class="info-box">
 
                 <span>
                     Username
                 </span>
 
-                <strong id="username">
-                    —
+                <strong id="studentUsername">
+                    Loading...
                 </strong>
 
             </div>
-
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         FILTERS
-    =========================================== -->
-
-    <section class="control-card">
-
-        <div class="controls">
-
-
-            <div class="control">
-
-                <label for="termFilter">
-                    Term
-                </label>
-
-                <select id="termFilter">
-
-                    <option value="all">
-                        All Terms
-                    </option>
-
-                    <option value="Term 1">
-                        Term 1
-                    </option>
-
-                    <option value="Term 2">
-                        Term 2
-                    </option>
-
-                    <option value="Term 3">
-                        Term 3
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="control">
-
-                <label for="yearFilter">
-                    Year
-                </label>
-
-                <select id="yearFilter">
-
-                    <option value="all">
-                        All Years
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <button
-                type="button"
-                class="refresh-btn"
-                id="refreshButton"
-            >
-                Refresh
-            </button>
-
 
         </div>
 
@@ -795,7 +823,7 @@
             </span>
 
             <strong id="overallGrade">
-                —
+                -
             </strong>
 
         </div>
@@ -806,37 +834,109 @@
 
 
     <!-- ==========================================
-         RESULTS TABLE
+         FILTERS
     =========================================== -->
 
-    <section class="results-card">
+    <section class="control-card">
+
+        <div class="controls">
 
 
-        <div class="results-header">
+            <div class="control">
 
-            <h3>
-                Subject Results
-            </h3>
+                <label for="termFilter">
+                    Term
+                </label>
 
-            <p>
-                Grades and points are loaded from the current Super Admin grading system.
-            </p>
+                <select id="termFilter">
+
+                    <option value="all">
+                        All Terms
+                    </option>
+
+                    <option value="Term 1">
+                        Term 1
+                    </option>
+
+                    <option value="Term 2">
+                        Term 2
+                    </option>
+
+                    <option value="Term 3">
+                        Term 3
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="control">
+
+                <label for="yearFilter">
+                    Year
+                </label>
+
+                <select id="yearFilter">
+
+                    <option value="all">
+                        All Years
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <button
+                id="refreshButton"
+                class="refresh-btn"
+                type="button"
+            >
+                Refresh
+            </button>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================
+         RESULTS
+    =========================================== -->
+
+    <section class="table-card">
+
+
+        <div class="table-header">
+
+            <div>
+
+                <h3>
+                    Subject Results
+                </h3>
+
+                <p>
+                    Grades and points use the current Super Admin grading configuration.
+                </p>
+
+            </div>
 
         </div>
 
 
-        <div class="table-container">
 
+        <div class="table-container">
 
             <table>
 
                 <thead>
 
                     <tr>
-
-                        <th>
-                            #
-                        </th>
 
                         <th>
                             Subject
@@ -848,10 +948,6 @@
 
                         <th>
                             Grade
-                        </th>
-
-                        <th>
-                            Description
                         </th>
 
                         <th>
@@ -876,11 +972,10 @@
                     <tr>
 
                         <td
-                            colspan="8"
+                            colspan="6"
                             class="empty-row"
                         >
                             Loading results...
-
                         </td>
 
                     </tr>
@@ -889,8 +984,8 @@
 
             </table>
 
-
         </div>
+
 
     </section>
 
