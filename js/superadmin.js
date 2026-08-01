@@ -45,9 +45,9 @@ const saveGradesButton =
     document.getElementById("saveGradesButton");
 
 
-/*
- * Password management
- */
+/* ==========================================
+   PASSWORD MANAGEMENT
+========================================== */
 
 const passwordUser =
     document.getElementById("passwordUser");
@@ -71,64 +71,56 @@ const DEFAULT_GRADES = [
         grade: "EE1",
         min_mark: 90,
         points: 8,
-        description:
-            "Exceeding Expectations"
+        description: "Exceeding Expectations"
     },
 
     {
         grade: "EE2",
         min_mark: 80,
         points: 7,
-        description:
-            "Exceeding Expectations"
+        description: "Exceeding Expectations"
     },
 
     {
         grade: "ME1",
         min_mark: 70,
         points: 6,
-        description:
-            "Meeting Expectations"
+        description: "Meeting Expectations"
     },
 
     {
         grade: "ME2",
         min_mark: 60,
         points: 5,
-        description:
-            "Meeting Expectations"
+        description: "Meeting Expectations"
     },
 
     {
         grade: "AE1",
         min_mark: 50,
         points: 4,
-        description:
-            "Approaching Expectations"
+        description: "Approaching Expectations"
     },
 
     {
         grade: "AE2",
         min_mark: 40,
         points: 3,
-        description:
-            "Approaching Expectations"
+        description: "Approaching Expectations"
     },
 
     {
         grade: "BE1",
         min_mark: 30,
         points: 2,
-        description:
-            "Below Expectations"
+        description: "Below Expectations"
     },
 
     {
         grade: "BE2",
         min_mark: 0,
         points: 1,
-        description:
-            "Below Expectations"
+        description: "Below Expectations"
     }
 
 ];
@@ -143,13 +135,16 @@ function showMessage(
     type = "success"
 ) {
 
+    if (!messageBox) {
+        return;
+    }
+
     messageBox.textContent =
         text;
 
     messageBox.className =
         "sa-message show " +
         type;
-
 }
 
 
@@ -163,34 +158,15 @@ function escapeHTML(value) {
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
 
-
     return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -204,24 +180,18 @@ function formatDate(value) {
         return "—";
     }
 
-
     const date =
         new Date(value);
-
 
     if (
         isNaN(
             date.getTime()
         )
     ) {
-
         return "—";
-
     }
 
-
     return date.toLocaleDateString();
-
 }
 
 
@@ -235,7 +205,6 @@ function formatSubjects(subjects) {
         return "—";
     }
 
-
     if (Array.isArray(subjects)) {
 
         return subjects
@@ -244,12 +213,9 @@ function formatSubjects(subjects) {
                     escapeHTML(subject)
             )
             .join(", ");
-
     }
 
-
     return escapeHTML(subjects);
-
 }
 
 
@@ -265,7 +231,6 @@ async function checkLogin() {
     } =
         await supabase.auth.getUser();
 
-
     if (error) {
 
         console.error(
@@ -274,17 +239,13 @@ async function checkLogin() {
         );
 
         return null;
-
     }
-
 
     if (!data.user) {
         return null;
     }
 
-
     return data.user;
-
 }
 
 
@@ -297,16 +258,13 @@ async function checkSuperAdmin() {
     const user =
         await checkLogin();
 
-
     if (!user) {
 
         window.location.href =
             "index.html";
 
         return null;
-
     }
-
 
     const {
         data,
@@ -322,7 +280,6 @@ async function checkSuperAdmin() {
                 user.id
             );
 
-
     if (error) {
 
         console.error(
@@ -336,18 +293,14 @@ async function checkSuperAdmin() {
         );
 
         return null;
-
     }
-
 
     const superAdmin =
         (data || []).find(
             row =>
-                row.role ===
-                    "super_admin" &&
+                row.role === "super_admin" &&
                 row.approved === true
         );
-
 
     if (!superAdmin) {
 
@@ -355,7 +308,6 @@ async function checkSuperAdmin() {
             "This account does not have an approved Super Admin role.",
             "error"
         );
-
 
         setTimeout(
             () => {
@@ -367,14 +319,10 @@ async function checkSuperAdmin() {
             1500
         );
 
-
         return null;
-
     }
 
-
     return user;
-
 }
 
 
@@ -386,16 +334,11 @@ async function loadApprovedAdmins() {
 
     approvedAdmins.innerHTML = `
         <tr>
-            <td
-                colspan="4"
-                class="sa-empty">
-
+            <td colspan="4" class="sa-empty">
                 Loading...
-
             </td>
         </tr>
     `;
-
 
     const {
         data,
@@ -415,7 +358,6 @@ async function loadApprovedAdmins() {
                 true
             );
 
-
     if (error) {
 
         console.error(
@@ -423,24 +365,16 @@ async function loadApprovedAdmins() {
             error
         );
 
-
         approvedAdmins.innerHTML = `
             <tr>
-                <td
-                    colspan="4"
-                    class="sa-empty">
-
+                <td colspan="4" class="sa-empty">
                     Failed to load administrators.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     if (
         !data ||
@@ -450,31 +384,22 @@ async function loadApprovedAdmins() {
         totalAdmins.textContent =
             "0";
 
-
         approvedAdmins.innerHTML = `
             <tr>
-                <td
-                    colspan="4"
-                    class="sa-empty">
-
+                <td colspan="4" class="sa-empty">
                     No approved administrators.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     const userIds =
         data.map(
             row =>
                 row.user_id
         );
-
 
     const {
         data: profiles,
@@ -490,7 +415,6 @@ async function loadApprovedAdmins() {
                 userIds
             );
 
-
     if (profileError) {
 
         console.error(
@@ -498,45 +422,33 @@ async function loadApprovedAdmins() {
             profileError
         );
 
-
         approvedAdmins.innerHTML = `
             <tr>
-                <td
-                    colspan="4"
-                    class="sa-empty">
-
+                <td colspan="4" class="sa-empty">
                     Administrators found,
                     but profiles could not
                     be loaded.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     const profileMap = {};
 
+    (profiles || []).forEach(
+        profile => {
 
-    (profiles || [])
-        .forEach(
-            profile => {
+            profileMap[
+                profile.id
+            ] = profile;
 
-                profileMap[
-                    profile.id
-                ] = profile;
-
-            }
-        );
-
+        }
+    );
 
     totalAdmins.textContent =
         data.length;
-
 
     approvedAdmins.innerHTML =
         data.map(
@@ -546,7 +458,6 @@ async function loadApprovedAdmins() {
                     profileMap[
                         row.user_id
                     ] || {};
-
 
                 return `
                     <tr>
@@ -574,11 +485,8 @@ async function loadApprovedAdmins() {
 
                         <td>
 
-                            <span
-                                class="sa-status approved">
-
+                            <span class="sa-status approved">
                                 Approved
-
                             </span>
 
                         </td>
@@ -588,7 +496,6 @@ async function loadApprovedAdmins() {
 
             }
         ).join("");
-
 }
 
 
@@ -600,16 +507,11 @@ async function loadAdminRequests() {
 
     adminRequests.innerHTML = `
         <tr>
-            <td
-                colspan="6"
-                class="sa-empty">
-
+            <td colspan="6" class="sa-empty">
                 Loading...
-
             </td>
         </tr>
     `;
-
 
     const {
         data,
@@ -625,7 +527,6 @@ async function loadAdminRequests() {
                 }
             );
 
-
     if (error) {
 
         console.error(
@@ -633,60 +534,41 @@ async function loadAdminRequests() {
             error
         );
 
-
         adminRequests.innerHTML = `
             <tr>
-                <td
-                    colspan="6"
-                    class="sa-empty">
-
+                <td colspan="6" class="sa-empty">
                     Failed to load requests.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     const requests =
         data || [];
 
-
     const pending =
         requests.filter(
             request =>
-                request.status ===
-                "pending"
+                request.status === "pending"
         );
-
 
     pendingAdmins.textContent =
         pending.length;
-
 
     if (requests.length === 0) {
 
         adminRequests.innerHTML = `
             <tr>
-                <td
-                    colspan="6"
-                    class="sa-empty">
-
+                <td colspan="6" class="sa-empty">
                     No administrator requests.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     adminRequests.innerHTML =
         requests.map(
@@ -694,10 +576,8 @@ async function loadAdminRequests() {
 
                 let actions = "—";
 
-
                 if (
-                    request.status ===
-                    "pending"
+                    request.status === "pending"
                 ) {
 
                     actions = `
@@ -713,7 +593,6 @@ async function loadAdminRequests() {
 
                         </button>
 
-
                         <button
                             class="sa-btn reject"
                             data-action="reject"
@@ -726,16 +605,12 @@ async function loadAdminRequests() {
                         </button>
 
                     `;
-
                 }
 
-
                 const statusClass =
-                    request.status ===
-                    "approved"
+                    request.status === "approved"
                         ? "approved"
                         : "pending";
-
 
                 return `
 
@@ -789,10 +664,8 @@ async function loadAdminRequests() {
                     </tr>
 
                 `;
-
             }
         ).join("");
-
 }
 
 
@@ -804,16 +677,11 @@ async function loadStudents() {
 
     studentTable.innerHTML = `
         <tr>
-            <td
-                colspan="5"
-                class="sa-empty">
-
+            <td colspan="5" class="sa-empty">
                 Loading...
-
             </td>
         </tr>
     `;
-
 
     const {
         data: students,
@@ -821,23 +689,20 @@ async function loadStudents() {
     } =
         await supabase
             .from("students")
-            .select(
-                `
+            .select(`
                 id,
                 user_id,
                 admission_number,
                 class,
                 optional_subjects,
                 created_at
-                `
-            )
+            `)
             .order(
                 "created_at",
                 {
                     ascending: false
                 }
             );
-
 
     if (error) {
 
@@ -846,55 +711,37 @@ async function loadStudents() {
             error
         );
 
-
         studentTable.innerHTML = `
             <tr>
-                <td
-                    colspan="5"
-                    class="sa-empty">
-
+                <td colspan="5" class="sa-empty">
                     Failed to load students.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     const studentList =
         students || [];
 
-
     totalStudents.textContent =
         studentList.length;
 
-
     if (
-        studentList.length ===
-        0
+        studentList.length === 0
     ) {
 
         studentTable.innerHTML = `
             <tr>
-                <td
-                    colspan="5"
-                    class="sa-empty">
-
+                <td colspan="5" class="sa-empty">
                     No students registered yet.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     const userIds =
         studentList
@@ -904,9 +751,7 @@ async function loadStudents() {
             )
             .filter(Boolean);
 
-
     let profiles = [];
-
 
     if (userIds.length > 0) {
 
@@ -921,7 +766,6 @@ async function loadStudents() {
                     userIds
                 );
 
-
         if (result.error) {
 
             console.error(
@@ -929,19 +773,15 @@ async function loadStudents() {
                 result.error
             );
 
-        }
-        else {
+        } else {
 
             profiles =
                 result.data || [];
 
         }
-
     }
 
-
     const profileMap = {};
-
 
     profiles.forEach(
         profile => {
@@ -953,7 +793,6 @@ async function loadStudents() {
         }
     );
 
-
     studentTable.innerHTML =
         studentList.map(
             student => {
@@ -962,7 +801,6 @@ async function loadStudents() {
                     profileMap[
                         student.user_id
                     ] || {};
-
 
                 return `
 
@@ -1005,10 +843,8 @@ async function loadStudents() {
                     </tr>
 
                 `;
-
             }
         ).join("");
-
 }
 
 
@@ -1025,18 +861,15 @@ async function approveAdmin(
             "Approve this administrator request?"
         );
 
-
     if (!confirmed) {
         return;
     }
-
 
     try {
 
         showMessage(
             "Approving administrator..."
         );
-
 
         const {
             data,
@@ -1050,23 +883,19 @@ async function approveAdmin(
                 }
             );
 
-
         if (error) {
             throw error;
         }
-
 
         console.log(
             "Approval result:",
             data
         );
 
-
         showMessage(
             "Administrator approved successfully.",
             "success"
         );
-
 
         await loadAdminRequests();
 
@@ -1083,7 +912,6 @@ async function approveAdmin(
             error
         );
 
-
         showMessage(
             "Approval failed: " +
             (
@@ -1092,9 +920,7 @@ async function approveAdmin(
             ),
             "error"
         );
-
     }
-
 }
 
 
@@ -1111,11 +937,9 @@ async function rejectAdmin(
             "Reject this administrator request?"
         );
 
-
     if (!confirmed) {
         return;
     }
-
 
     try {
 
@@ -1133,17 +957,14 @@ async function rejectAdmin(
                     requestId
                 );
 
-
         if (error) {
             throw error;
         }
-
 
         showMessage(
             "Administrator request rejected.",
             "success"
         );
-
 
         await loadAdminRequests();
 
@@ -1156,7 +977,6 @@ async function rejectAdmin(
             error
         );
 
-
         showMessage(
             "Rejection failed: " +
             (
@@ -1165,9 +985,7 @@ async function rejectAdmin(
             ),
             "error"
         );
-
     }
-
 }
 
 
@@ -1184,46 +1002,37 @@ adminRequests.addEventListener(
                 "button[data-action]"
             );
 
-
         if (!button) {
             return;
         }
 
-
         const action =
             button.dataset.action;
-
 
         const id =
             button.dataset.id;
 
-
-        button.disabled = true;
-
+        button.disabled =
+            true;
 
         if (
-            action ===
-            "approve"
+            action === "approve"
         ) {
 
             await approveAdmin(id);
 
         }
 
-
         if (
-            action ===
-            "reject"
+            action === "reject"
         ) {
 
             await rejectAdmin(id);
 
         }
 
-
         button.disabled =
             false;
-
     }
 );
 
@@ -1243,20 +1052,14 @@ function renderGradingTable(
 
         gradingTable.innerHTML = `
             <tr>
-                <td
-                    colspan="5"
-                    class="sa-empty">
-
+                <td colspan="5" class="sa-empty">
                     No grading levels configured.
-
                 </td>
             </tr>
         `;
 
         return;
-
     }
-
 
     grades.sort(
         (a, b) =>
@@ -1264,15 +1067,13 @@ function renderGradingTable(
             Number(a.min_mark)
     );
 
-
     gradingTable.innerHTML =
         grades.map(
             (grade, index) => {
 
                 return `
 
-                    <tr
-                        data-row="${index}">
+                    <tr data-row="${index}">
 
                         <td>
 
@@ -1285,7 +1086,6 @@ function renderGradingTable(
                                 maxlength="20">
 
                         </td>
-
 
                         <td>
 
@@ -1302,7 +1102,6 @@ function renderGradingTable(
 
                         </td>
 
-
                         <td>
 
                             <input
@@ -1318,7 +1117,6 @@ function renderGradingTable(
 
                         </td>
 
-
                         <td>
 
                             <input
@@ -1329,7 +1127,6 @@ function renderGradingTable(
                                 )}">
 
                         </td>
-
 
                         <td>
 
@@ -1349,10 +1146,8 @@ function renderGradingTable(
                     </tr>
 
                 `;
-
             }
         ).join("");
-
 }
 
 
@@ -1364,16 +1159,11 @@ async function loadGradingSystem() {
 
     gradingTable.innerHTML = `
         <tr>
-            <td
-                colspan="5"
-                class="sa-empty">
-
+            <td colspan="5" class="sa-empty">
                 Loading grading system...
-
             </td>
         </tr>
     `;
-
 
     const {
         data,
@@ -1391,7 +1181,6 @@ async function loadGradingSystem() {
                 }
             );
 
-
     if (error) {
 
         console.error(
@@ -1399,29 +1188,20 @@ async function loadGradingSystem() {
             error
         );
 
-
         gradingTable.innerHTML = `
             <tr>
-                <td
-                    colspan="5"
-                    class="sa-empty">
-
+                <td colspan="5" class="sa-empty">
                     Failed to load grading system.
-
                 </td>
             </tr>
         `;
 
-
         return;
-
     }
-
 
     renderGradingTable(
         data || []
     );
-
 }
 
 
@@ -1440,20 +1220,16 @@ addGradeButton.addEventListener(
                 )
             );
 
-
         const newRow =
             document.createElement(
                 "tr"
             );
 
-
         newRow.dataset.row =
             rows.length;
 
-
         newRow.dataset.new =
             "true";
-
 
         newRow.innerHTML = `
 
@@ -1466,7 +1242,6 @@ addGradeButton.addEventListener(
                     maxlength="20">
 
             </td>
-
 
             <td>
 
@@ -1481,7 +1256,6 @@ addGradeButton.addEventListener(
 
             </td>
 
-
             <td>
 
                 <input
@@ -1495,7 +1269,6 @@ addGradeButton.addEventListener(
 
             </td>
 
-
             <td>
 
                 <input
@@ -1504,7 +1277,6 @@ addGradeButton.addEventListener(
                     value="New Grade">
 
             </td>
-
 
             <td>
 
@@ -1520,11 +1292,9 @@ addGradeButton.addEventListener(
 
         `;
 
-
         gradingTable.appendChild(
             newRow
         );
-
     }
 );
 
@@ -1542,47 +1312,38 @@ gradingTable.addEventListener(
                 ".delete-grade"
             );
 
-
         if (!button) {
             return;
         }
 
-
         const row =
             button.closest("tr");
-
 
         if (!row) {
             return;
         }
 
-
         const id =
             button.dataset.id;
-
 
         const confirmed =
             window.confirm(
                 "Delete this grading level?"
             );
 
-
         if (!confirmed) {
             return;
         }
-
 
         if (!id) {
 
             row.remove();
 
             return;
-
         }
 
-
-        button.disabled = true;
-
+        button.disabled =
+            true;
 
         const {
             error
@@ -1595,7 +1356,6 @@ gradingTable.addEventListener(
                     id
                 );
 
-
         if (error) {
 
             console.error(
@@ -1603,31 +1363,24 @@ gradingTable.addEventListener(
                 error
             );
 
-
             showMessage(
                 "Could not delete grade: " +
                 error.message,
                 "error"
             );
 
-
             button.disabled =
                 false;
 
-
             return;
-
         }
 
-
         row.remove();
-
 
         showMessage(
             "Grading level deleted.",
             "success"
         );
-
     }
 );
 
@@ -1645,9 +1398,7 @@ function readGradingTable() {
             )
         );
 
-
     const grades = [];
-
 
     for (
         const row of rows
@@ -1658,24 +1409,20 @@ function readGradingTable() {
                 '[data-field="grade"]'
             );
 
-
         const markInput =
             row.querySelector(
                 '[data-field="min_mark"]'
             );
-
 
         const pointsInput =
             row.querySelector(
                 '[data-field="points"]'
             );
 
-
         const descriptionInput =
             row.querySelector(
                 '[data-field="description"]'
             );
-
 
         if (
             !gradeInput ||
@@ -1683,42 +1430,33 @@ function readGradingTable() {
             !pointsInput ||
             !descriptionInput
         ) {
-
             continue;
-
         }
-
 
         const grade =
             gradeInput.value.trim();
-
 
         const minMark =
             Number(
                 markInput.value
             );
 
-
         const points =
             Number(
                 pointsInput.value
             );
-
 
         const description =
             descriptionInput
                 .value
                 .trim();
 
-
         if (!grade) {
 
             throw new Error(
                 "Every grade must have a name."
             );
-
         }
-
 
         if (
             Number.isNaN(minMark) ||
@@ -1729,9 +1467,7 @@ function readGradingTable() {
             throw new Error(
                 `Invalid minimum mark for ${grade}.`
             );
-
         }
-
 
         if (
             !Number.isInteger(minMark)
@@ -1740,9 +1476,7 @@ function readGradingTable() {
             throw new Error(
                 `Minimum mark for ${grade} must be a whole number.`
             );
-
         }
-
 
         if (
             Number.isNaN(points) ||
@@ -1752,9 +1486,7 @@ function readGradingTable() {
             throw new Error(
                 `Invalid points for ${grade}.`
             );
-
         }
-
 
         if (
             !Number.isInteger(points)
@@ -1763,18 +1495,14 @@ function readGradingTable() {
             throw new Error(
                 `Points for ${grade} must be a whole number.`
             );
-
         }
-
 
         if (!description) {
 
             throw new Error(
                 `Enter a description for ${grade}.`
             );
-
         }
-
 
         grades.push({
 
@@ -1788,12 +1516,9 @@ function readGradingTable() {
             description
 
         });
-
     }
 
-
     return grades;
-
 }
 
 
@@ -1810,30 +1535,20 @@ saveGradesButton.addEventListener(
             saveGradesButton.disabled =
                 true;
 
-
             saveGradesButton.textContent =
                 "Saving...";
-
 
             const grades =
                 readGradingTable();
 
-
             if (
-                grades.length ===
-                0
+                grades.length === 0
             ) {
 
                 throw new Error(
                     "Add at least one grading level."
                 );
-
             }
-
-
-            /*
-             * Duplicate grade names
-             */
 
             const names =
                 grades.map(
@@ -1842,10 +1557,8 @@ saveGradesButton.addEventListener(
                             .toUpperCase()
                 );
 
-
             const uniqueNames =
                 new Set(names);
-
 
             if (
                 uniqueNames.size !==
@@ -1855,13 +1568,7 @@ saveGradesButton.addEventListener(
                 throw new Error(
                     "Grade names must be unique."
                 );
-
             }
-
-
-            /*
-             * Duplicate minimum marks
-             */
 
             const marks =
                 grades.map(
@@ -1871,10 +1578,8 @@ saveGradesButton.addEventListener(
                         )
                 );
 
-
             const uniqueMarks =
                 new Set(marks);
-
 
             if (
                 uniqueMarks.size !==
@@ -1884,13 +1589,7 @@ saveGradesButton.addEventListener(
                 throw new Error(
                     "Minimum marks must be unique."
                 );
-
             }
-
-
-            /*
-             * Delete existing configuration
-             */
 
             const {
                 error: deleteError
@@ -1905,15 +1604,9 @@ saveGradesButton.addEventListener(
                         "__never__"
                     );
 
-
             if (deleteError) {
                 throw deleteError;
             }
-
-
-            /*
-             * Insert new configuration
-             */
 
             const {
                 error: insertError
@@ -1926,17 +1619,14 @@ saveGradesButton.addEventListener(
                         grades
                     );
 
-
             if (insertError) {
                 throw insertError;
             }
-
 
             showMessage(
                 "Grading system saved successfully.",
                 "success"
             );
-
 
             await loadGradingSystem();
 
@@ -1948,7 +1638,6 @@ saveGradesButton.addEventListener(
                 "Save grading error:",
                 error
             );
-
 
             showMessage(
                 "Could not save grading system: " +
@@ -1966,12 +1655,10 @@ saveGradesButton.addEventListener(
             saveGradesButton.disabled =
                 false;
 
-
             saveGradesButton.textContent =
                 "Save Grading System";
 
         }
-
     }
 );
 
@@ -1989,21 +1676,17 @@ resetGradesButton.addEventListener(
                 "Reset the grading system to the default CBC configuration?"
             );
 
-
         if (!confirmed) {
             return;
         }
-
 
         try {
 
             resetGradesButton.disabled =
                 true;
 
-
             resetGradesButton.textContent =
                 "Resetting...";
-
 
             const {
                 error: deleteError
@@ -2018,11 +1701,9 @@ resetGradesButton.addEventListener(
                         "__never__"
                     );
 
-
             if (deleteError) {
                 throw deleteError;
             }
-
 
             const {
                 error: insertError
@@ -2035,17 +1716,14 @@ resetGradesButton.addEventListener(
                         DEFAULT_GRADES
                     );
 
-
             if (insertError) {
                 throw insertError;
             }
-
 
             showMessage(
                 "Default CBC grading restored.",
                 "success"
             );
-
 
             await loadGradingSystem();
 
@@ -2057,7 +1735,6 @@ resetGradesButton.addEventListener(
                 "Reset grading error:",
                 error
             );
-
 
             showMessage(
                 "Could not reset grading system: " +
@@ -2075,12 +1752,10 @@ resetGradesButton.addEventListener(
             resetGradesButton.disabled =
                 false;
 
-
             resetGradesButton.textContent =
                 "Reset Defaults";
 
         }
-
     }
 );
 
@@ -2097,7 +1772,6 @@ async function loadPasswordUsers() {
         </option>
     `;
 
-
     try {
 
         /*
@@ -2113,7 +1787,6 @@ async function loadPasswordUsers() {
                 .select(
                     "user_id, admission_number"
                 );
-
 
         if (studentError) {
             throw studentError;
@@ -2142,7 +1815,6 @@ async function loadPasswordUsers() {
                     true
                 );
 
-
         if (adminError) {
             throw adminError;
         }
@@ -2151,13 +1823,12 @@ async function loadPasswordUsers() {
         const studentList =
             students || [];
 
-
         const adminList =
             admins || [];
 
 
         /*
-         * Get all profile IDs
+         * Collect IDs
          */
 
         const userIds = [
@@ -2187,8 +1858,7 @@ async function loadPasswordUsers() {
 
 
         if (
-            uniqueUserIds.length >
-            0
+            uniqueUserIds.length > 0
         ) {
 
             const {
@@ -2205,24 +1875,20 @@ async function loadPasswordUsers() {
                         uniqueUserIds
                     );
 
-
             if (error) {
                 throw error;
             }
 
-
             profiles =
                 data || [];
-
         }
 
 
         /*
-         * Create profile map
+         * Profile map
          */
 
         const profileMap = {};
-
 
         profiles.forEach(
             profile => {
@@ -2257,22 +1923,18 @@ async function loadPasswordUsers() {
                     return;
                 }
 
-
                 const profile =
                     profileMap[
                         student.user_id
                     ] || {};
-
 
                 const option =
                     document.createElement(
                         "option"
                     );
 
-
                 option.value =
                     student.user_id;
-
 
                 option.textContent =
                     `Student — ${
@@ -2282,11 +1944,9 @@ async function loadPasswordUsers() {
                         "Unknown"
                     }`;
 
-
                 passwordUser.appendChild(
                     option
                 );
-
             }
         );
 
@@ -2302,22 +1962,18 @@ async function loadPasswordUsers() {
                     return;
                 }
 
-
                 const profile =
                     profileMap[
                         admin.user_id
                     ] || {};
-
 
                 const option =
                     document.createElement(
                         "option"
                     );
 
-
                 option.value =
                     admin.user_id;
-
 
                 option.textContent =
                     `Administrator — ${
@@ -2327,11 +1983,9 @@ async function loadPasswordUsers() {
                         "Unknown"
                     }`;
 
-
                 passwordUser.appendChild(
                     option
                 );
-
             }
         );
 
@@ -2344,13 +1998,11 @@ async function loadPasswordUsers() {
             error
         );
 
-
         passwordUser.innerHTML = `
             <option value="">
                 Failed to load accounts
             </option>
         `;
-
 
         showMessage(
             "Could not load password accounts: " +
@@ -2360,9 +2012,7 @@ async function loadPasswordUsers() {
             ),
             "error"
         );
-
     }
-
 }
 
 
@@ -2374,7 +2024,6 @@ async function changeUserPassword() {
 
     const userId =
         passwordUser.value;
-
 
     const password =
         newPassword.value.trim();
@@ -2392,7 +2041,6 @@ async function changeUserPassword() {
         );
 
         return;
-
     }
 
 
@@ -2408,13 +2056,11 @@ async function changeUserPassword() {
         );
 
         return;
-
     }
 
 
     if (
-        password.length <
-        6
+        password.length < 6
     ) {
 
         showMessage(
@@ -2423,19 +2069,17 @@ async function changeUserPassword() {
         );
 
         return;
-
     }
 
 
     /*
-     * Confirm action
+     * Confirm
      */
 
     const confirmed =
         window.confirm(
             "Are you sure you want to change this user's password?"
         );
-
 
     if (!confirmed) {
         return;
@@ -2447,13 +2091,41 @@ async function changeUserPassword() {
         changePasswordButton.disabled =
             true;
 
-
         changePasswordButton.textContent =
             "Changing...";
 
 
         /*
-         * Call Supabase Edge Function
+         * Get current session.
+         *
+         * This is important because
+         * the Edge Function needs
+         * the logged-in user's token.
+         */
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } =
+            await supabase.auth.getSession();
+
+        if (sessionError) {
+            throw sessionError;
+        }
+
+        const session =
+            sessionData?.session;
+
+        if (!session) {
+
+            throw new Error(
+                "Your login session has expired. Please sign in again."
+            );
+        }
+
+
+        /*
+         * Call Edge Function
          */
 
         const {
@@ -2476,10 +2148,27 @@ async function changeUserPassword() {
             );
 
 
+        /*
+         * Handle function error
+         */
+
         if (error) {
-            throw error;
+
+            console.error(
+                "Edge Function error:",
+                error
+            );
+
+            throw new Error(
+                error.message ||
+                "Failed to contact the password service."
+            );
         }
 
+
+        /*
+         * Handle application error
+         */
 
         if (
             !data ||
@@ -2490,9 +2179,12 @@ async function changeUserPassword() {
                 data?.error ||
                 "Password change failed."
             );
-
         }
 
+
+        /*
+         * Success
+         */
 
         showMessage(
             "Password changed successfully.",
@@ -2501,12 +2193,11 @@ async function changeUserPassword() {
 
 
         /*
-         * Clear password field
+         * Clear fields
          */
 
         newPassword.value =
             "";
-
 
         passwordUser.value =
             "";
@@ -2519,7 +2210,6 @@ async function changeUserPassword() {
             "Password change error:",
             error
         );
-
 
         showMessage(
             "Could not change password: " +
@@ -2537,12 +2227,10 @@ async function changeUserPassword() {
         changePasswordButton.disabled =
             false;
 
-
         changePasswordButton.textContent =
             "Change Password";
 
     }
-
 }
 
 
@@ -2550,10 +2238,14 @@ async function changeUserPassword() {
    PASSWORD BUTTON
 ========================================== */
 
-changePasswordButton.addEventListener(
-    "click",
-    changeUserPassword
-);
+if (changePasswordButton) {
+
+    changePasswordButton.addEventListener(
+        "click",
+        changeUserPassword
+    );
+
+}
 
 
 /* ==========================================
@@ -2567,21 +2259,16 @@ refreshButton.addEventListener(
         refreshButton.disabled =
             true;
 
-
         refreshButton.textContent =
             "Refreshing...";
 
-
         await loadDashboard();
-
 
         refreshButton.disabled =
             false;
 
-
         refreshButton.textContent =
             "Refresh";
-
     }
 );
 
@@ -2599,25 +2286,20 @@ logoutButton.addEventListener(
                 "Are you sure you want to sign out?"
             );
 
-
         if (!confirmed) {
             return;
         }
 
-
         logoutButton.disabled =
             true;
 
-
         logoutButton.textContent =
             "Signing out...";
-
 
         const {
             error
         } =
             await supabase.auth.signOut();
-
 
         if (error) {
 
@@ -2626,30 +2308,23 @@ logoutButton.addEventListener(
                 error
             );
 
-
             showMessage(
                 "Sign out failed: " +
                 error.message,
                 "error"
             );
 
-
             logoutButton.disabled =
                 false;
-
 
             logoutButton.textContent =
                 "Sign out";
 
-
             return;
-
         }
-
 
         window.location.href =
             "index.html";
-
     }
 );
 
@@ -2665,11 +2340,9 @@ async function loadDashboard() {
         const user =
             await checkSuperAdmin();
 
-
         if (!user) {
             return;
         }
-
 
         await Promise.all([
 
@@ -2694,7 +2367,6 @@ async function loadDashboard() {
             error
         );
 
-
         showMessage(
             "Dashboard error: " +
             (
@@ -2703,14 +2375,12 @@ async function loadDashboard() {
             ),
             "error"
         );
-
     }
-
 }
 
 
 /* ==========================================
-   START
+   START DASHBOARD
 ========================================== */
 
 loadDashboard();
