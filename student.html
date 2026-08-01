@@ -3,526 +3,550 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Grade Hub - Student Results</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
 
-<title>Grade Hub - Student Dashboard</title>
+            color: #172033;
+        }
 
-<link rel="stylesheet" href="css/style.css">
+        /* ==========================================
+           HEADER
+        ========================================== */
 
+        header {
+            min-height: 72px;
+            padding: 0 30px;
 
-<style>
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
 
-* {
-    box-sizing: border-box;
-}
+            gap: 20px;
 
+            background: #111827;
+            color: white;
 
-body {
+            box-shadow:
+                0 4px 18px
+                rgba(15, 23, 42, .12);
+        }
 
-    margin: 0;
+        header h1 {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 800;
+        }
 
-    background:
-        linear-gradient(
-            135deg,
-            #eef2ff,
-            #f8fafc
-        );
+        header nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-    color: #172033;
+        header nav a {
+            color: #dbeafe;
+            text-decoration: none;
 
-    font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
+            padding: 9px 13px;
 
+            border-radius: 9px;
 
-/* ==========================================
-   HEADER
-========================================== */
+            font-size: 14px;
+            font-weight: 600;
+        }
 
-header {
+        header nav a:hover {
+            background: #1f2937;
+            color: white;
+        }
 
-    min-height: 72px;
+        /* ==========================================
+           PAGE
+        ========================================== */
 
-    display: flex;
+        .student-page {
+            width:
+                min(
+                    1200px,
+                    calc(100% - 32px)
+                );
 
-    align-items: center;
+            margin: 30px auto 50px;
+        }
 
-    justify-content: space-between;
+        .page-heading {
+            margin-bottom: 22px;
+        }
 
-    gap: 20px;
+        .page-heading h2 {
+            margin: 0 0 6px;
 
-    padding:
-        15px
-        5%;
+            font-size: 29px;
 
-    background: #111827;
+            letter-spacing: -.6px;
+        }
 
-    color: white;
+        .page-heading p {
+            margin: 0;
 
-    box-shadow:
-        0 4px 18px
-        rgba(15,23,42,.12);
-}
+            color: #697386;
 
+            font-size: 15px;
+        }
 
-header h1 {
+        /* ==========================================
+           MESSAGE
+        ========================================== */
 
-    margin: 0;
+        .message {
+            display: none;
 
-    font-size: 22px;
+            padding: 12px 14px;
 
-    font-weight: 800;
-}
+            margin-bottom: 18px;
 
+            border-radius: 10px;
 
-nav {
+            font-size: 14px;
 
-    display: flex;
+            font-weight: 600;
+        }
 
-    align-items: center;
+        .message.show {
+            display: block;
+        }
 
-    gap: 8px;
-}
+        .message.error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
 
+        .message.success {
+            background: #f0fdf4;
+            color: #166534;
+        }
 
-nav a {
+        /* ==========================================
+           PROFILE CARD
+        ========================================== */
 
-    color: #cbd5e1;
+        .profile-card {
+            background: white;
 
-    text-decoration: none;
+            border:
+                1px solid #e5e9f2;
 
-    padding:
-        9px
-        13px;
+            border-radius: 17px;
 
-    border-radius: 9px;
+            padding: 22px;
 
-    font-size: 14px;
+            margin-bottom: 20px;
 
-    font-weight: 700;
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, .05);
+        }
 
-    transition: .2s;
-}
+        .profile-grid {
+            display: grid;
 
+            grid-template-columns:
+                repeat(4, 1fr);
 
-nav a:hover {
+            gap: 18px;
+        }
 
-    color: white;
+        .profile-item span {
+            display: block;
 
-    background: #1f2937;
-}
+            color: #697386;
 
+            font-size: 12px;
 
-#logout {
+            font-weight: 700;
 
-    color: #fecaca;
+            margin-bottom: 5px;
+        }
 
-}
+        .profile-item strong {
+            font-size: 16px;
+        }
 
+        /* ==========================================
+           SUMMARY
+        ========================================== */
 
-#logout:hover {
+        .summary-grid {
+            display: grid;
 
-    background: #7f1d1d;
+            grid-template-columns:
+                repeat(4, 1fr);
 
-    color: white;
-}
+            gap: 16px;
 
+            margin-bottom: 22px;
+        }
 
-/* ==========================================
-   DASHBOARD
-========================================== */
+        .summary-card {
+            background: white;
 
-.dashboard {
+            border:
+                1px solid #e5e9f2;
 
-    width: min(
-        1150px,
-        92%
-    );
+            border-radius: 16px;
 
-    margin:
-        35px
-        auto;
+            padding: 19px;
 
-}
+            box-shadow:
+                0 7px 20px
+                rgba(15, 23, 42, .05);
+        }
 
+        .summary-card span {
+            display: block;
 
-/* ==========================================
-   CARDS
-========================================== */
+            color: #697386;
 
-.card {
+            font-size: 13px;
 
-    background: white;
+            font-weight: 600;
+        }
 
-    border:
-        1px solid
-        #e5e9f2;
+        .summary-card strong {
+            display: block;
 
-    border-radius: 18px;
+            margin-top: 6px;
 
-    padding: 24px;
+            font-size: 27px;
+        }
 
-    margin-bottom: 24px;
+        /* ==========================================
+           CONTROLS
+        ========================================== */
 
-    box-shadow:
-        0 8px 28px
-        rgba(15,23,42,.06);
-}
+        .control-card {
+            background: white;
 
+            border:
+                1px solid #e5e9f2;
 
-.card h2 {
+            border-radius: 16px;
 
-    margin:
-        0 0 18px;
+            padding: 18px;
 
-    font-size: 20px;
-}
+            margin-bottom: 20px;
 
+            box-shadow:
+                0 7px 20px
+                rgba(15, 23, 42, .04);
+        }
 
-/* ==========================================
-   PROFILE
-========================================== */
+        .controls {
+            display: grid;
 
-.profile-grid {
+            grid-template-columns:
+                1fr 1fr auto;
 
-    display: grid;
+            gap: 12px;
 
-    grid-template-columns:
-        repeat(
-            2,
-            minmax(
-                0,
-                1fr
-            )
-        );
+            align-items: end;
+        }
 
-    gap: 15px;
-}
+        .control label {
+            display: block;
 
+            margin-bottom: 6px;
 
-.profile-item {
+            font-size: 12px;
 
-    padding: 16px;
+            font-weight: 700;
 
-    background: #f8fafc;
+            color: #475569;
+        }
 
-    border:
-        1px solid
-        #e5e9f2;
+        .control select {
+            width: 100%;
 
-    border-radius: 12px;
-}
+            padding: 11px 12px;
 
+            border:
+                1px solid #d9deea;
 
-.profile-item span {
+            border-radius: 9px;
 
-    display: block;
+            background: white;
 
-    color: #697386;
+            font: inherit;
 
-    font-size: 12px;
+            outline: none;
+        }
 
-    font-weight: 700;
+        .control select:focus {
+            border-color: #4f46e5;
 
-    margin-bottom: 6px;
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .1);
+        }
 
-    text-transform: uppercase;
-}
+        .refresh-btn {
+            border: 0;
 
+            border-radius: 9px;
 
-.profile-item strong {
+            padding:
+                11px 16px;
 
-    font-size: 15px;
+            background: #4f46e5;
 
-    color: #172033;
+            color: white;
 
-    word-break: break-word;
-}
+            font-weight: 700;
 
+            cursor: pointer;
+        }
 
-.profile-wide {
+        .refresh-btn:hover {
+            background: #4338ca;
+        }
 
-    grid-column:
-        1 / -1;
-}
+        /* ==========================================
+           RESULTS
+        ========================================== */
 
+        .results-card {
+            background: white;
 
-.dashboard-error {
+            border:
+                1px solid #e5e9f2;
 
-    padding: 15px;
+            border-radius: 17px;
 
-    border-radius: 10px;
+            overflow: hidden;
 
-    background: #fef2f2;
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, .055);
+        }
 
-    color: #991b1b;
+        .results-header {
+            padding: 20px;
 
-    border:
-        1px solid
-        #fecaca;
-}
+            border-bottom:
+                1px solid #e5e9f2;
+        }
 
+        .results-header h3 {
+            margin: 0;
 
-/* ==========================================
-   STAT CARDS
-========================================== */
+            font-size: 18px;
+        }
 
-.cards {
+        .results-header p {
+            margin: 4px 0 0;
 
-    display: grid;
+            color: #697386;
 
-    grid-template-columns:
-        repeat(
-            3,
-            minmax(
-                0,
-                1fr
-            )
-        );
+            font-size: 13px;
+        }
 
-    gap: 18px;
+        .table-container {
+            overflow-x: auto;
+        }
 
-    margin-bottom: 24px;
-}
+        table {
+            width: 100%;
 
+            border-collapse: collapse;
 
-.stat-card {
+            min-width: 800px;
+        }
 
-    background: white;
+        th {
+            text-align: left;
 
-    border:
-        1px solid
-        #e5e9f2;
+            padding: 14px 16px;
 
-    border-radius: 18px;
+            background: #f8fafc;
 
-    padding: 22px;
+            color: #475569;
 
-    box-shadow:
-        0 8px 28px
-        rgba(15,23,42,.06);
-}
+            font-size: 12px;
 
+            text-transform: uppercase;
 
-.stat-card h3 {
+            letter-spacing: .3px;
 
-    margin: 0;
+            border-bottom:
+                1px solid #e5e9f2;
+        }
 
-    color: #697386;
+        td {
+            padding: 14px 16px;
 
-    font-size: 14px;
+            border-bottom:
+                1px solid #eef1f6;
 
-    font-weight: 700;
-}
+            font-size: 14px;
+        }
 
+        tbody tr:hover {
+            background: #fafbff;
+        }
 
-.stat-card p {
+        /* ==========================================
+           GRADE BADGE
+        ========================================== */
 
-    margin:
-        10px
-        0
-        0;
+        .grade-badge {
+            display: inline-block;
 
-    color: #4f46e5;
+            padding:
+                6px 10px;
 
-    font-size: 30px;
+            border-radius: 999px;
 
-    font-weight: 900;
-}
+            font-size: 12px;
 
+            font-weight: 800;
 
-/* ==========================================
-   TABLE
-========================================== */
+            background: #eef2ff;
 
-.table-container {
+            color: #3730a3;
+        }
 
-    width: 100%;
+        .description {
+            display: block;
 
-    overflow-x: auto;
-}
+            margin-top: 4px;
 
+            color: #697386;
 
-table {
+            font-size: 11px;
+        }
 
-    width: 100%;
+        .points {
+            font-weight: 800;
 
-    border-collapse: collapse;
+            color: #3730a3;
+        }
 
-    min-width: 550px;
-}
+        /* ==========================================
+           EMPTY
+        ========================================== */
 
+        .empty-row {
+            text-align: center;
 
-th,
-td {
+            padding: 35px !important;
 
-    padding:
-        14px
-        16px;
+            color: #697386;
+        }
 
-    text-align: left;
+        /* ==========================================
+           RESPONSIVE
+        ========================================== */
 
-    border-bottom:
-        1px solid
-        #e5e9f2;
+        @media (max-width: 900px) {
 
-    font-size: 14px;
-}
+            .summary-grid {
+                grid-template-columns:
+                    1fr 1fr;
+            }
 
+            .profile-grid {
+                grid-template-columns:
+                    1fr 1fr;
+            }
 
-th {
+            .controls {
+                grid-template-columns:
+                    1fr 1fr;
+            }
 
-    background: #f8fafc;
+            .refresh-btn {
+                width: 100%;
+            }
 
-    color: #475569;
+        }
 
-    font-weight: 800;
-}
+        @media (max-width: 600px) {
 
+            header {
+                padding: 14px 18px;
 
-td {
+                flex-direction: column;
 
-    color: #334155;
-}
+                align-items: flex-start;
+            }
 
+            header nav {
+                width: 100%;
+            }
 
-tbody tr:hover {
+            header nav a {
+                background: #1f2937;
+            }
 
-    background: #f8fafc;
-}
+            .student-page {
+                width:
+                    calc(100% - 20px);
 
+                margin-top: 20px;
+            }
 
-.empty {
+            .summary-grid {
+                grid-template-columns:
+                    1fr;
+            }
 
-    text-align: center;
+            .profile-grid {
+                grid-template-columns:
+                    1fr;
+            }
 
-    color: #697386;
+            .controls {
+                grid-template-columns:
+                    1fr;
+            }
 
-    padding: 30px;
-}
+        }
 
-
-/* ==========================================
-   CHART
-========================================== */
-
-#performanceChart {
-
-    width: 100%;
-
-    max-height: 400px;
-}
-
-
-/* ==========================================
-   MOBILE
-========================================== */
-
-@media (
-    max-width: 750px
-) {
-
-    header {
-
-        flex-direction: column;
-
-        align-items: flex-start;
-
-        padding:
-            16px
-            5%;
-    }
-
-
-    nav {
-
-        width: 100%;
-    }
-
-
-    nav a {
-
-        flex: 1;
-
-        text-align: center;
-    }
-
-
-    .dashboard {
-
-        width: 94%;
-
-        margin:
-            20px
-            auto;
-    }
-
-
-    .cards {
-
-        grid-template-columns:
-            1fr;
-    }
-
-
-    .profile-grid {
-
-        grid-template-columns:
-            1fr;
-    }
-
-
-    .profile-wide {
-
-        grid-column:
-            auto;
-    }
-
-
-    .card {
-
-        padding: 18px;
-
-        border-radius: 14px;
-    }
-
-}
-
-
-@media (
-    max-width: 450px
-) {
-
-    header h1 {
-
-        font-size: 19px;
-    }
-
-
-    .stat-card p {
-
-        font-size: 26px;
-    }
-
-
-    .card h2 {
-
-        font-size: 18px;
-    }
-
-}
-
-</style>
+    </style>
 
 </head>
 
@@ -533,11 +557,15 @@ tbody tr:hover {
 <header>
 
     <h1>
-        Grade Hub Student
+        Grade Hub
     </h1>
 
 
     <nav>
+
+        <a href="home.html">
+            Home
+        </a>
 
         <a href="student.html">
             Results
@@ -553,91 +581,262 @@ tbody tr:hover {
 
 
 
-<section class="dashboard">
+<main class="student-page">
 
 
-    <!-- PROFILE -->
-
-    <div class="card">
+    <div class="page-heading">
 
         <h2>
-            Student Profile
+            My Academic Results
         </h2>
 
-        <div id="studentProfile">
-
-            Loading profile...
-
-        </div>
+        <p>
+            View your marks, CBC grades and performance points.
+        </p>
 
     </div>
 
 
 
-    <!-- SUMMARY -->
+    <div
+        id="message"
+        class="message"
+    ></div>
 
-    <div class="cards">
 
 
-        <div class="stat-card">
+    <!-- ==========================================
+         PROFILE
+    =========================================== -->
 
-            <h3>
-                Average Marks
-            </h3>
+    <section class="profile-card">
 
-            <p id="averageMarks">
-                0%
-            </p>
+        <div class="profile-grid">
+
+
+            <div class="profile-item">
+
+                <span>
+                    Learner
+                </span>
+
+                <strong id="studentName">
+                    Loading...
+                </strong>
+
+            </div>
+
+
+            <div class="profile-item">
+
+                <span>
+                    Admission Number
+                </span>
+
+                <strong id="admissionNumber">
+                    —
+                </strong>
+
+            </div>
+
+
+            <div class="profile-item">
+
+                <span>
+                    Class
+                </span>
+
+                <strong id="studentClass">
+                    —
+                </strong>
+
+            </div>
+
+
+            <div class="profile-item">
+
+                <span>
+                    Username
+                </span>
+
+                <strong id="username">
+                    —
+                </strong>
+
+            </div>
+
 
         </div>
 
+    </section>
 
-        <div class="stat-card">
 
-            <h3>
-                Overall Grade
-            </h3>
 
-            <p id="overallGrade">
-                -
-            </p>
+    <!-- ==========================================
+         FILTERS
+    =========================================== -->
+
+    <section class="control-card">
+
+        <div class="controls">
+
+
+            <div class="control">
+
+                <label for="termFilter">
+                    Term
+                </label>
+
+                <select id="termFilter">
+
+                    <option value="all">
+                        All Terms
+                    </option>
+
+                    <option value="Term 1">
+                        Term 1
+                    </option>
+
+                    <option value="Term 2">
+                        Term 2
+                    </option>
+
+                    <option value="Term 3">
+                        Term 3
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="control">
+
+                <label for="yearFilter">
+                    Year
+                </label>
+
+                <select id="yearFilter">
+
+                    <option value="all">
+                        All Years
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="refresh-btn"
+                id="refreshButton"
+            >
+                Refresh
+            </button>
+
 
         </div>
 
+    </section>
 
-        <div class="stat-card">
 
-            <h3>
-                Optional Subjects
-            </h3>
 
-            <p id="subjectCount">
+    <!-- ==========================================
+         SUMMARY
+    =========================================== -->
+
+    <section class="summary-grid">
+
+
+        <div class="summary-card">
+
+            <span>
+                Subjects
+            </span>
+
+            <strong id="subjectCount">
                 0
-            </p>
+            </strong>
 
         </div>
 
 
-    </div>
+        <div class="summary-card">
+
+            <span>
+                Average
+            </span>
+
+            <strong id="average">
+                0%
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Total Points
+            </span>
+
+            <strong id="totalPoints">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Overall Grade
+            </span>
+
+            <strong id="overallGrade">
+                —
+            </strong>
+
+        </div>
+
+
+    </section>
 
 
 
-    <!-- RESULTS -->
+    <!-- ==========================================
+         RESULTS TABLE
+    =========================================== -->
 
-    <div class="card">
+    <section class="results-card">
 
-        <h2>
-            My Results
-        </h2>
+
+        <div class="results-header">
+
+            <h3>
+                Subject Results
+            </h3>
+
+            <p>
+                Grades and points are loaded from the current Super Admin grading system.
+            </p>
+
+        </div>
 
 
         <div class="table-container">
+
 
             <table>
 
                 <thead>
 
                     <tr>
+
+                        <th>
+                            #
+                        </th>
 
                         <th>
                             Subject
@@ -651,20 +850,37 @@ tbody tr:hover {
                             Grade
                         </th>
 
+                        <th>
+                            Description
+                        </th>
+
+                        <th>
+                            Points
+                        </th>
+
+                        <th>
+                            Term
+                        </th>
+
+                        <th>
+                            Year
+                        </th>
+
                     </tr>
 
                 </thead>
 
 
-                <tbody id="resultTable">
+                <tbody id="resultsTable">
 
                     <tr>
 
                         <td
-                            colspan="3"
-                            class="empty"
+                            colspan="8"
+                            class="empty-row"
                         >
                             Loading results...
+
                         </td>
 
                     </tr>
@@ -673,35 +889,14 @@ tbody tr:hover {
 
             </table>
 
+
         </div>
 
-    </div>
+    </section>
 
 
+</main>
 
-    <!-- GRAPH -->
-
-    <div class="card">
-
-        <h2>
-            Performance Analysis
-        </h2>
-
-
-        <canvas
-            id="performanceChart"
-        ></canvas>
-
-    </div>
-
-
-</section>
-
-
-
-<script
-    src="https://cdn.jsdelivr.net/npm/chart.js"
-></script>
 
 
 <script
