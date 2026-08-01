@@ -264,6 +264,8 @@
 
             background: white;
 
+            color: #172033;
+
             font: inherit;
 
             outline: none;
@@ -295,11 +297,64 @@
             font-weight: 700;
 
             cursor: pointer;
+
+            min-width: 90px;
         }
 
 
         .refresh-btn:hover {
             background: #4338ca;
+        }
+
+
+        .refresh-btn:disabled {
+            opacity: .65;
+
+            cursor: not-allowed;
+        }
+
+
+        /* ==========================================
+           MESSAGE
+        ========================================== */
+
+        .message {
+            display: none;
+
+            padding: 12px 14px;
+
+            margin-bottom: 18px;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        .message.show {
+            display: block;
+        }
+
+
+        .message.error {
+            background: #fef2f2;
+
+            color: #991b1b;
+
+            border:
+                1px solid #fecaca;
+        }
+
+
+        .message.success {
+            background: #f0fdf4;
+
+            color: #166534;
+
+            border:
+                1px solid #bbf7d0;
         }
 
 
@@ -363,7 +418,7 @@
 
             border-collapse: collapse;
 
-            min-width: 900px;
+            min-width: 1000px;
         }
 
 
@@ -384,6 +439,8 @@
 
             border-bottom:
                 1px solid #e5e9f2;
+
+            white-space: nowrap;
         }
 
 
@@ -394,11 +451,18 @@
                 1px solid #eef1f6;
 
             font-size: 14px;
+
+            vertical-align: middle;
         }
 
 
         tbody tr:hover {
             background: #fafbff;
+        }
+
+
+        tbody tr:last-child td {
+            border-bottom: 0;
         }
 
 
@@ -462,6 +526,43 @@
             color: #697386;
 
             font-size: 11px;
+
+            line-height: 1.3;
+        }
+
+
+        /* ==========================================
+           POINTS
+        ========================================== */
+
+        .points-value {
+            font-size: 16px;
+
+            font-weight: 800;
+
+            color: #3730a3;
+        }
+
+
+        .points-label {
+            display: block;
+
+            margin-top: 2px;
+
+            color: #697386;
+
+            font-size: 11px;
+        }
+
+
+        /* ==========================================
+           AVERAGE
+        ========================================== */
+
+        .average-value {
+            font-weight: 800;
+
+            white-space: nowrap;
         }
 
 
@@ -478,42 +579,8 @@
         }
 
 
-        .message {
-            display: none;
-
-            padding: 12px 14px;
-
-            margin-bottom: 18px;
-
-            border-radius: 10px;
-
-            font-size: 14px;
-
-            font-weight: 600;
-        }
-
-
-        .message.show {
-            display: block;
-        }
-
-
-        .message.error {
-            background: #fef2f2;
-
-            color: #991b1b;
-        }
-
-
-        .message.success {
-            background: #f0fdf4;
-
-            color: #166534;
-        }
-
-
         /* ==========================================
-           RESPONSIVE
+           RESPONSIVE - TABLET
         ========================================== */
 
         @media (max-width: 900px) {
@@ -532,11 +599,15 @@
 
             .summary-grid {
                 grid-template-columns:
-                    1fr;
+                    1fr 1fr 1fr;
             }
 
         }
 
+
+        /* ==========================================
+           RESPONSIVE - MOBILE
+        ========================================== */
 
         @media (max-width: 600px) {
 
@@ -551,6 +622,10 @@
 
             header nav {
                 width: 100%;
+
+                display: flex;
+
+                flex-wrap: wrap;
             }
 
 
@@ -564,6 +639,17 @@
                     calc(100% - 20px);
 
                 margin-top: 20px;
+            }
+
+
+            .page-heading h2 {
+                font-size: 24px;
+            }
+
+
+            .summary-grid {
+                grid-template-columns:
+                    1fr;
             }
 
 
@@ -583,6 +669,16 @@
                 width: 100%;
             }
 
+
+            .table-header {
+                padding: 16px;
+            }
+
+
+            .table-header h3 {
+                font-size: 16px;
+            }
+
         }
 
     </style>
@@ -592,6 +688,10 @@
 
 <body>
 
+
+<!-- ==========================================
+     HEADER
+========================================== -->
 
 <header>
 
@@ -606,11 +706,16 @@
             Dashboard
         </a>
 
+
         <a href="superadmin.html">
             Super Admin
         </a>
 
-        <a href="#" id="logout">
+
+        <a
+            href="#"
+            id="logout"
+        >
             Logout
         </a>
 
@@ -620,14 +725,23 @@
 
 
 
+<!-- ==========================================
+     MAIN
+========================================== -->
+
 <main class="merit-page">
 
+
+    <!-- ======================================
+         PAGE HEADING
+    ======================================= -->
 
     <div class="page-heading">
 
         <h2>
             Learner Merit List
         </h2>
+
 
         <p>
             Ranked academic performance of all registered learners.
@@ -637,6 +751,10 @@
 
 
 
+    <!-- ======================================
+         MESSAGE
+    ======================================= -->
+
     <div
         id="message"
         class="message"
@@ -644,9 +762,9 @@
 
 
 
-    <!-- ==========================================
+    <!-- ======================================
          SUMMARY
-    =========================================== -->
+    ======================================= -->
 
     <section class="summary-grid">
 
@@ -657,11 +775,13 @@
                 Learners Ranked
             </span>
 
+
             <strong id="learnerCount">
                 0
             </strong>
 
         </div>
+
 
 
         <div class="summary-card">
@@ -670,6 +790,7 @@
                 Highest Average
             </span>
 
+
             <strong id="highestAverage">
                 0%
             </strong>
@@ -677,11 +798,13 @@
         </div>
 
 
+
         <div class="summary-card">
 
             <span>
                 Top Learner
             </span>
+
 
             <strong
                 id="topLearner"
@@ -697,9 +820,9 @@
 
 
 
-    <!-- ==========================================
+    <!-- ======================================
          FILTERS
-    =========================================== -->
+    ======================================= -->
 
     <section class="control-card">
 
@@ -707,27 +830,36 @@
         <div class="controls">
 
 
-            <div class="control search-control">
+            <!-- SEARCH -->
+
+            <div
+                class="control search-control"
+            >
 
                 <label for="search">
                     Search Learner
                 </label>
 
+
                 <input
                     type="search"
                     id="search"
                     placeholder="Name or admission number..."
+                    autocomplete="off"
                 >
 
             </div>
 
 
 
+            <!-- CLASS -->
+
             <div class="control">
 
                 <label for="classFilter">
                     Class
                 </label>
+
 
                 <select id="classFilter">
 
@@ -741,11 +873,14 @@
 
 
 
+            <!-- TERM -->
+
             <div class="control">
 
                 <label for="termFilter">
                     Term
                 </label>
+
 
                 <select id="termFilter">
 
@@ -753,13 +888,16 @@
                         All Terms
                     </option>
 
+
                     <option value="Term 1">
                         Term 1
                     </option>
 
+
                     <option value="Term 2">
                         Term 2
                     </option>
+
 
                     <option value="Term 3">
                         Term 3
@@ -771,11 +909,14 @@
 
 
 
+            <!-- YEAR -->
+
             <div class="control">
 
                 <label for="yearFilter">
                     Year
                 </label>
+
 
                 <select id="yearFilter">
 
@@ -783,13 +924,16 @@
                         All Years
                     </option>
 
+
                     <option value="2026">
                         2026
                     </option>
 
+
                     <option value="2025">
                         2025
                     </option>
+
 
                     <option value="2024">
                         2024
@@ -801,12 +945,16 @@
 
 
 
+            <!-- REFRESH -->
+
             <button
                 id="refreshButton"
                 class="refresh-btn"
                 type="button"
             >
+
                 Refresh
+
             </button>
 
 
@@ -817,12 +965,14 @@
 
 
 
-    <!-- ==========================================
+    <!-- ======================================
          MERIT TABLE
-    =========================================== -->
+    ======================================= -->
 
     <section class="table-card">
 
+
+        <!-- TABLE HEADER -->
 
         <div class="table-header">
 
@@ -832,8 +982,9 @@
                     School Merit List
                 </h3>
 
+
                 <p>
-                    Learners are ranked by average marks.
+                    Learners are ranked by total grading points, with average marks used as a tiebreaker.
                 </p>
 
             </div>
@@ -841,6 +992,8 @@
         </div>
 
 
+
+        <!-- TABLE -->
 
         <div class="table-container">
 
@@ -856,25 +1009,36 @@
                             Position
                         </th>
 
+
                         <th>
                             Admission
                         </th>
+
 
                         <th>
                             Learner
                         </th>
 
+
                         <th>
                             Class
                         </th>
+
 
                         <th>
                             Subjects
                         </th>
 
+
                         <th>
                             Average
                         </th>
+
+
+                        <th>
+                            Points
+                        </th>
+
 
                         <th>
                             CBC Grade
@@ -885,14 +1049,16 @@
                 </thead>
 
 
+
                 <tbody id="meritTable">
 
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="8"
                             class="empty-row"
                         >
+
                             Loading merit list...
 
                         </td>
@@ -914,6 +1080,10 @@
 </main>
 
 
+
+<!-- ==========================================
+     JAVASCRIPT
+========================================== -->
 
 <script
     type="module"
