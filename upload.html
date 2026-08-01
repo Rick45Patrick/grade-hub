@@ -19,16 +19,13 @@
 
     <style>
 
-        /* ==========================================
-           GRADE HUB UPLOAD PAGE
-        ========================================== */
-
         * {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
+
             font-family:
                 Inter,
                 system-ui,
@@ -55,8 +52,7 @@
         header {
             min-height: 72px;
 
-            padding:
-                0 30px;
+            padding: 0 30px;
 
             display: flex;
 
@@ -88,8 +84,6 @@
             font-size: 21px;
 
             font-weight: 800;
-
-            letter-spacing: -.3px;
         }
 
 
@@ -99,16 +93,18 @@
             align-items: center;
 
             gap: 10px;
+
+            flex-wrap: wrap;
         }
 
 
-        header nav a {
+        header nav a,
+        .header-button {
             text-decoration: none;
 
             color: #dbeafe;
 
-            padding:
-                9px 13px;
+            padding: 9px 13px;
 
             border-radius: 9px;
 
@@ -116,13 +112,16 @@
 
             font-weight: 600;
 
-            transition:
-                background .2s,
-                color .2s;
+            border: 0;
+
+            background: transparent;
+
+            cursor: pointer;
         }
 
 
-        header nav a:hover {
+        header nav a:hover,
+        .header-button:hover {
             background: #1f2937;
 
             color: white;
@@ -135,7 +134,7 @@
 
         .upload-page {
             width: min(
-                1050px,
+                1150px,
                 calc(100% - 32px)
             );
 
@@ -239,6 +238,282 @@
 
 
         /* ==========================================
+           STATISTICS
+        ========================================== */
+
+        .stats-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 14px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .stat-card {
+            background: #fff;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 15px;
+
+            padding: 18px;
+
+            box-shadow:
+                0 6px 20px
+                rgba(15, 23, 42, .04);
+        }
+
+
+        .stat-label {
+            display: block;
+
+            font-size: 12px;
+
+            color: #697386;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: .4px;
+
+            margin-bottom: 7px;
+        }
+
+
+        .stat-number {
+            font-size: 28px;
+
+            font-weight: 900;
+
+            color: #172033;
+        }
+
+
+        /* ==========================================
+           FILTERS
+        ========================================== */
+
+        .filter-bar {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr auto;
+
+            gap: 12px;
+
+            align-items: end;
+
+            margin-bottom: 20px;
+        }
+
+
+        .filter-field label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+
+        .filter-field select,
+        .filter-field input {
+            width: 100%;
+
+            padding: 11px 12px;
+
+            border:
+                1px solid #d9deea;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #172033;
+
+            font: inherit;
+
+            outline: none;
+        }
+
+
+        .filter-field select:focus,
+        .filter-field input:focus {
+            border-color: #4f46e5;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(79, 70, 229, .10);
+        }
+
+
+        .refresh-button {
+            border: 0;
+
+            border-radius: 9px;
+
+            padding: 11px 17px;
+
+            background: #111827;
+
+            color: white;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .refresh-button:hover {
+            background: #1f2937;
+        }
+
+
+        .refresh-button:disabled {
+            opacity: .6;
+
+            cursor: not-allowed;
+        }
+
+
+        /* ==========================================
+           STUDENT TABLE
+        ========================================== */
+
+        .table-wrapper {
+            width: 100%;
+
+            overflow-x: auto;
+
+            border:
+                1px solid #e5e9f2;
+
+            border-radius: 13px;
+        }
+
+
+        .student-status-table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 700px;
+        }
+
+
+        .student-status-table th {
+            text-align: left;
+
+            background: #f8fafc;
+
+            padding: 13px 14px;
+
+            font-size: 12px;
+
+            color: #475569;
+
+            text-transform: uppercase;
+
+            letter-spacing: .4px;
+
+            border-bottom:
+                1px solid #e5e9f2;
+        }
+
+
+        .student-status-table td {
+            padding: 14px;
+
+            border-bottom:
+                1px solid #edf0f5;
+
+            font-size: 14px;
+        }
+
+
+        .student-status-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+
+        .student-status-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+
+        .status {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            padding: 5px 10px;
+
+            border-radius: 999px;
+
+            font-size: 12px;
+
+            font-weight: 800;
+        }
+
+
+        .status.uploaded {
+            background: #dcfce7;
+
+            color: #166534;
+        }
+
+
+        .status.pending {
+            background: #fee2e2;
+
+            color: #991b1b;
+        }
+
+
+        .upload-student-button {
+            border: 0;
+
+            border-radius: 8px;
+
+            padding: 8px 12px;
+
+            background: #4f46e5;
+
+            color: white;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .upload-student-button:hover {
+            background: #4338ca;
+        }
+
+
+        .sa-empty {
+            text-align: center;
+
+            color: #697386;
+
+            padding: 25px !important;
+        }
+
+
+        /* ==========================================
            STUDENT INFORMATION
         ========================================== */
 
@@ -307,8 +582,6 @@
                 0 0 14px;
 
             font-size: 16px;
-
-            color: #172033;
         }
 
 
@@ -348,7 +621,6 @@
 
 
         .subject-box input,
-        .form-control,
         .subject-name {
             width: 100%;
 
@@ -367,16 +639,10 @@
             font: inherit;
 
             outline: none;
-
-            transition:
-                border .2s,
-                box-shadow .2s;
         }
 
 
-        .subject-box input:focus,
-        .form-control:focus,
-        .subject-name:focus {
+        .subject-box input:focus {
             border-color: #4f46e5;
 
             box-shadow:
@@ -399,7 +665,7 @@
 
 
         /* ==========================================
-           OPTIONAL SUBJECT
+           OPTIONAL
         ========================================== */
 
         .optional-box {
@@ -425,6 +691,11 @@
         }
 
 
+        .optional-title label {
+            margin: 0;
+        }
+
+
         .optional-title span {
             font-size: 12px;
 
@@ -442,7 +713,7 @@
 
 
         /* ==========================================
-           ACADEMIC DETAILS
+           ACADEMIC
         ========================================== */
 
         .academic-grid {
@@ -488,18 +759,8 @@
         }
 
 
-        .academic-field select:focus,
-        .academic-field input:focus {
-            border-color: #4f46e5;
-
-            box-shadow:
-                0 0 0 3px
-                rgba(79, 70, 229, .1);
-        }
-
-
         /* ==========================================
-           SAVE BUTTON
+           SAVE
         ========================================== */
 
         .form-actions {
@@ -532,18 +793,11 @@
             box-shadow:
                 0 5px 14px
                 rgba(79, 70, 229, .22);
-
-            transition:
-                transform .15s,
-                background .2s;
         }
 
 
         .save-button:hover {
             background: #4338ca;
-
-            transform:
-                translateY(-1px);
         }
 
 
@@ -551,8 +805,6 @@
             opacity: .6;
 
             cursor: not-allowed;
-
-            transform: none;
         }
 
 
@@ -582,8 +834,7 @@
         @media (max-width: 750px) {
 
             header {
-                padding:
-                    14px 18px;
+                padding: 14px 18px;
 
                 flex-direction: column;
 
@@ -595,11 +846,6 @@
 
             header nav {
                 width: 100%;
-            }
-
-
-            header nav a {
-                background: #1f2937;
             }
 
 
@@ -618,21 +864,28 @@
             }
 
 
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .filter-bar {
+                grid-template-columns: 1fr;
+            }
+
+
             #studentInfo {
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
 
             .subject-grid {
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
 
             .academic-grid {
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
 
@@ -689,9 +942,13 @@
         </a>
 
 
-        <a href="#" id="logout">
+        <button
+            type="button"
+            class="header-button"
+            id="logout"
+        >
             Logout
-        </a>
+        </button>
 
     </nav>
 
@@ -709,10 +966,202 @@
         </h2>
 
         <p>
-            Enter and save academic results for the selected student.
+            Select a student and enter their academic results.
         </p>
 
     </div>
+
+
+
+    <!-- ==========================================
+         STATUS
+    =========================================== -->
+
+    <section class="upload-card">
+
+        <div class="card-heading">
+
+            <div class="card-icon">
+                ✓
+            </div>
+
+            <div>
+
+                <h3>
+                    Results Upload Status
+                </h3>
+
+                <p>
+                    See which students have completed results for the selected academic period.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="filter-bar">
+
+            <div class="filter-field">
+
+                <label for="statusTerm">
+                    Term
+                </label>
+
+                <select id="statusTerm">
+
+                    <option value="Term 1">
+                        Term 1
+                    </option>
+
+                    <option value="Term 2">
+                        Term 2
+                    </option>
+
+                    <option value="Term 3">
+                        Term 3
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-field">
+
+                <label for="statusYear">
+                    Year
+                </label>
+
+                <input
+                    type="number"
+                    id="statusYear"
+                    min="2020"
+                    max="2100"
+                    value="2026"
+                >
+
+            </div>
+
+
+            <button
+                type="button"
+                class="refresh-button"
+                id="refreshStatus"
+            >
+                Refresh
+            </button>
+
+        </div>
+
+
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    Total Students
+                </span>
+
+                <span
+                    class="stat-number"
+                    id="totalStudents"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    Uploaded
+                </span>
+
+                <span
+                    class="stat-number"
+                    id="uploadedStudents"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    Pending
+                </span>
+
+                <span
+                    class="stat-number"
+                    id="pendingStudents"
+                >
+                    0
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="table-wrapper">
+
+            <table class="student-status-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Admission
+                        </th>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Class
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="studentStatusTable">
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="sa-empty"
+                        >
+                            Loading students...
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
 
 
 
@@ -721,7 +1170,6 @@
     =========================================== -->
 
     <section class="upload-card">
-
 
         <div class="card-heading">
 
@@ -753,13 +1201,12 @@
                 </span>
 
                 <strong>
-                    Loading...
+                    Select a student above
                 </strong>
 
             </div>
 
         </div>
-
 
     </section>
 
@@ -770,7 +1217,6 @@
     =========================================== -->
 
     <section class="upload-card">
-
 
         <div class="card-heading">
 
@@ -828,7 +1274,6 @@
                     </div>
 
 
-
                     <div class="subject-box">
 
                         <label for="english">
@@ -848,7 +1293,6 @@
                     </div>
 
 
-
                     <div class="subject-box">
 
                         <label for="kiswahili">
@@ -866,7 +1310,6 @@
                         >
 
                     </div>
-
 
 
                     <div class="subject-box">
@@ -926,7 +1369,7 @@
                             id="optionalName1"
                             class="subject-name"
                             readonly
-                            placeholder="Loading subject..."
+                            placeholder="No subject"
                         >
 
 
@@ -963,7 +1406,7 @@
                             id="optionalName2"
                             class="subject-name"
                             readonly
-                            placeholder="Loading subject..."
+                            placeholder="No subject"
                         >
 
 
@@ -1000,7 +1443,7 @@
                             id="optionalName3"
                             class="subject-name"
                             readonly
-                            placeholder="Loading subject..."
+                            placeholder="No subject"
                         >
 
 
@@ -1084,8 +1527,6 @@
             </div>
 
 
-
-            <!-- ACTION -->
 
             <div class="form-actions">
 
