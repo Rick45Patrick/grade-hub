@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
   <title>Grade Hub | Super Admin</title>
 
-  <link rel="stylesheet" href="css/style.css">
+  <link
+    rel="stylesheet"
+    href="css/style.css">
 
   <style>
+
     :root{
       --gh-bg:#f5f7fb;
       --gh-card:#fff;
@@ -21,22 +29,32 @@
       --gh-warning:#b45309;
     }
 
+
     *{
       box-sizing:border-box;
     }
+
 
     body{
       margin:0;
       background:var(--gh-bg);
       color:var(--gh-text);
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     }
+
 
     .sa-layout{
       min-height:100vh;
       display:grid;
       grid-template-columns:250px 1fr;
     }
+
 
     .sa-sidebar{
       background:#111827;
@@ -46,12 +64,14 @@
       flex-direction:column;
     }
 
+
     .sa-brand{
       display:flex;
       align-items:center;
       gap:12px;
       padding:8px 10px 26px;
     }
+
 
     .sa-logo{
       width:42px;
@@ -63,18 +83,22 @@
       font-weight:800;
     }
 
+
     .sa-brand strong{
       display:block;
     }
+
 
     .sa-brand small{
       color:#aeb7c8;
     }
 
+
     .sa-nav{
       display:grid;
       gap:7px;
     }
+
 
     .sa-nav a{
       color:#cbd5e1;
@@ -83,11 +107,13 @@
       border-radius:10px;
     }
 
+
     .sa-nav a:hover,
     .sa-nav a.active{
       background:#1f2937;
       color:#fff;
     }
+
 
     .sa-logout{
       margin-top:auto;
@@ -99,10 +125,12 @@
       cursor:pointer;
     }
 
+
     .sa-main{
       padding:28px;
       min-width:0;
     }
+
 
     .sa-top{
       display:flex;
@@ -112,15 +140,18 @@
       margin-bottom:24px;
     }
 
+
     .sa-top h1{
       margin:0 0 5px;
       font-size:28px;
     }
 
+
     .sa-top p{
       margin:0;
       color:var(--gh-muted);
     }
+
 
     .sa-refresh{
       border:1px solid var(--gh-border);
@@ -130,6 +161,7 @@
       cursor:pointer;
     }
 
+
     .sa-message{
       display:none;
       padding:12px 15px;
@@ -138,19 +170,23 @@
       background:#eef2ff;
     }
 
+
     .sa-message.show{
       display:block;
     }
+
 
     .sa-message.error{
       background:#fef2f2;
       color:#991b1b;
     }
 
+
     .sa-message.success{
       background:#f0fdf4;
       color:#166534;
     }
+
 
     .sa-stats{
       display:grid;
@@ -158,6 +194,7 @@
       gap:16px;
       margin-bottom:28px;
     }
+
 
     .sa-stat,
     .sa-card{
@@ -167,14 +204,17 @@
       box-shadow:0 5px 18px rgba(15,23,42,.04);
     }
 
+
     .sa-stat{
       padding:20px;
     }
+
 
     .sa-stat span{
       color:var(--gh-muted);
       font-size:14px;
     }
+
 
     .sa-stat strong{
       display:block;
@@ -182,33 +222,40 @@
       margin-top:7px;
     }
 
+
     .sa-section{
       margin-bottom:28px;
     }
+
 
     .sa-section h2{
       font-size:20px;
       margin:0 0 5px;
     }
 
+
     .sa-section>p{
       color:var(--gh-muted);
       margin:0 0 14px;
     }
 
+
     .sa-card{
       overflow:hidden;
     }
 
+
     .sa-table-wrap{
       overflow-x:auto;
     }
+
 
     table{
       width:100%;
       border-collapse:collapse;
       min-width:780px;
     }
+
 
     th,
     td{
@@ -218,11 +265,13 @@
       font-size:14px;
     }
 
+
     th{
       background:#f8fafc;
       color:#475569;
       font-weight:700;
     }
+
 
     .sa-status{
       display:inline-block;
@@ -232,15 +281,18 @@
       font-weight:700;
     }
 
+
     .pending{
       background:#fff7ed;
       color:var(--gh-warning);
     }
 
+
     .approved{
       background:#f0fdf4;
       color:var(--gh-success);
     }
+
 
     .sa-btn{
       border:0;
@@ -251,25 +303,36 @@
       margin-right:6px;
     }
 
+
+    .sa-btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+
     .approve{
       background:#dcfce7;
       color:#166534;
     }
+
 
     .reject{
       background:#fee2e2;
       color:#991b1b;
     }
 
+
     .neutral{
       background:#eef2ff;
       color:#3730a3;
     }
 
+
     .danger{
       background:#fee2e2;
       color:#991b1b;
     }
+
 
     .sa-empty{
       text-align:center;
@@ -277,9 +340,11 @@
       padding:30px;
     }
 
+
     /* =====================================
        GRADING SYSTEM
     ===================================== */
+
 
     .grading-header{
       display:flex;
@@ -290,10 +355,12 @@
       border-bottom:1px solid var(--gh-border);
     }
 
+
     .grading-header h3{
       margin:0;
       font-size:17px;
     }
+
 
     .grading-header p{
       margin:4px 0 0;
@@ -301,15 +368,18 @@
       font-size:13px;
     }
 
+
     .grading-actions{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
     }
 
+
     .grading-table{
       min-width:850px;
     }
+
 
     .grading-input{
       width:100%;
@@ -321,18 +391,24 @@
       background:#fff;
     }
 
+
     .grading-input:focus{
       border-color:#4f46e5;
-      box-shadow:0 0 0 3px rgba(79,70,229,.1);
+      box-shadow:
+        0 0 0 3px
+        rgba(79,70,229,.1);
     }
+
 
     .grade-number{
       width:110px;
     }
 
+
     .grade-points{
       width:90px;
     }
+
 
     .grading-footer{
       padding:16px;
@@ -341,6 +417,7 @@
       justify-content:flex-end;
       gap:10px;
     }
+
 
     .primary-button{
       border:0;
@@ -352,10 +429,12 @@
       cursor:pointer;
     }
 
+
     .primary-button:disabled{
       opacity:.6;
       cursor:not-allowed;
     }
+
 
     .secondary-button{
       border:1px solid var(--gh-border);
@@ -367,6 +446,7 @@
       cursor:pointer;
     }
 
+
     .grading-note{
       margin:0;
       padding:14px 16px;
@@ -375,52 +455,146 @@
       font-size:13px;
     }
 
+
+    /* =====================================
+       PASSWORD MANAGEMENT
+    ===================================== */
+
+
+    .password-card{
+      padding:20px;
+    }
+
+
+    .password-grid{
+      display:grid;
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+
+
+    .password-field label{
+      display:block;
+      margin-bottom:7px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+
+    .password-actions{
+      margin-top:18px;
+      display:flex;
+      justify-content:flex-end;
+    }
+
+
+    .password-help{
+      margin-top:14px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border-radius:9px;
+      color:#64748b;
+      font-size:13px;
+    }
+
+
+    /* =====================================
+       MOBILE
+    ===================================== */
+
+
     @media(max-width:850px){
 
       .sa-layout{
         grid-template-columns:1fr;
       }
 
+
       .sa-sidebar{
         position:relative;
       }
+
 
       .sa-nav{
         grid-template-columns:repeat(2,1fr);
       }
 
+
       .sa-logout{
         margin-top:16px;
       }
+
 
       .sa-stats{
         grid-template-columns:1fr;
       }
 
+
       .sa-main{
         padding:18px;
       }
+
 
       .sa-top{
         align-items:flex-start;
         flex-direction:column;
       }
 
+
       .grading-header{
         align-items:flex-start;
         flex-direction:column;
       }
+
+
+      .password-grid{
+        grid-template-columns:1fr;
+      }
+
+
+      .password-actions{
+        justify-content:stretch;
+      }
+
+
+      .password-actions button{
+        width:100%;
+      }
+
     }
+
+
+    @media(max-width:500px){
+
+      .sa-nav{
+        grid-template-columns:1fr;
+      }
+
+
+      .sa-top h1{
+        font-size:23px;
+      }
+
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+
 <div class="sa-layout">
 
-  <!-- SIDEBAR -->
+
+  <!-- =====================================
+       SIDEBAR
+  ====================================== -->
 
   <aside class="sa-sidebar">
+
 
     <div class="sa-brand">
 
@@ -429,8 +603,15 @@
       </div>
 
       <div>
-        <strong>Grade Hub</strong>
-        <small>Super Admin</small>
+
+        <strong>
+          Grade Hub
+        </strong>
+
+        <small>
+          Super Admin
+        </small>
+
       </div>
 
     </div>
@@ -438,43 +619,77 @@
 
     <nav class="sa-nav">
 
-      <a class="active" href="#overview">
+      <a
+        class="active"
+        href="#overview">
+
         Overview
+
       </a>
+
 
       <a href="#requests">
+
         Admin Requests
+
       </a>
+
 
       <a href="#admins">
+
         Administrators
+
       </a>
+
 
       <a href="#students">
+
         Students
+
       </a>
+
+
+      <a href="#passwords">
+
+        Password Management
+
+      </a>
+
 
       <a href="#grading">
+
         Grading System
+
       </a>
 
+
       <a href="merit.html">
+
         Merit List
+
       </a>
 
     </nav>
 
 
-    <button id="logoutButton" class="sa-logout">
+    <button
+      id="logoutButton"
+      class="sa-logout">
+
       Sign out
+
     </button>
 
   </aside>
 
 
-  <!-- MAIN -->
+
+  <!-- =====================================
+       MAIN
+  ====================================== -->
 
   <main class="sa-main">
+
 
     <header class="sa-top">
 
@@ -485,25 +700,38 @@
         </h1>
 
         <p>
-          Manage administrator requests, students and grading.
+          Manage administrator requests,
+          students, passwords and grading.
         </p>
 
       </div>
 
 
-      <button id="refreshDashboard" class="sa-refresh">
+      <button
+        id="refreshDashboard"
+        class="sa-refresh">
+
         Refresh
+
       </button>
 
     </header>
 
 
-    <div id="saMessage" class="sa-message"></div>
+    <div
+      id="saMessage"
+      class="sa-message">
+    </div>
 
 
-    <!-- OVERVIEW -->
 
-    <section id="overview" class="sa-section">
+    <!-- =====================================
+         OVERVIEW
+    ====================================== -->
+
+    <section
+      id="overview"
+      class="sa-section">
 
       <h2>
         Overview
@@ -515,6 +743,7 @@
 
 
       <div class="sa-stats">
+
 
         <div class="sa-stat">
 
@@ -554,21 +783,28 @@
 
         </div>
 
+
       </div>
 
     </section>
 
 
-    <!-- ADMIN REQUESTS -->
 
-    <section id="requests" class="sa-section">
+    <!-- =====================================
+         ADMIN REQUESTS
+    ====================================== -->
+
+    <section
+      id="requests"
+      class="sa-section">
 
       <h2>
         Administrator Requests
       </h2>
 
       <p>
-        Approve or reject pending administrator applications.
+        Approve or reject pending administrator
+        applications.
       </p>
 
 
@@ -595,9 +831,15 @@
           <tbody id="adminRequests">
 
             <tr>
-              <td colspan="6" class="sa-empty">
+
+              <td
+                colspan="6"
+                class="sa-empty">
+
                 Loading...
+
               </td>
+
             </tr>
 
           </tbody>
@@ -609,9 +851,14 @@
     </section>
 
 
-    <!-- ADMINISTRATORS -->
 
-    <section id="admins" class="sa-section">
+    <!-- =====================================
+         ADMINISTRATORS
+    ====================================== -->
+
+    <section
+      id="admins"
+      class="sa-section">
 
       <h2>
         Administrators
@@ -644,8 +891,12 @@
 
             <tr>
 
-              <td colspan="4" class="sa-empty">
+              <td
+                colspan="4"
+                class="sa-empty">
+
                 Loading...
+
               </td>
 
             </tr>
@@ -659,16 +910,22 @@
     </section>
 
 
-    <!-- STUDENTS -->
 
-    <section id="students" class="sa-section">
+    <!-- =====================================
+         STUDENTS
+    ====================================== -->
+
+    <section
+      id="students"
+      class="sa-section">
 
       <h2>
         Students
       </h2>
 
       <p>
-        Registered students and their class information.
+        Registered students and their class
+        information.
       </p>
 
 
@@ -695,8 +952,12 @@
 
             <tr>
 
-              <td colspan="5" class="sa-empty">
+              <td
+                colspan="5"
+                class="sa-empty">
+
                 Loading...
+
               </td>
 
             </tr>
@@ -710,20 +971,128 @@
     </section>
 
 
-    <!-- GRADING SYSTEM -->
 
-    <section id="grading" class="sa-section">
+    <!-- =====================================
+         PASSWORD MANAGEMENT
+    ====================================== -->
+
+    <section
+      id="passwords"
+      class="sa-section">
+
+      <h2>
+        Password Management
+      </h2>
+
+      <p>
+        Change the password of a registered
+        student or approved administrator.
+      </p>
+
+
+      <div class="sa-card password-card">
+
+
+        <div class="password-grid">
+
+
+          <div class="password-field">
+
+            <label for="passwordUser">
+
+              Account
+
+            </label>
+
+
+            <select
+              id="passwordUser"
+              class="grading-input">
+
+              <option value="">
+
+                Select account
+
+              </option>
+
+            </select>
+
+          </div>
+
+
+
+          <div class="password-field">
+
+            <label for="newPassword">
+
+              New Password
+
+            </label>
+
+
+            <input
+              id="newPassword"
+              class="grading-input"
+              type="password"
+              minlength="6"
+              autocomplete="new-password"
+              placeholder="Enter new password">
+
+          </div>
+
+
+        </div>
+
+
+        <div class="password-actions">
+
+          <button
+            id="changePasswordButton"
+            class="primary-button"
+            type="button">
+
+            Change Password
+
+          </button>
+
+        </div>
+
+
+        <div class="password-help">
+
+          The Super Admin can change passwords
+          for registered students and approved
+          administrators.
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         GRADING SYSTEM
+    ====================================== -->
+
+    <section
+      id="grading"
+      class="sa-section">
 
       <h2>
         Grading System
       </h2>
 
       <p>
-        Configure the CBC grading levels, minimum marks and merit points.
+        Configure the CBC grading levels,
+        minimum marks and merit points.
       </p>
 
 
       <div class="sa-card">
+
 
         <div class="grading-header">
 
@@ -734,13 +1103,15 @@
             </h3>
 
             <p>
-              Only the Super Admin can modify these values.
+              Only the Super Admin can modify
+              these values.
             </p>
 
           </div>
 
 
           <div class="grading-actions">
+
 
             <button
               id="addGradeButton"
@@ -751,6 +1122,7 @@
 
             </button>
 
+
             <button
               id="resetGradesButton"
               class="secondary-button"
@@ -760,6 +1132,7 @@
 
             </button>
 
+
           </div>
 
         </div>
@@ -767,8 +1140,9 @@
 
         <p class="grading-note">
 
-          Minimum mark determines when a learner receives the grade.
-          Points are used when calculating the merit ranking.
+          Minimum mark determines when a learner
+          receives the grade. Points are used when
+          calculating the merit ranking.
 
         </p>
 
@@ -810,8 +1184,12 @@
 
               <tr>
 
-                <td colspan="5" class="sa-empty">
+                <td
+                  colspan="5"
+                  class="sa-empty">
+
                   Loading grading system...
+
                 </td>
 
               </tr>
@@ -840,12 +1218,19 @@
 
     </section>
 
+
   </main>
 
 </div>
 
 
-<script type="module" src="js/superadmin.js"></script>
+
+<script
+  type="module"
+  src="js/superadmin.js">
+</script>
+
 
 </body>
+
 </html>
