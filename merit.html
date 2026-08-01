@@ -567,6 +567,44 @@
 
 
         /* ==========================================
+           TOTAL MEAN
+        ========================================== */
+
+        .total-mean-row {
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
+
+            border-top:
+                2px solid #c7d2fe;
+        }
+
+
+        .total-mean-row td {
+            padding:
+                18px 16px;
+
+            font-size: 14px;
+
+            border-bottom: 0;
+        }
+
+
+        .school-total-mean {
+            display: inline-block;
+
+            font-size: 21px;
+
+            color: #3730a3;
+
+            white-space: nowrap;
+        }
+
+
+        /* ==========================================
            EMPTY / LOADING
         ========================================== */
 
@@ -580,7 +618,7 @@
 
 
         /* ==========================================
-           RESPONSIVE - TABLET
+           RESPONSIVE
         ========================================== */
 
         @media (max-width: 900px) {
@@ -604,10 +642,6 @@
 
         }
 
-
-        /* ==========================================
-           RESPONSIVE - MOBILE
-        ========================================== */
 
         @media (max-width: 600px) {
 
@@ -689,10 +723,6 @@
 <body>
 
 
-<!-- ==========================================
-     HEADER
-========================================== -->
-
 <header>
 
     <h1>
@@ -725,16 +755,8 @@
 
 
 
-<!-- ==========================================
-     MAIN
-========================================== -->
-
 <main class="merit-page">
 
-
-    <!-- ======================================
-         PAGE HEADING
-    ======================================= -->
 
     <div class="page-heading">
 
@@ -744,16 +766,12 @@
 
 
         <p>
-            Ranked academic performance of all registered learners.
+            Learners are ranked according to their average percentage.
         </p>
 
     </div>
 
 
-
-    <!-- ======================================
-         MESSAGE
-    ======================================= -->
 
     <div
         id="message"
@@ -787,7 +805,7 @@
         <div class="summary-card">
 
             <span>
-                Highest Average
+                Highest Percentage
             </span>
 
 
@@ -830,8 +848,6 @@
         <div class="controls">
 
 
-            <!-- SEARCH -->
-
             <div
                 class="control search-control"
             >
@@ -852,8 +868,6 @@
 
 
 
-            <!-- CLASS -->
-
             <div class="control">
 
                 <label for="classFilter">
@@ -872,8 +886,6 @@
             </div>
 
 
-
-            <!-- TERM -->
 
             <div class="control">
 
@@ -909,8 +921,6 @@
 
 
 
-            <!-- YEAR -->
-
             <div class="control">
 
                 <label for="yearFilter">
@@ -945,8 +955,6 @@
 
 
 
-            <!-- REFRESH -->
-
             <button
                 id="refreshButton"
                 class="refresh-btn"
@@ -972,8 +980,6 @@
     <section class="table-card">
 
 
-        <!-- TABLE HEADER -->
-
         <div class="table-header">
 
             <div>
@@ -984,7 +990,7 @@
 
 
                 <p>
-                    Learners are ranked by total grading points, with average marks used as a tiebreaker.
+                    Ranking is based on percentage only. Points are displayed for reference and do not affect position.
                 </p>
 
             </div>
@@ -992,8 +998,6 @@
         </div>
 
 
-
-        <!-- TABLE -->
 
         <div class="table-container">
 
@@ -1031,7 +1035,7 @@
 
 
                         <th>
-                            Average
+                            Percentage
                         </th>
 
 
@@ -1080,10 +1084,6 @@
 </main>
 
 
-
-<!-- ==========================================
-     JAVASCRIPT
-========================================== -->
 
 <script
     type="module"
