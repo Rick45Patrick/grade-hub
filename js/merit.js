@@ -1,5 +1,6 @@
 // ==========================================
 // GRADE HUB - MERIT LIST
+// RANKING BY PERCENTAGE / AVERAGE
 // DYNAMIC GRADING SYSTEM
 // ==========================================
 
@@ -59,6 +60,10 @@ function showMessage(
     type = "error"
 ) {
 
+    if (!message) {
+        return;
+    }
+
     message.textContent = text;
 
     message.className =
@@ -74,31 +79,11 @@ function showMessage(
 function escapeHTML(value) {
 
     return String(value ?? "")
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
 
@@ -133,13 +118,8 @@ async function checkAdmin() {
         data: roles,
         error: roleError
     } = await supabase
-
         .from("user_roles")
-
-        .select(
-            "role, approved"
-        )
-
+        .select("role, approved")
         .eq(
             "user_id",
             data.user.id
@@ -154,7 +134,8 @@ async function checkAdmin() {
         );
 
         showMessage(
-            "Unable to verify account permissions."
+            "Unable to verify account permissions.",
+            "error"
         );
 
         return false;
@@ -198,9 +179,7 @@ async function loadGradingSystem() {
         data,
         error
     } = await supabase
-
         .from("grading_system")
-
         .select(`
             id,
             grade,
@@ -208,7 +187,6 @@ async function loadGradingSystem() {
             points,
             description
         `)
-
         .order(
             "min_mark",
             {
@@ -262,21 +240,10 @@ async function loadGradingSystem() {
         );
 
 
-    /*
-     * Make sure highest minimum mark
-     * is checked first.
-     */
-
     gradingSystem.sort(
         (a, b) =>
             b.min_mark -
             a.min_mark
-    );
-
-
-    console.log(
-        "Loaded grading system:",
-        gradingSystem
     );
 
 
@@ -294,7 +261,7 @@ async function loadGradingSystem() {
 
 
 // ==========================================
-// GET GRADE FROM DATABASE RULES
+// GET GRADE
 // ==========================================
 
 function getCBCGrade(marks) {
@@ -304,9 +271,7 @@ function getCBCGrade(marks) {
 
 
     if (
-        Number.isNaN(
-            numericMarks
-        )
+        Number.isNaN(numericMarks)
     ) {
 
         return "-";
@@ -370,9 +335,7 @@ function getPoints(marks) {
 
 
     if (
-        Number.isNaN(
-            numericMarks
-        )
+        Number.isNaN(numericMarks)
     ) {
 
         return 0;
@@ -408,22 +371,26 @@ function getPoints(marks) {
 
 async function loadLearners() {
 
-    meritTable.innerHTML = `
+    if (meritTable) {
 
-        <tr>
+        meritTable.innerHTML = `
 
-            <td
-                colspan="8"
-                class="empty-row"
-            >
+            <tr>
 
-                Loading learners...
+                <td
+                    colspan="8"
+                    class="empty-row"
+                >
 
-            </td>
+                    Loading learners...
 
-        </tr>
+                </td>
 
-    `;
+            </tr>
+
+        `;
+
+    }
 
 
     const allowed =
@@ -437,10 +404,9 @@ async function loadLearners() {
 
     try {
 
-        /*
-         * Load the CURRENT grading system
-         * every time the Merit page loads.
-         */
+        // ==================================
+        // GRADING SYSTEM
+        // ==================================
 
         await loadGradingSystem();
 
@@ -453,9 +419,7 @@ async function loadLearners() {
             data: students,
             error: studentError
         } = await supabase
-
             .from("students")
-
             .select(`
                 id,
                 user_id,
@@ -483,9 +447,7 @@ async function loadLearners() {
             data: results,
             error: resultError
         } = await supabase
-
             .from("results")
-
             .select(`
                 student_id,
                 subject,
@@ -571,22 +533,26 @@ async function loadLearners() {
         );
 
 
-        meritTable.innerHTML = `
+        if (meritTable) {
 
-            <tr>
+            meritTable.innerHTML = `
 
-                <td
-                    colspan="8"
-                    class="empty-row"
-                >
+                <tr>
 
-                    Unable to load merit list.
+                    <td
+                        colspan="8"
+                        class="empty-row"
+                    >
 
-                </td>
+                        Unable to load merit list.
 
-            </tr>
+                    </td>
 
-        `;
+                </tr>
+
+            `;
+
+        }
 
 
         showMessage(
@@ -601,7 +567,7 @@ async function loadLearners() {
 
 
 // ==========================================
-// CALCULATE AVERAGE
+// CALCULATE AVERAGE / PERCENTAGE
 // ==========================================
 
 function calculateAverage(results) {
@@ -618,22 +584,44 @@ function calculateAverage(results) {
 
     let total = 0;
 
+    let validResults = 0;
+
 
     results.forEach(
         result => {
 
-            total +=
+            const mark =
                 Number(
                     result.marks
-                ) || 0;
+                );
+
+
+            if (
+                Number.isFinite(mark)
+            ) {
+
+                total += mark;
+
+                validResults++;
+
+            }
 
         }
     );
 
 
+    if (
+        validResults === 0
+    ) {
+
+        return 0;
+
+    }
+
+
     return (
         total /
-        results.length
+        validResults
     );
 
 }
@@ -641,6 +629,7 @@ function calculateAverage(results) {
 
 // ==========================================
 // CALCULATE TOTAL POINTS
+// POINTS ARE DISPLAY ONLY
 // ==========================================
 
 function calculatePoints(results) {
@@ -685,12 +674,10 @@ function populateClasses() {
         [
             ...new Set(
                 allLearners
-
                     .map(
                         learner =>
                             learner.className
                     )
-
                     .filter(
                         className =>
                             className &&
@@ -799,8 +786,7 @@ function getFilteredLearners() {
             // ==============================
 
             if (
-                selectedClass !==
-                "all" &&
+                selectedClass !== "all" &&
                 learner.className !==
                 selectedClass
             ) {
@@ -811,7 +797,7 @@ function getFilteredLearners() {
 
 
             // ==============================
-            // TERM AND YEAR
+            // TERM/YEAR
             // ==============================
 
             let relevantResults =
@@ -819,8 +805,7 @@ function getFilteredLearners() {
 
 
             if (
-                selectedTerm !==
-                "all"
+                selectedTerm !== "all"
             ) {
 
                 relevantResults =
@@ -834,8 +819,7 @@ function getFilteredLearners() {
 
 
             if (
-                selectedYear !==
-                "all"
+                selectedYear !== "all"
             ) {
 
                 relevantResults =
@@ -853,21 +837,18 @@ function getFilteredLearners() {
 
 
             /*
-             * If a term or year is selected,
-             * exclude learners who have no
-             * results for that selection.
+             * When a specific term/year
+             * is selected, only show learners
+             * who have results for it.
              */
 
             if (
-                selectedTerm !==
-                "all" ||
-                selectedYear !==
-                "all"
+                selectedTerm !== "all" ||
+                selectedYear !== "all"
             ) {
 
                 if (
-                    relevantResults.length ===
-                    0
+                    relevantResults.length === 0
                 ) {
 
                     return false;
@@ -916,8 +897,7 @@ function renderMeritList() {
 
 
                 if (
-                    selectedTerm !==
-                    "all"
+                    selectedTerm !== "all"
                 ) {
 
                     relevantResults =
@@ -931,8 +911,7 @@ function renderMeritList() {
 
 
                 if (
-                    selectedYear !==
-                    "all"
+                    selectedYear !== "all"
                 ) {
 
                     relevantResults =
@@ -981,51 +960,78 @@ function renderMeritList() {
 
 
     // ======================================
-    // RANKING
+    // RANK BY PERCENTAGE ONLY
     // ======================================
 
     /*
-     * 1. Highest total points
-     * 2. Highest average
-     * 3. Highest number of subjects
+     * IMPORTANT:
+     *
+     * Students are ranked ONLY by their
+     * average percentage.
+     *
+     * Points are NOT used for ranking.
+     *
+     * If two learners have exactly the same
+     * percentage, they share the same rank.
      */
 
     learners.sort(
         (a, b) => {
 
-            if (
-                b.totalPoints !==
-                a.totalPoints
-            ) {
-
-                return (
-                    b.totalPoints -
-                    a.totalPoints
-                );
-
-            }
-
-
-            if (
-                b.rankingAverage !==
-                a.rankingAverage
-            ) {
-
-                return (
-                    b.rankingAverage -
-                    a.rankingAverage
-                );
-
-            }
-
-
             return (
-                b.subjectTotal -
-                a.subjectTotal
+                b.rankingAverage -
+                a.rankingAverage
             );
 
         }
     );
+
+
+    // ======================================
+    // SCHOOL TOTAL MEAN
+    // ======================================
+
+    let schoolTotalMean = 0;
+
+
+    if (
+        learners.length > 0
+    ) {
+
+        let totalAverages = 0;
+
+        let learnersWithResults = 0;
+
+
+        learners.forEach(
+            learner => {
+
+                if (
+                    learner.subjectTotal > 0
+                ) {
+
+                    totalAverages +=
+                        learner.rankingAverage;
+
+                    learnersWithResults++;
+
+                }
+
+            }
+        );
+
+
+        if (
+            learnersWithResults > 0
+        ) {
+
+            schoolTotalMean =
+                totalAverages /
+                learnersWithResults;
+
+        }
+
+    }
 
 
     // ======================================
@@ -1100,15 +1106,52 @@ function renderMeritList() {
     meritTable.innerHTML = "";
 
 
+    let currentRank = 0;
+
+    let previousAverage = null;
+
+
     learners.forEach(
         (learner, index) => {
 
-            const position =
-                index + 1;
-
+            /*
+             * Competition ranking:
+             *
+             * 1
+             * 2
+             * 2
+             * 4
+             *
+             * Equal percentages receive
+             * the same position.
+             */
 
             const average =
                 learner.rankingAverage;
+
+
+            if (
+                previousAverage === null ||
+                Number(
+                    average.toFixed(2)
+                ) !==
+                Number(
+                    previousAverage.toFixed(2)
+                )
+            ) {
+
+                currentRank =
+                    index + 1;
+
+            }
+
+
+            previousAverage =
+                average;
+
+
+            const position =
+                currentRank;
 
 
             const grade =
@@ -1204,7 +1247,7 @@ function renderMeritList() {
 
                 <td>
 
-                    <strong>
+                    <strong class="average-value">
 
                         ${formatAverage(
                             average
@@ -1217,22 +1260,14 @@ function renderMeritList() {
 
                 <td>
 
-                    <strong
-                        style="
-                            font-size:16px;
-                            color:#3730a3;
-                        "
-                    >
+                    <strong class="points-value">
 
                         ${totalPoints}
 
                     </strong>
 
 
-                    <small style="
-                        color:#697386;
-                        display:block;
-                    ">
+                    <small class="points-label">
 
                         points
 
@@ -1274,6 +1309,72 @@ function renderMeritList() {
         }
     );
 
+
+    // ======================================
+    // TOTAL MEAN ROW
+    // ======================================
+
+    const meanRow =
+        document.createElement("tr");
+
+
+    meanRow.className =
+        "total-mean-row";
+
+
+    meanRow.innerHTML = `
+
+        <td colspan="4">
+
+            <strong>
+                SCHOOL TOTAL MEAN
+            </strong>
+
+        </td>
+
+
+        <td>
+
+            <strong>
+                ${learners.filter(
+                    learner =>
+                        learner.subjectTotal > 0
+                ).length}
+            </strong>
+
+            learners
+
+        </td>
+
+
+        <td>
+
+            <strong
+                class="school-total-mean"
+            >
+
+                ${formatAverage(
+                    schoolTotalMean
+                )}%
+
+            </strong>
+
+        </td>
+
+
+        <td colspan="2">
+
+            Overall mean percentage
+
+        </td>
+
+    `;
+
+
+    meritTable.appendChild(
+        meanRow
+    );
+
 }
 
 
@@ -1294,77 +1395,97 @@ function formatAverage(value) {
 // FILTER EVENTS
 // ==========================================
 
-search.addEventListener(
-    "input",
-    renderMeritList
-);
+if (search) {
+
+    search.addEventListener(
+        "input",
+        renderMeritList
+    );
+
+}
 
 
-classFilter.addEventListener(
-    "change",
-    renderMeritList
-);
+if (classFilter) {
+
+    classFilter.addEventListener(
+        "change",
+        renderMeritList
+    );
+
+}
 
 
-termFilter.addEventListener(
-    "change",
-    renderMeritList
-);
+if (termFilter) {
+
+    termFilter.addEventListener(
+        "change",
+        renderMeritList
+    );
+
+}
 
 
-yearFilter.addEventListener(
-    "change",
-    renderMeritList
-);
+if (yearFilter) {
+
+    yearFilter.addEventListener(
+        "change",
+        renderMeritList
+    );
+
+}
 
 
 // ==========================================
 // REFRESH
 // ==========================================
 
-refreshButton.addEventListener(
-    "click",
-    async () => {
+if (refreshButton) {
 
-        refreshButton.disabled =
-            true;
+    refreshButton.addEventListener(
+        "click",
+        async () => {
 
-
-        refreshButton.textContent =
-            "Refreshing...";
+            refreshButton.disabled =
+                true;
 
 
-        try {
+            refreshButton.textContent =
+                "Refreshing...";
 
-            await loadLearners();
+
+            try {
+
+                await loadLearners();
 
 
-            showMessage(
-                "Merit list updated.",
-                "success"
-            );
+                showMessage(
+                    "Merit list updated.",
+                    "success"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Refresh error:",
+                    error
+                );
+
+            }
+
+
+            refreshButton.disabled =
+                false;
+
+
+            refreshButton.textContent =
+                "Refresh";
 
         }
+    );
 
-        catch (error) {
-
-            console.error(
-                "Refresh error:",
-                error
-            );
-
-        }
-
-
-        refreshButton.disabled =
-            false;
-
-
-        refreshButton.textContent =
-            "Refresh";
-
-    }
-);
+}
 
 
 // ==========================================
@@ -1384,6 +1505,10 @@ if (logoutButton) {
         async event => {
 
             event.preventDefault();
+
+
+            logoutButton.textContent =
+                "Logging out...";
 
 
             await supabase.auth.signOut();
