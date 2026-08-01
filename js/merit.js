@@ -1,6 +1,6 @@
 // ==========================================
 // GRADE HUB - MERIT LIST
-// DYNAMIC CBC GRADING + POINTS
+// DYNAMIC GRADING SYSTEM
 // ==========================================
 
 import { supabase } from "./supabase.js";
@@ -41,83 +41,12 @@ const message =
     document.getElementById("message");
 
 
+// ==========================================
+// DATA
+// ==========================================
+
 let allLearners = [];
 
-
-// ==========================================
-// DEFAULT GRADING
-// ==========================================
-// Used only if the grading configuration
-// cannot be loaded from Supabase.
-
-const DEFAULT_GRADING = [
-    {
-        grade: "EE1",
-        min_marks: 90,
-        max_marks: 100,
-        points: 8,
-        description: "Exceeding Expectations"
-    },
-
-    {
-        grade: "EE2",
-        min_marks: 80,
-        max_marks: 89,
-        points: 7,
-        description: "Exceeding Expectations"
-    },
-
-    {
-        grade: "ME1",
-        min_marks: 70,
-        max_marks: 79,
-        points: 6,
-        description: "Meeting Expectations"
-    },
-
-    {
-        grade: "ME2",
-        min_marks: 60,
-        max_marks: 69,
-        points: 5,
-        description: "Meeting Expectations"
-    },
-
-    {
-        grade: "AE1",
-        min_marks: 50,
-        max_marks: 59,
-        points: 4,
-        description: "Approaching Expectations"
-    },
-
-    {
-        grade: "AE2",
-        min_marks: 40,
-        max_marks: 49,
-        points: 3,
-        description: "Approaching Expectations"
-    },
-
-    {
-        grade: "BE1",
-        min_marks: 30,
-        max_marks: 39,
-        points: 2,
-        description: "Below Expectations"
-    },
-
-    {
-        grade: "BE2",
-        min_marks: 0,
-        max_marks: 29,
-        points: 1,
-        description: "Below Expectations"
-    }
-];
-
-
-// Current grading configuration
 let gradingSystem = [];
 
 
@@ -125,29 +54,26 @@ let gradingSystem = [];
 // MESSAGE
 // ==========================================
 
-function showMessage(text, type = "error") {
+function showMessage(
+    text,
+    type = "error"
+) {
 
     message.textContent = text;
 
     message.className =
         `message show ${type}`;
+
 }
 
 
 // ==========================================
-// HTML SAFETY
+// ESCAPE HTML
 // ==========================================
 
 function escapeHTML(value) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
+    return String(value ?? "")
 
         .replace(
             /&/g,
@@ -173,227 +99,7 @@ function escapeHTML(value) {
             /'/g,
             "&#039;"
         );
-}
 
-
-// ==========================================
-// FORMAT AVERAGE
-// ==========================================
-
-function formatAverage(value) {
-
-    return Math.round(
-        Number(value) * 100
-    ) / 100;
-}
-
-
-// ==========================================
-// LOAD GRADING SYSTEM
-// ==========================================
-//
-// IMPORTANT:
-// Change "grading_system" below ONLY if the
-// table you created in Supabase has a
-// different name.
-//
-// Expected columns:
-//
-// grade
-// min_marks
-// max_marks
-// points
-// description
-//
-// ==========================================
-
-async function loadGradingSystem() {
-
-    const {
-        data,
-        error
-    } = await supabase
-
-        .from("grading_system")
-
-        .select(`
-            grade,
-            min_marks,
-            max_marks,
-            points,
-            description
-        `)
-
-        .order(
-            "min_marks",
-            {
-                ascending: false
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Grading system error:",
-            error
-        );
-
-
-        console.warn(
-            "Using default CBC grading."
-        );
-
-
-        gradingSystem =
-            DEFAULT_GRADING;
-
-
-        return;
-    }
-
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
-        console.warn(
-            "No grading configuration found. Using defaults."
-        );
-
-
-        gradingSystem =
-            DEFAULT_GRADING;
-
-
-        return;
-    }
-
-
-    gradingSystem =
-        data.map(row => ({
-
-            grade:
-                row.grade,
-
-            min_marks:
-                Number(
-                    row.min_marks
-                ),
-
-            max_marks:
-                Number(
-                    row.max_marks
-                ),
-
-            points:
-                Number(
-                    row.points
-                ),
-
-            description:
-                row.description ||
-                ""
-
-        }));
-
-
-    console.log(
-        "Grading system loaded:",
-        gradingSystem
-    );
-}
-
-
-// ==========================================
-// GET CBC GRADE
-// ==========================================
-
-function getCBCGrade(marks) {
-
-    marks =
-        Number(marks);
-
-
-    const grade =
-        gradingSystem.find(
-            item =>
-                marks >=
-                    item.min_marks &&
-
-                marks <=
-                    item.max_marks
-        );
-
-
-    if (grade) {
-
-        return grade.grade;
-
-    }
-
-
-    return "-";
-}
-
-
-// ==========================================
-// GET CBC DESCRIPTION
-// ==========================================
-
-function getCBCDescription(grade) {
-
-    const item =
-        gradingSystem.find(
-            grading =>
-                grading.grade ===
-                grade
-        );
-
-
-    if (item) {
-
-        return item.description;
-
-    }
-
-
-    return "-";
-}
-
-
-// ==========================================
-// GET POINTS
-// ==========================================
-
-function getPoints(marks) {
-
-    marks =
-        Number(marks);
-
-
-    const item =
-        gradingSystem.find(
-            grade =>
-                marks >=
-                    grade.min_marks &&
-
-                marks <=
-                    grade.max_marks
-        );
-
-
-    if (item) {
-
-        return Number(
-            item.points
-        ) || 0;
-
-    }
-
-
-    return 0;
 }
 
 
@@ -406,8 +112,7 @@ async function checkAdmin() {
     const {
         data,
         error
-    } =
-        await supabase.auth.getUser();
+    } = await supabase.auth.getUser();
 
 
     if (
@@ -420,40 +125,40 @@ async function checkAdmin() {
             "index.html";
 
         return false;
+
     }
 
 
     const {
         data: roles,
         error: roleError
-    } =
-        await supabase
+    } = await supabase
 
-            .from("user_roles")
+        .from("user_roles")
 
-            .select(
-                "role, approved"
-            )
+        .select(
+            "role, approved"
+        )
 
-            .eq(
-                "user_id",
-                data.user.id
-            );
+        .eq(
+            "user_id",
+            data.user.id
+        );
 
 
     if (roleError) {
 
         console.error(
+            "Role check error:",
             roleError
         );
-
 
         showMessage(
             "Unable to verify account permissions."
         );
 
-
         return false;
+
     }
 
 
@@ -461,7 +166,6 @@ async function checkAdmin() {
         (roles || []).find(
             role =>
                 role.approved === true &&
-
                 (
                     role.role === "admin" ||
                     role.role === "super_admin"
@@ -475,10 +179,226 @@ async function checkAdmin() {
             "index.html";
 
         return false;
+
     }
 
 
     return true;
+
+}
+
+
+// ==========================================
+// LOAD GRADING SYSTEM
+// ==========================================
+
+async function loadGradingSystem() {
+
+    const {
+        data,
+        error
+    } = await supabase
+
+        .from("grading_system")
+
+        .select(`
+            id,
+            grade,
+            min_mark,
+            points,
+            description
+        `)
+
+        .order(
+            "min_mark",
+            {
+                ascending: false
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            "Grading system error:",
+            error
+        );
+
+        gradingSystem = [];
+
+        throw error;
+
+    }
+
+
+    gradingSystem =
+        (data || []).map(
+            item => ({
+
+                id:
+                    item.id,
+
+                grade:
+                    String(
+                        item.grade ?? ""
+                    ),
+
+                min_mark:
+                    Number(
+                        item.min_mark
+                    ),
+
+                points:
+                    Number(
+                        item.points
+                    ),
+
+                description:
+                    String(
+                        item.description ?? ""
+                    )
+
+            })
+        );
+
+
+    /*
+     * Make sure highest minimum mark
+     * is checked first.
+     */
+
+    gradingSystem.sort(
+        (a, b) =>
+            b.min_mark -
+            a.min_mark
+    );
+
+
+    console.log(
+        "Loaded grading system:",
+        gradingSystem
+    );
+
+
+    if (
+        gradingSystem.length === 0
+    ) {
+
+        throw new Error(
+            "No grading system has been configured by the Super Admin."
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// GET GRADE FROM DATABASE RULES
+// ==========================================
+
+function getCBCGrade(marks) {
+
+    const numericMarks =
+        Number(marks);
+
+
+    if (
+        Number.isNaN(
+            numericMarks
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    const matchingGrade =
+        gradingSystem.find(
+            grading =>
+                numericMarks >=
+                grading.min_mark
+        );
+
+
+    if (!matchingGrade) {
+
+        return "-";
+
+    }
+
+
+    return matchingGrade.grade;
+
+}
+
+
+// ==========================================
+// GET DESCRIPTION
+// ==========================================
+
+function getCBCDescription(grade) {
+
+    const matchingGrade =
+        gradingSystem.find(
+            grading =>
+                grading.grade === grade
+        );
+
+
+    if (!matchingGrade) {
+
+        return "-";
+
+    }
+
+
+    return matchingGrade.description;
+
+}
+
+
+// ==========================================
+// GET POINTS
+// ==========================================
+
+function getPoints(marks) {
+
+    const numericMarks =
+        Number(marks);
+
+
+    if (
+        Number.isNaN(
+            numericMarks
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    const matchingGrade =
+        gradingSystem.find(
+            grading =>
+                numericMarks >=
+                grading.min_mark
+        );
+
+
+    if (!matchingGrade) {
+
+        return 0;
+
+    }
+
+
+    return Number(
+        matchingGrade.points
+    ) || 0;
+
 }
 
 
@@ -496,7 +416,9 @@ async function loadLearners() {
                 colspan="8"
                 class="empty-row"
             >
+
                 Loading learners...
+
             </td>
 
         </tr>
@@ -513,166 +435,168 @@ async function loadLearners() {
     }
 
 
-    // ======================================
-    // LOAD GRADING SYSTEM FIRST
-    // ======================================
+    try {
 
-    await loadGradingSystem();
+        /*
+         * Load the CURRENT grading system
+         * every time the Merit page loads.
+         */
+
+        await loadGradingSystem();
 
 
-    // ======================================
-    // STUDENTS
-    // ======================================
+        // ==================================
+        // STUDENTS
+        // ==================================
 
-    const {
-        data: students,
-        error: studentError
-    } =
-        await supabase
+        const {
+            data: students,
+            error: studentError
+        } = await supabase
 
             .from("students")
 
             .select(`
-
                 id,
-
                 user_id,
-
                 admission_number,
-
                 class,
-
                 profiles(
-
                     full_name,
-
                     username
-
                 )
-
             `);
 
 
-    if (studentError) {
+        if (studentError) {
 
-        console.error(
-            studentError
-        );
+            throw studentError;
 
-
-        showMessage(
-            studentError.message
-        );
+        }
 
 
-        return;
-    }
+        // ==================================
+        // RESULTS
+        // ==================================
 
-
-    // ======================================
-    // RESULTS
-    // ======================================
-
-    const {
-        data: results,
-        error: resultError
-    } =
-        await supabase
+        const {
+            data: results,
+            error: resultError
+        } = await supabase
 
             .from("results")
 
             .select(`
-
                 student_id,
-
                 subject,
-
                 marks,
-
                 term,
-
                 year
-
             `);
 
 
-    if (resultError) {
+        if (resultError) {
+
+            throw resultError;
+
+        }
+
+
+        // ==================================
+        // BUILD LEARNERS
+        // ==================================
+
+        allLearners = [];
+
+
+        (students || []).forEach(
+            student => {
+
+                const studentResults =
+                    (results || []).filter(
+                        result =>
+                            result.student_id ===
+                            student.id
+                    );
+
+
+                const profile =
+                    Array.isArray(
+                        student.profiles
+                    )
+                        ? student.profiles[0]
+                        : student.profiles;
+
+
+                allLearners.push({
+
+                    id:
+                        student.id,
+
+                    admission:
+                        student.admission_number ||
+                        "-",
+
+                    name:
+                        profile?.full_name ||
+                        "Unknown Learner",
+
+                    username:
+                        profile?.username ||
+                        "-",
+
+                    className:
+                        student.class ||
+                        "-",
+
+                    results:
+                        studentResults
+
+                });
+
+            }
+        );
+
+
+        populateClasses();
+
+        renderMeritList();
+
+
+    } catch (error) {
 
         console.error(
-            resultError
+            "Merit loading error:",
+            error
         );
+
+
+        meritTable.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="empty-row"
+                >
+
+                    Unable to load merit list.
+
+                </td>
+
+            </tr>
+
+        `;
 
 
         showMessage(
-            resultError.message
+            error.message ||
+            "Unable to load merit list.",
+            "error"
         );
 
-
-        return;
     }
 
-
-    // ======================================
-    // BUILD LEARNERS
-    // ======================================
-
-    allLearners = [];
-
-
-    (students || []).forEach(
-        student => {
-
-            const studentResults =
-                (results || []).filter(
-                    result =>
-                        result.student_id ===
-                        student.id
-                );
-
-
-            const profile =
-                Array.isArray(
-                    student.profiles
-                )
-
-                    ? student.profiles[0]
-
-                    : student.profiles;
-
-
-            allLearners.push({
-
-                id:
-                    student.id,
-
-                admission:
-                    student.admission_number ||
-                    "-",
-
-                name:
-                    profile?.full_name ||
-                    "Unknown Learner",
-
-                username:
-                    profile?.username ||
-                    "-",
-
-                className:
-                    student.class ||
-                    "-",
-
-                results:
-                    studentResults
-
-            });
-
-        }
-    );
-
-
-    populateClasses();
-
-    renderMeritList();
 }
 
 
@@ -688,6 +612,7 @@ function calculateAverage(results) {
     ) {
 
         return 0;
+
     }
 
 
@@ -706,8 +631,11 @@ function calculateAverage(results) {
     );
 
 
-    return total /
-        results.length;
+    return (
+        total /
+        results.length
+    );
+
 }
 
 
@@ -723,6 +651,7 @@ function calculatePoints(results) {
     ) {
 
         return 0;
+
     }
 
 
@@ -742,6 +671,7 @@ function calculatePoints(results) {
 
 
     return totalPoints;
+
 }
 
 
@@ -754,7 +684,6 @@ function populateClasses() {
     const classes =
         [
             ...new Set(
-
                 allLearners
 
                     .map(
@@ -762,8 +691,11 @@ function populateClasses() {
                             learner.className
                     )
 
-                    .filter(Boolean)
-
+                    .filter(
+                        className =>
+                            className &&
+                            className !== "-"
+                    )
             )
         ];
 
@@ -803,11 +735,12 @@ function populateClasses() {
 
         }
     );
+
 }
 
 
 // ==========================================
-// FILTER LEARNERS
+// GET FILTERED LEARNERS
 // ==========================================
 
 function getFilteredLearners() {
@@ -833,7 +766,12 @@ function getFilteredLearners() {
     return allLearners.filter(
         learner => {
 
+            // ==============================
+            // SEARCH
+            // ==============================
+
             const matchesSearch =
+
                 !searchValue ||
 
                 learner.name
@@ -852,20 +790,29 @@ function getFilteredLearners() {
             if (!matchesSearch) {
 
                 return false;
+
             }
 
+
+            // ==============================
+            // CLASS
+            // ==============================
 
             if (
                 selectedClass !==
                 "all" &&
-
                 learner.className !==
                 selectedClass
             ) {
 
                 return false;
+
             }
 
+
+            // ==============================
+            // TERM AND YEAR
+            // ==============================
 
             let relevantResults =
                 learner.results;
@@ -882,6 +829,7 @@ function getFilteredLearners() {
                             result.term ===
                             selectedTerm
                     );
+
             }
 
 
@@ -900,26 +848,40 @@ function getFilteredLearners() {
                                 selectedYear
                             )
                     );
+
             }
 
 
+            /*
+             * If a term or year is selected,
+             * exclude learners who have no
+             * results for that selection.
+             */
+
             if (
-                selectedTerm !== "all" ||
-                selectedYear !== "all"
+                selectedTerm !==
+                "all" ||
+                selectedYear !==
+                "all"
             ) {
 
                 if (
-                    relevantResults.length === 0
+                    relevantResults.length ===
+                    0
                 ) {
 
                     return false;
+
                 }
+
             }
 
 
             return true;
+
         }
     );
+
 }
 
 
@@ -964,6 +926,7 @@ function renderMeritList() {
                                 result.term ===
                                 selectedTerm
                         );
+
                 }
 
 
@@ -982,6 +945,7 @@ function renderMeritList() {
                                     selectedYear
                                 )
                         );
+
                 }
 
 
@@ -1011,6 +975,7 @@ function renderMeritList() {
                         relevantResults.length
 
                 };
+
             }
         );
 
@@ -1018,6 +983,12 @@ function renderMeritList() {
     // ======================================
     // RANKING
     // ======================================
+
+    /*
+     * 1. Highest total points
+     * 2. Highest average
+     * 3. Highest number of subjects
+     */
 
     learners.sort(
         (a, b) => {
@@ -1031,13 +1002,28 @@ function renderMeritList() {
                     b.totalPoints -
                     a.totalPoints
                 );
+
+            }
+
+
+            if (
+                b.rankingAverage !==
+                a.rankingAverage
+            ) {
+
+                return (
+                    b.rankingAverage -
+                    a.rankingAverage
+                );
+
             }
 
 
             return (
-                b.rankingAverage -
-                a.rankingAverage
+                b.subjectTotal -
+                a.subjectTotal
             );
+
         }
     );
 
@@ -1064,9 +1050,7 @@ function renderMeritList() {
         topLearner.textContent =
             learners[0].name;
 
-    }
-
-    else {
+    } else {
 
         highestAverage.textContent =
             "0%";
@@ -1074,6 +1058,7 @@ function renderMeritList() {
 
         topLearner.textContent =
             "-";
+
     }
 
 
@@ -1104,6 +1089,7 @@ function renderMeritList() {
         `;
 
         return;
+
     }
 
 
@@ -1284,8 +1270,23 @@ function renderMeritList() {
             meritTable.appendChild(
                 row
             );
+
         }
     );
+
+}
+
+
+// ==========================================
+// FORMAT AVERAGE
+// ==========================================
+
+function formatAverage(value) {
+
+    return Math.round(
+        Number(value) * 100
+    ) / 100;
+
 }
 
 
@@ -1337,17 +1338,31 @@ refreshButton.addEventListener(
 
             await loadLearners();
 
+
+            showMessage(
+                "Merit list updated.",
+                "success"
+            );
+
         }
 
-        finally {
+        catch (error) {
 
-            refreshButton.disabled =
-                false;
+            console.error(
+                "Refresh error:",
+                error
+            );
 
-
-            refreshButton.textContent =
-                "Refresh";
         }
+
+
+        refreshButton.disabled =
+            false;
+
+
+        refreshButton.textContent =
+            "Refresh";
+
     }
 );
 
@@ -1356,9 +1371,15 @@ refreshButton.addEventListener(
 // LOGOUT
 // ==========================================
 
-document
-    .getElementById("logout")
-    .addEventListener(
+const logoutButton =
+    document.getElementById(
+        "logout"
+    );
+
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
         "click",
         async event => {
 
@@ -1370,8 +1391,11 @@ document
 
             window.location.href =
                 "index.html";
+
         }
     );
+
+}
 
 
 // ==========================================
