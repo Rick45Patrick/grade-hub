@@ -1,20 +1,122 @@
+import { supabase } from "./supabase.js";
+
+
 // ============================================================
-// GRADE HUB V2
-// Subject combinations, exams, results, documents
+// ELEMENTS
 // ============================================================
 
-const subjectsTable = document.getElementById("subjectsTable");
-const combinationSubjects = document.getElementById("combinationSubjects");
-const combinationsList = document.getElementById("combinationsList");
+const logoutButton =
+    document.getElementById("logoutButton");
+
+const refreshButton =
+    document.getElementById("refreshDashboard");
+
+const messageBox =
+    document.getElementById("saMessage");
+
+
+// Statistics
+const totalStudents =
+    document.getElementById("totalStudents");
+
+const totalAdmins =
+    document.getElementById("totalAdmins");
+
+const totalSubjects =
+    document.getElementById("totalSubjects");
+
+const totalExams =
+    document.getElementById("totalExams");
+
+
+// Existing admin system
+const adminRequests =
+    document.getElementById("adminRequests");
+
+const approvedAdmins =
+    document.getElementById("approvedAdmins");
+
+const studentsTable =
+    document.getElementById("studentsTable");
+
+
+// Subjects
+const subjectForm =
+    document.getElementById("subjectForm");
+
+const subjectName =
+    document.getElementById("subjectName");
+
+const subjectCode =
+    document.getElementById("subjectCode");
+
+const subjectsTable =
+    document.getElementById("subjectsTable");
+
+
+// Combinations
+const combinationForm =
+    document.getElementById("combinationForm");
+
+const combinationName =
+    document.getElementById("combinationName");
+
+const combinationDescription =
+    document.getElementById(
+        "combinationDescription"
+    );
+
+const combinationSubjects =
+    document.getElementById(
+        "combinationSubjects"
+    );
+
+const combinationsList =
+    document.getElementById(
+        "combinationsList"
+    );
+
+
+// Student combination
+const studentCombinationForm =
+    document.getElementById(
+        "studentCombinationForm"
+    );
 
 const combinationStudent =
-    document.getElementById("combinationStudent");
+    document.getElementById(
+        "combinationStudent"
+    );
 
 const studentCombination =
-    document.getElementById("studentCombination");
+    document.getElementById(
+        "studentCombination"
+    );
+
+
+// Exams
+const examForm =
+    document.getElementById("examForm");
+
+const examName =
+    document.getElementById("examName");
+
+const examYear =
+    document.getElementById("examYear");
+
+const examTerm =
+    document.getElementById("examTerm");
+
+const examDate =
+    document.getElementById("examDate");
 
 const examsTable =
     document.getElementById("examsTable");
+
+
+// Results
+const resultForm =
+    document.getElementById("resultForm");
 
 const resultExam =
     document.getElementById("resultExam");
@@ -25,130 +127,456 @@ const resultStudent =
 const resultSubject =
     document.getElementById("resultSubject");
 
+const resultScore =
+    document.getElementById("resultScore");
+
+const resultMaxScore =
+    document.getElementById("resultMaxScore");
+
+const resultComment =
+    document.getElementById("resultComment");
+
+
+// Documents
+const documentForm =
+    document.getElementById("documentForm");
+
+const documentTitle =
+    document.getElementById("documentTitle");
+
+const documentCategory =
+    document.getElementById("documentCategory");
+
+const documentDescription =
+    document.getElementById(
+        "documentDescription"
+    );
+
+const documentFile =
+    document.getElementById("documentFile");
+
 const documentsTable =
     document.getElementById("documentsTable");
 
+
+// Announcements
+const announcementForm =
+    document.getElementById(
+        "announcementForm"
+    );
+
+const announcementTitle =
+    document.getElementById(
+        "announcementTitle"
+    );
+
+const announcementMessage =
+    document.getElementById(
+        "announcementMessage"
+    );
+
 const announcementsList =
-    document.getElementById("announcementsList");
+    document.getElementById(
+        "announcementsList"
+    );
 
 
-// ------------------------------------------------------------
+// ============================================================
+// CACHE
+// ============================================================
+
+let cachedStudents = [];
+
+let cachedSubjects = [];
+
+let cachedCombinations = [];
+
+let cachedExams = [];
+
+
+// ============================================================
 // MESSAGE
-// ------------------------------------------------------------
+// ============================================================
 
-function showV2Message(message, type = "success") {
+function showMessage(
+    message,
+    type = "success"
+) {
 
-    const box =
-        document.getElementById("saMessage");
+    if (!messageBox) {
+        return;
+    }
 
-    if (!box) return;
+    messageBox.textContent =
+        message;
 
-    box.textContent = message;
-
-    box.className =
-        `sa-message show ${type}`;
+    messageBox.className =
+        "sa-message show " +
+        type;
 
     setTimeout(() => {
 
-        box.classList.remove("show");
+        messageBox.classList.remove(
+            "show"
+        );
 
     }, 4000);
 }
 
 
-// ------------------------------------------------------------
-// LOAD SUBJECTS
-// ------------------------------------------------------------
+// ============================================================
+// HTML SAFETY
+// ============================================================
 
-async function loadSubjects() {
+function escapeHTML(value) {
 
-    const { data, error } =
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+// ============================================================
+// DATE
+// ============================================================
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "—";
+
+    }
+
+    return date.toLocaleDateString();
+
+}
+
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+async function checkLogin() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase.auth.getUser();
+
+    if (error) {
+
+        console.error(
+            "Auth error:",
+            error
+        );
+
+        return null;
+
+    }
+
+    if (!data.user) {
+
+        return null;
+
+    }
+
+    return data.user;
+
+}
+
+
+// ============================================================
+// SUPER ADMIN CHECK
+// ============================================================
+
+async function checkSuperAdmin() {
+
+    const user =
+        await checkLogin();
+
+    if (!user) {
+
+        window.location.href =
+            "index.html";
+
+        return null;
+
+    }
+
+    const {
+        data,
+        error
+    } =
         await supabase
-            .from("subjects")
-            .select("*")
-            .order("name");
+            .from("user_roles")
+            .select(
+                "role, approved"
+            )
+            .eq(
+                "user_id",
+                user.id
+            );
+
+    if (error) {
+
+        console.error(
+            "Role error:",
+            error
+        );
+
+        showMessage(
+            "Unable to verify your account.",
+            "error"
+        );
+
+        return null;
+
+    }
+
+    const isSuperAdmin =
+        (data || []).some(
+            row =>
+                row.role ===
+                    "super_admin" &&
+                row.approved === true
+        );
+
+    if (!isSuperAdmin) {
+
+        showMessage(
+            "You are not an approved Super Admin.",
+            "error"
+        );
+
+        setTimeout(() => {
+
+            window.location.href =
+                "index.html";
+
+        }, 1500);
+
+        return null;
+
+    }
+
+    return user;
+
+}
+
+
+// ============================================================
+// LOAD APPROVED ADMINISTRATORS
+// ============================================================
+
+async function loadApprovedAdmins() {
+
+    if (!approvedAdmins) {
+        return;
+    }
+
+    approvedAdmins.innerHTML = `
+        <tr>
+            <td
+                colspan="4"
+                class="empty">
+
+                Loading...
+
+            </td>
+        </tr>
+    `;
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("user_roles")
+            .select(
+                "user_id, role, approved"
+            )
+            .eq(
+                "role",
+                "admin"
+            )
+            .eq(
+                "approved",
+                true
+            );
 
     if (error) {
 
         console.error(error);
 
-        showV2Message(
-            "Could not load subjects.",
-            "error"
-        );
-
-        return [];
-
-    }
-
-    renderSubjects(data || []);
-
-    renderSubjectCheckboxes(data || []);
-
-    renderResultSubjects(data || []);
-
-    const total =
-        document.getElementById("totalSubjects");
-
-    if (total) {
-
-        total.textContent =
-            data.length;
-
-    }
-
-    return data || [];
-}
-
-
-// ------------------------------------------------------------
-// DISPLAY SUBJECTS
-// ------------------------------------------------------------
-
-function renderSubjects(subjects) {
-
-    if (!subjectsTable) return;
-
-    if (!subjects.length) {
-
-        subjectsTable.innerHTML = `
+        approvedAdmins.innerHTML = `
             <tr>
-                <td colspan="4" class="empty">
-                    No subjects found.
+                <td
+                    colspan="4"
+                    class="empty">
+
+                    Failed to load administrators.
+
                 </td>
             </tr>
         `;
 
         return;
+
     }
 
-    subjectsTable.innerHTML =
-        subjects.map(subject => {
+    if (!data || data.length === 0) {
+
+        if (totalAdmins) {
+            totalAdmins.textContent =
+                "0";
+        }
+
+        approvedAdmins.innerHTML = `
+            <tr>
+                <td
+                    colspan="4"
+                    class="empty">
+
+                    No approved administrators.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    const userIds =
+        data.map(
+            row =>
+                row.user_id
+        );
+
+    const {
+        data: profiles,
+        error: profileError
+    } =
+        await supabase
+            .from("profiles")
+            .select(
+                "id, full_name, username, email"
+            )
+            .in(
+                "id",
+                userIds
+            );
+
+    if (profileError) {
+
+        console.error(
+            profileError
+        );
+
+        return;
+
+    }
+
+    const profileMap = {};
+
+    (profiles || []).forEach(
+        profile => {
+
+            profileMap[
+                profile.id
+            ] = profile;
+
+        }
+    );
+
+    if (totalAdmins) {
+
+        totalAdmins.textContent =
+            data.length;
+
+    }
+
+    approvedAdmins.innerHTML =
+        data.map(row => {
+
+            const profile =
+                profileMap[
+                    row.user_id
+                ] || {};
 
             return `
                 <tr>
 
                     <td>
-                        ${escapeHTML(subject.code || "-")}
+                        ${escapeHTML(
+                            profile.full_name ||
+                            "—"
+                        )}
                     </td>
 
                     <td>
-                        ${escapeHTML(subject.name)}
+                        ${escapeHTML(
+                            profile.username ||
+                            "—"
+                        )}
                     </td>
 
                     <td>
-                        ${formatDate(subject.created_at)}
+                        ${escapeHTML(
+                            profile.email ||
+                            "—"
+                        )}
                     </td>
 
                     <td>
 
-                        <button
-                            class="danger-button"
-                            onclick="deleteSubject('${subject.id}')">
+                        <span
+                            class="status published">
 
-                            Delete
+                            Approved
 
-                        </button>
+                        </span>
 
                     </td>
 
@@ -156,50 +584,817 @@ function renderSubjects(subjects) {
             `;
 
         }).join("");
+
 }
 
 
-// ------------------------------------------------------------
-// SUBJECT CHECKBOXES
-// ------------------------------------------------------------
+// ============================================================
+// ADMIN REQUESTS
+// ============================================================
 
-function renderSubjectCheckboxes(subjects) {
+async function loadAdminRequests() {
 
-    if (!combinationSubjects) return;
-
-    if (!subjects.length) {
-
-        combinationSubjects.innerHTML =
-            "No subjects available.";
-
+    if (!adminRequests) {
         return;
     }
 
-    combinationSubjects.innerHTML =
-        subjects.map(subject => {
+    adminRequests.innerHTML = `
+        <tr>
+            <td
+                colspan="6"
+                class="empty">
+
+                Loading...
+
+            </td>
+        </tr>
+    `;
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("admin_requests")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+    if (error) {
+
+        console.error(error);
+
+        adminRequests.innerHTML = `
+            <tr>
+                <td
+                    colspan="6"
+                    class="empty">
+
+                    Failed to load requests.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    const requests =
+        data || [];
+
+    const pending =
+        requests.filter(
+            request =>
+                request.status ===
+                "pending"
+        );
+
+    const pendingElement =
+        document.getElementById(
+            "pendingAdmins"
+        );
+
+    if (pendingElement) {
+
+        pendingElement.textContent =
+            pending.length;
+
+    }
+
+    if (!requests.length) {
+
+        adminRequests.innerHTML = `
+            <tr>
+                <td
+                    colspan="6"
+                    class="empty">
+
+                    No administrator requests.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    adminRequests.innerHTML =
+        requests.map(request => {
+
+            let actions =
+                "—";
+
+            if (
+                request.status ===
+                "pending"
+            ) {
+
+                actions = `
+
+                    <button
+                        class="secondary-button"
+                        data-action="approve"
+                        data-id="${escapeHTML(
+                            request.id
+                        )}">
+
+                        Approve
+
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        data-action="reject"
+                        data-id="${escapeHTML(
+                            request.id
+                        )}">
+
+                        Reject
+
+                    </button>
+
+                `;
+
+            }
 
             return `
-                <label class="checkbox-item">
+                <tr>
 
-                    <input
-                        type="checkbox"
-                        value="${subject.id}">
+                    <td>
+                        ${escapeHTML(
+                            request.full_name ||
+                            "—"
+                        )}
+                    </td>
 
-                    ${escapeHTML(subject.name)}
+                    <td>
+                        ${escapeHTML(
+                            request.username ||
+                            "—"
+                        )}
+                    </td>
 
-                </label>
+                    <td>
+                        ${escapeHTML(
+                            request.email ||
+                            "—"
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatDate(
+                            request.created_at
+                        )}
+                    </td>
+
+                    <td>
+
+                        <span
+                            class="status ${
+                                request.status ===
+                                "approved"
+                                    ? "published"
+                                    : "unpublished"
+                            }">
+
+                            ${escapeHTML(
+                                request.status ||
+                                "unknown"
+                            )}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+                        ${actions}
+                    </td>
+
+                </tr>
             `;
 
         }).join("");
+
 }
 
 
-// ------------------------------------------------------------
-// ADD SUBJECT
-// ------------------------------------------------------------
+// ============================================================
+// APPROVE ADMIN
+// ============================================================
 
-const subjectForm =
-    document.getElementById("subjectForm");
+async function approveAdmin(
+    requestId
+) {
+
+    const confirmed =
+        window.confirm(
+            "Approve this administrator request?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const {
+            error
+        } =
+            await supabase.rpc(
+                "approve_admin_request",
+                {
+                    request_id:
+                        requestId
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        showMessage(
+            "Administrator approved successfully."
+        );
+
+        await loadAdminRequests();
+
+        await loadApprovedAdmins();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        showMessage(
+            error.message ||
+            "Approval failed.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// REJECT ADMIN
+// ============================================================
+
+async function rejectAdmin(
+    requestId
+) {
+
+    const confirmed =
+        window.confirm(
+            "Reject this administrator request?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        error
+    } =
+        await supabase
+            .from("admin_requests")
+            .update({
+                status:
+                    "rejected"
+            })
+            .eq(
+                "id",
+                requestId
+            );
+
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+    showMessage(
+        "Administrator request rejected."
+    );
+
+    await loadAdminRequests();
+
+}
+
+
+// ============================================================
+// ADMIN REQUEST BUTTONS
+// ============================================================
+
+if (adminRequests) {
+
+    adminRequests.addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "button[data-action]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            const action =
+                button.dataset.action;
+
+            const id =
+                button.dataset.id;
+
+            button.disabled =
+                true;
+
+            if (
+                action ===
+                "approve"
+            ) {
+
+                await approveAdmin(
+                    id
+                );
+
+            }
+
+            if (
+                action ===
+                "reject"
+            ) {
+
+                await rejectAdmin(
+                    id
+                );
+
+            }
+
+            button.disabled =
+                false;
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// LOAD STUDENTS
+// ============================================================
+
+async function loadStudents() {
+
+    if (!studentsTable) {
+        return;
+    }
+
+    studentsTable.innerHTML = `
+        <tr>
+            <td
+                colspan="4"
+                class="empty">
+
+                Loading...
+
+            </td>
+        </tr>
+    `;
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("students")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+    if (error) {
+
+        console.error(
+            "Student error:",
+            error
+        );
+
+        studentsTable.innerHTML = `
+            <tr>
+                <td
+                    colspan="4"
+                    class="empty">
+
+                    Failed to load students.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    cachedStudents =
+        data || [];
+
+    if (totalStudents) {
+
+        totalStudents.textContent =
+            cachedStudents.length;
+
+    }
+
+    await loadStudentProfiles();
+
+    renderStudentSelects();
+
+    if (!cachedStudents.length) {
+
+        studentsTable.innerHTML = `
+            <tr>
+                <td
+                    colspan="4"
+                    class="empty">
+
+                    No students found.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    studentsTable.innerHTML =
+        cachedStudents.map(
+            student => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                student.admission_number ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                student.full_name ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                student.class ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                student.email ||
+                                "—"
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// ============================================================
+// LOAD STUDENT PROFILES
+// ============================================================
+
+async function loadStudentProfiles() {
+
+    const ids =
+        cachedStudents
+            .map(
+                student =>
+                    student.user_id
+            )
+            .filter(Boolean);
+
+    if (!ids.length) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("profiles")
+            .select(
+                "id, full_name, username, email"
+            )
+            .in(
+                "id",
+                ids
+            );
+
+    if (error) {
+
+        console.error(
+            "Profile error:",
+            error
+        );
+
+        return;
+
+    }
+
+    const profileMap = {};
+
+    (data || []).forEach(
+        profile => {
+
+            profileMap[
+                profile.id
+            ] = profile;
+
+        }
+    );
+
+    cachedStudents =
+        cachedStudents.map(
+            student => {
+
+                const profile =
+                    profileMap[
+                        student.user_id
+                    ] || {};
+
+                return {
+                    ...student,
+                    full_name:
+                        profile.full_name ||
+                        "",
+                    username:
+                        profile.username ||
+                        "",
+                    email:
+                        profile.email ||
+                        ""
+                };
+
+            }
+        );
+
+}
+
+
+// ============================================================
+// STUDENT SELECTS
+// ============================================================
+
+function renderStudentSelects() {
+
+    const selects = [
+        combinationStudent,
+        resultStudent
+    ];
+
+    selects.forEach(select => {
+
+        if (!select) {
+            return;
+        }
+
+        select.innerHTML = `
+            <option value="">
+                Select student
+            </option>
+        `;
+
+        cachedStudents.forEach(
+            student => {
+
+                select.innerHTML += `
+                    <option
+                        value="${student.id}">
+
+                        ${escapeHTML(
+                            student.full_name ||
+                            student.admission_number ||
+                            student.email ||
+                            "Student"
+                        )}
+
+                    </option>
+                `;
+
+            }
+        );
+
+    });
+
+}
+
+
+// ============================================================
+// LOAD SUBJECTS
+// ============================================================
+
+async function loadSubjects() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("subjects")
+            .select("*")
+            .order("name");
+
+    if (error) {
+
+        console.error(
+            "Subjects error:",
+            error
+        );
+
+        showMessage(
+            "Could not load subjects.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    cachedSubjects =
+        data || [];
+
+    if (totalSubjects) {
+
+        totalSubjects.textContent =
+            cachedSubjects.length;
+
+    }
+
+    renderSubjects();
+
+    renderSubjectCheckboxes();
+
+    renderResultSubjectSelect();
+
+}
+
+
+// ============================================================
+// DISPLAY SUBJECTS
+// ============================================================
+
+function renderSubjects() {
+
+    if (!subjectsTable) {
+        return;
+    }
+
+    if (!cachedSubjects.length) {
+
+        subjectsTable.innerHTML = `
+            <tr>
+                <td
+                    colspan="4"
+                    class="empty">
+
+                    No subjects yet.
+
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    subjectsTable.innerHTML =
+        cachedSubjects.map(
+            subject => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                subject.code
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                subject.name
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatDate(
+                                subject.created_at
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="danger-button"
+                                data-delete-subject="${subject.id}">
+
+                                Delete
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// ============================================================
+// SUBJECT CHECKBOXES
+// ============================================================
+
+function renderSubjectCheckboxes() {
+
+    if (!combinationSubjects) {
+        return;
+    }
+
+    if (!cachedSubjects.length) {
+
+        combinationSubjects.textContent =
+            "No subjects available.";
+
+        return;
+
+    }
+
+    combinationSubjects.innerHTML =
+        cachedSubjects.map(
+            subject => {
+
+                return `
+                    <label
+                        class="checkbox-item">
+
+                        <input
+                            type="checkbox"
+                            value="${subject.id}">
+
+                        ${escapeHTML(
+                            subject.code
+                        )}
+                        -
+                        ${escapeHTML(
+                            subject.name
+                        )}
+
+                    </label>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// ============================================================
+// ADD SUBJECT
+// ============================================================
 
 if (subjectForm) {
 
@@ -210,22 +1405,17 @@ if (subjectForm) {
             event.preventDefault();
 
             const name =
-                document
-                    .getElementById("subjectName")
-                    .value
-                    .trim();
+                subjectName.value.trim();
 
             const code =
-                document
-                    .getElementById("subjectCode")
-                    .value
+                subjectCode.value
                     .trim()
                     .toUpperCase();
 
             if (!name || !code) {
 
-                showV2Message(
-                    "Enter both subject name and code.",
+                showMessage(
+                    "Enter subject name and code.",
                     "warning"
                 );
 
@@ -233,7 +1423,9 @@ if (subjectForm) {
 
             }
 
-            const { error } =
+            const {
+                error
+            } =
                 await supabase
                     .from("subjects")
                     .insert({
@@ -245,7 +1437,7 @@ if (subjectForm) {
 
                 console.error(error);
 
-                showV2Message(
+                showMessage(
                     error.message,
                     "error"
                 );
@@ -256,11 +1448,11 @@ if (subjectForm) {
 
             subjectForm.reset();
 
-            showV2Message(
+            showMessage(
                 "Subject added successfully."
             );
 
-            loadSubjects();
+            await loadSubjects();
 
         }
     );
@@ -268,56 +1460,78 @@ if (subjectForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DELETE SUBJECT
-// ------------------------------------------------------------
+// ============================================================
 
-window.deleteSubject =
-    async function (id) {
+if (subjectsTable) {
 
-        const confirmed =
-            confirm(
-                "Delete this subject?"
+    subjectsTable.addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "[data-delete-subject]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            const id =
+                button.dataset.deleteSubject;
+
+            const confirmed =
+                window.confirm(
+                    "Delete this subject?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            const {
+                error
+            } =
+                await supabase
+                    .from("subjects")
+                    .delete()
+                    .eq(
+                        "id",
+                        id
+                    );
+
+            if (error) {
+
+                console.error(error);
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            showMessage(
+                "Subject deleted."
             );
 
-        if (!confirmed) return;
+            await loadSubjects();
 
-        const { error } =
-            await supabase
-                .from("subjects")
-                .delete()
-                .eq("id", id);
-
-        if (error) {
-
-            console.error(error);
-
-            showV2Message(
-                error.message,
-                "error"
-            );
-
-            return;
+            await loadCombinations();
 
         }
-
-        showV2Message(
-            "Subject deleted."
-        );
-
-        loadSubjects();
-
-    };
-
-
-// ------------------------------------------------------------
-// CREATE COMBINATION
-// ------------------------------------------------------------
-
-const combinationForm =
-    document.getElementById(
-        "combinationForm"
     );
+
+}
+
+
+// ============================================================
+// CREATE COMBINATION
+// ============================================================
 
 if (combinationForm) {
 
@@ -328,33 +1542,26 @@ if (combinationForm) {
             event.preventDefault();
 
             const name =
-                document
-                    .getElementById(
-                        "combinationName"
-                    )
-                    .value
+                combinationName.value
                     .trim();
 
             const description =
-                document
-                    .getElementById(
-                        "combinationDescription"
-                    )
-                    .value
+                combinationDescription.value
                     .trim();
 
-            const selected =
+            const selectedSubjects =
                 [
                     ...document.querySelectorAll(
                         "#combinationSubjects input:checked"
                     )
                 ].map(
-                    checkbox => checkbox.value
+                    input =>
+                        input.value
                 );
 
             if (!name) {
 
-                showV2Message(
+                showMessage(
                     "Enter a combination name.",
                     "warning"
                 );
@@ -363,9 +1570,12 @@ if (combinationForm) {
 
             }
 
-            if (!selected.length) {
+            if (
+                selectedSubjects.length ===
+                0
+            ) {
 
-                showV2Message(
+                showMessage(
                     "Select at least one subject.",
                     "warning"
                 );
@@ -395,7 +1605,7 @@ if (combinationForm) {
                     combinationError
                 );
 
-                showV2Message(
+                showMessage(
                     combinationError.message,
                     "error"
                 );
@@ -405,20 +1615,19 @@ if (combinationForm) {
             }
 
             const rows =
-                selected.map(subjectId => {
-
-                    return {
+                selectedSubjects.map(
+                    subjectId => ({
                         combination_id:
                             combination.id,
 
                         subject_id:
                             subjectId
-                    };
-
-                });
+                    })
+                );
 
             const {
-                error: subjectError
+                error:
+                    subjectError
             } =
                 await supabase
                     .from(
@@ -442,7 +1651,7 @@ if (combinationForm) {
                         combination.id
                     );
 
-                showV2Message(
+                showMessage(
                     subjectError.message,
                     "error"
                 );
@@ -453,11 +1662,11 @@ if (combinationForm) {
 
             combinationForm.reset();
 
-            showV2Message(
+            showMessage(
                 "Combination created successfully."
             );
 
-            loadCombinations();
+            await loadCombinations();
 
         }
     );
@@ -465,9 +1674,9 @@ if (combinationForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // LOAD COMBINATIONS
-// ------------------------------------------------------------
+// ============================================================
 
 async function loadCombinations() {
 
@@ -497,9 +1706,12 @@ async function loadCombinations() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Combination error:",
+            error
+        );
 
-        showV2Message(
+        showMessage(
             "Could not load combinations.",
             "error"
         );
@@ -508,34 +1720,37 @@ async function loadCombinations() {
 
     }
 
-    renderCombinations(
-        data || []
-    );
+    cachedCombinations =
+        data || [];
 
-    renderCombinationSelect(
-        data || []
-    );
+    renderCombinations();
+
+    renderCombinationSelect();
 
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DISPLAY COMBINATIONS
-// ------------------------------------------------------------
+// ============================================================
 
-function renderCombinations(
-    combinations
-) {
+function renderCombinations() {
 
-    if (!combinationsList) return;
+    if (!combinationsList) {
+        return;
+    }
 
-    if (!combinations.length) {
+    if (!cachedCombinations.length) {
 
         combinationsList.innerHTML = `
             <div class="sa-card">
+
                 <div class="empty">
+
                     No combinations created yet.
+
                 </div>
+
             </div>
         `;
 
@@ -544,20 +1759,24 @@ function renderCombinations(
     }
 
     combinationsList.innerHTML =
-        combinations.map(
+        cachedCombinations.map(
             combination => {
 
                 const subjects =
-                    combination
-                        .combination_subjects
-                        ?.map(
-                            row => row.subjects
-                        )
-                        .filter(Boolean)
-                        || [];
+                    (
+                        combination
+                            .combination_subjects ||
+                        []
+                    )
+                    .map(
+                        row =>
+                            row.subjects
+                    )
+                    .filter(Boolean);
 
                 return `
-                    <div class="combination-card">
+                    <div
+                        class="combination-card">
 
                         <h4>
                             ${escapeHTML(
@@ -567,21 +1786,28 @@ function renderCombinations(
 
                         <p>
                             ${escapeHTML(
-                                combination.description
-                                || "No description"
+                                combination.description ||
+                                "No description"
                             )}
                         </p>
 
-                        <div class="subject-list">
+                        <div
+                            class="subject-list">
 
                             ${
                                 subjects.length
 
-                                ? subjects.map(
+                                ?
+
+                                subjects.map(
                                     subject => `
                                         <span
                                             class="subject-tag">
 
+                                            ${escapeHTML(
+                                                subject.code
+                                            )}
+                                            -
                                             ${escapeHTML(
                                                 subject.name
                                             )}
@@ -590,7 +1816,9 @@ function renderCombinations(
                                     `
                                 ).join("")
 
-                                : `
+                                :
+
+                                `
                                     <span>
                                         No subjects
                                     </span>
@@ -603,9 +1831,7 @@ function renderCombinations(
 
                         <button
                             class="danger-button"
-                            onclick="deleteCombination(
-                                '${combination.id}'
-                            )">
+                            data-delete-combination="${combination.id}">
 
                             Delete
 
@@ -620,31 +1846,33 @@ function renderCombinations(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // COMBINATION SELECT
-// ------------------------------------------------------------
+// ============================================================
 
-function renderCombinationSelect(
-    combinations
-) {
+function renderCombinationSelect() {
 
-    if (!studentCombination) return;
+    if (!studentCombination) {
+        return;
+    }
 
-    studentCombination.innerHTML =
-        `
-            <option value="">
-                Select combination
-            </option>
-        `;
+    studentCombination.innerHTML = `
+        <option value="">
+            Select combination
+        </option>
+    `;
 
-    combinations.forEach(
+    cachedCombinations.forEach(
         combination => {
 
             studentCombination.innerHTML += `
-                <option value="${combination.id}">
+                <option
+                    value="${combination.id}">
+
                     ${escapeHTML(
                         combination.name
                     )}
+
                 </option>
             `;
 
@@ -654,244 +1882,79 @@ function renderCombinationSelect(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DELETE COMBINATION
-// ------------------------------------------------------------
+// ============================================================
 
-window.deleteCombination =
-    async function (id) {
+if (combinationsList) {
 
-        const confirmed =
-            confirm(
-                "Delete this combination?"
+    combinationsList.addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "[data-delete-combination]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            const id =
+                button.dataset
+                    .deleteCombination;
+
+            const confirmed =
+                window.confirm(
+                    "Delete this combination?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "subject_combinations"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        id
+                    );
+
+            if (error) {
+
+                console.error(error);
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            showMessage(
+                "Combination deleted."
             );
 
-        if (!confirmed) return;
-
-        const { error } =
-            await supabase
-                .from(
-                    "subject_combinations"
-                )
-                .delete()
-                .eq("id", id);
-
-        if (error) {
-
-            console.error(error);
-
-            showV2Message(
-                error.message,
-                "error"
-            );
-
-            return;
+            await loadCombinations();
 
         }
-
-        showV2Message(
-            "Combination deleted."
-        );
-
-        loadCombinations();
-
-    };
-
-
-// ------------------------------------------------------------
-// LOAD STUDENTS
-// ------------------------------------------------------------
-
-async function loadV2Students() {
-
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from("students")
-            .select("*")
-            .order("full_name");
-
-    if (error) {
-
-        console.error(error);
-
-        return [];
-
-    }
-
-    renderStudentSelects(
-        data || []
     );
 
-    renderStudentsV2(
-        data || []
-    );
-
-    const total =
-        document.getElementById(
-            "totalStudents"
-        );
-
-    if (total) {
-
-        total.textContent =
-            data.length;
-
-    }
-
-    return data || [];
-
 }
 
 
-// ------------------------------------------------------------
-// STUDENT SELECTS
-// ------------------------------------------------------------
-
-function renderStudentSelects(
-    students
-) {
-
-    if (
-        !combinationStudent &&
-        !resultStudent
-    ) return;
-
-    const options =
-        students.map(
-            student => {
-
-                const name =
-                    student.full_name
-                    || student.name
-                    || student.email
-                    || "Student";
-
-                return `
-                    <option value="${student.id}">
-                        ${escapeHTML(name)}
-                    </option>
-                `;
-
-            }
-        ).join("");
-
-    if (combinationStudent) {
-
-        combinationStudent.innerHTML =
-            `
-                <option value="">
-                    Select student
-                </option>
-            `
-            +
-            options;
-
-    }
-
-    if (resultStudent) {
-
-        resultStudent.innerHTML =
-            `
-                <option value="">
-                    Select student
-                </option>
-            `
-            +
-            options;
-
-    }
-
-}
-
-
-// ------------------------------------------------------------
-// STUDENT TABLE
-// ------------------------------------------------------------
-
-function renderStudentsV2(
-    students
-) {
-
-    const table =
-        document.getElementById(
-            "studentsTable"
-        );
-
-    if (!table) return;
-
-    if (!students.length) {
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="4" class="empty">
-                    No students found.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    table.innerHTML =
-        students.map(
-            student => {
-
-                const name =
-                    student.full_name
-                    || student.name
-                    || "-";
-
-                return `
-                    <tr>
-
-                        <td>
-                            ${escapeHTML(
-                                student.admission_number
-                                || student.admission_no
-                                || "-"
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHTML(name)}
-                        </td>
-
-                        <td>
-                            ${escapeHTML(
-                                student.class
-                                || student.grade
-                                || "-"
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHTML(
-                                student.email
-                                || "-"
-                            )}
-                        </td>
-
-                    </tr>
-                `;
-
-            }
-        ).join("");
-
-}
-
-
-// ------------------------------------------------------------
+// ============================================================
 // ASSIGN STUDENT COMBINATION
-// ------------------------------------------------------------
-
-const studentCombinationForm =
-    document.getElementById(
-        "studentCombinationForm"
-    );
+// ============================================================
 
 if (studentCombinationForm) {
 
@@ -912,8 +1975,8 @@ if (studentCombinationForm) {
                 !combinationId
             ) {
 
-                showV2Message(
-                    "Select both student and combination.",
+                showMessage(
+                    "Select a student and combination.",
                     "warning"
                 );
 
@@ -922,7 +1985,6 @@ if (studentCombinationForm) {
             }
 
             const {
-                data,
                 error
             } =
                 await supabase.rpc(
@@ -940,7 +2002,7 @@ if (studentCombinationForm) {
 
                 console.error(error);
 
-                showV2Message(
+                showMessage(
                     error.message,
                     "error"
                 );
@@ -951,7 +2013,7 @@ if (studentCombinationForm) {
 
             studentCombinationForm.reset();
 
-            showV2Message(
+            showMessage(
                 "Student combination updated."
             );
 
@@ -961,14 +2023,9 @@ if (studentCombinationForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // CREATE EXAM
-// ------------------------------------------------------------
-
-const examForm =
-    document.getElementById(
-        "examForm"
-    );
+// ============================================================
 
 if (examForm) {
 
@@ -979,36 +2036,30 @@ if (examForm) {
             event.preventDefault();
 
             const name =
-                document
-                    .getElementById(
-                        "examName"
-                    )
-                    .value
-                    .trim();
+                examName.value.trim();
 
             const academicYear =
                 Number(
-                    document
-                        .getElementById(
-                            "examYear"
-                        )
-                        .value
+                    examYear.value
                 );
 
             const term =
-                document
-                    .getElementById(
-                        "examTerm"
-                    )
-                    .value;
+                examTerm.value;
 
-            const examDate =
-                document
-                    .getElementById(
-                        "examDate"
-                    )
-                    .value
-                    || null;
+            const date =
+                examDate.value ||
+                null;
+
+            if (!name) {
+
+                showMessage(
+                    "Enter an exam name.",
+                    "warning"
+                );
+
+                return;
+
+            }
 
             const {
                 error
@@ -1017,19 +2068,21 @@ if (examForm) {
                     .from("exams")
                     .insert({
                         name,
+
                         academic_year:
                             academicYear,
 
                         term,
+
                         exam_date:
-                            examDate
+                            date
                     });
 
             if (error) {
 
                 console.error(error);
 
-                showV2Message(
+                showMessage(
                     error.message,
                     "error"
                 );
@@ -1040,11 +2093,11 @@ if (examForm) {
 
             examForm.reset();
 
-            showV2Message(
-                "Exam created."
+            showMessage(
+                "Exam created successfully."
             );
 
-            loadExams();
+            await loadExams();
 
         }
     );
@@ -1052,9 +2105,9 @@ if (examForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // LOAD EXAMS
-// ------------------------------------------------------------
+// ============================================================
 
 async function loadExams() {
 
@@ -1074,51 +2127,57 @@ async function loadExams() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Exam error:",
+            error
+        );
+
+        showMessage(
+            "Could not load exams.",
+            "error"
+        );
 
         return;
 
     }
 
-    renderExams(
-        data || []
-    );
+    cachedExams =
+        data || [];
 
-    renderExamSelect(
-        data || []
-    );
+    if (totalExams) {
 
-    const total =
-        document.getElementById(
-            "totalExams"
-        );
-
-    if (total) {
-
-        total.textContent =
-            data.length;
+        totalExams.textContent =
+            cachedExams.length;
 
     }
+
+    renderExams();
+
+    renderExamSelect();
 
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DISPLAY EXAMS
-// ------------------------------------------------------------
+// ============================================================
 
-function renderExams(
-    exams
-) {
+function renderExams() {
 
-    if (!examsTable) return;
+    if (!examsTable) {
+        return;
+    }
 
-    if (!exams.length) {
+    if (!cachedExams.length) {
 
         examsTable.innerHTML = `
             <tr>
-                <td colspan="5" class="empty">
+                <td
+                    colspan="5"
+                    class="empty">
+
                     No exams created.
+
                 </td>
             </tr>
         `;
@@ -1128,7 +2187,7 @@ function renderExams(
     }
 
     examsTable.innerHTML =
-        exams.map(
+        cachedExams.map(
             exam => {
 
                 return `
@@ -1142,13 +2201,15 @@ function renderExams(
 
                         <td>
                             ${escapeHTML(
-                                exam.term || "-"
+                                exam.term ||
+                                "—"
                             )}
                         </td>
 
                         <td>
                             ${escapeHTML(
-                                exam.exam_date || "-"
+                                exam.exam_date ||
+                                "—"
                             )}
                         </td>
 
@@ -1157,17 +2218,25 @@ function renderExams(
                             ${
                                 exam.is_latest
 
-                                ? `
+                                ?
+
+                                `
                                     <span
                                         class="status published">
+
                                         Latest
+
                                     </span>
                                 `
 
-                                : `
+                                :
+
+                                `
                                     <span
                                         class="status unpublished">
+
                                         Normal
+
                                     </span>
                                 `
                             }
@@ -1179,14 +2248,16 @@ function renderExams(
                             ${
                                 exam.is_latest
 
-                                ? ""
+                                ?
 
-                                : `
+                                ""
+
+                                :
+
+                                `
                                     <button
                                         class="primary-button"
-                                        onclick="setLatestExam(
-                                            '${exam.id}'
-                                        )">
+                                        data-latest-exam="${exam.id}">
 
                                         Make Latest
 
@@ -1196,9 +2267,7 @@ function renderExams(
 
                             <button
                                 class="danger-button"
-                                onclick="deleteExam(
-                                    '${exam.id}'
-                                )">
+                                data-delete-exam="${exam.id}">
 
                                 Delete
 
@@ -1215,31 +2284,33 @@ function renderExams(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // EXAM SELECT
-// ------------------------------------------------------------
+// ============================================================
 
-function renderExamSelect(
-    exams
-) {
+function renderExamSelect() {
 
-    if (!resultExam) return;
+    if (!resultExam) {
+        return;
+    }
 
-    resultExam.innerHTML =
-        `
-            <option value="">
-                Select exam
-            </option>
-        `;
+    resultExam.innerHTML = `
+        <option value="">
+            Select exam
+        </option>
+    `;
 
-    exams.forEach(
+    cachedExams.forEach(
         exam => {
 
             resultExam.innerHTML += `
-                <option value="${exam.id}">
+                <option
+                    value="${exam.id}">
+
                     ${escapeHTML(
                         exam.name
                     )}
+
                 </option>
             `;
 
@@ -1249,115 +2320,180 @@ function renderExamSelect(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
+// EXAM BUTTONS
+// ============================================================
+
+if (examsTable) {
+
+    examsTable.addEventListener(
+        "click",
+        async event => {
+
+            const latestButton =
+                event.target.closest(
+                    "[data-latest-exam]"
+                );
+
+            if (latestButton) {
+
+                const examId =
+                    latestButton.dataset
+                        .latestExam;
+
+                await setLatestExam(
+                    examId
+                );
+
+                return;
+
+            }
+
+            const deleteButton =
+                event.target.closest(
+                    "[data-delete-exam]"
+                );
+
+            if (deleteButton) {
+
+                const examId =
+                    deleteButton.dataset
+                        .deleteExam;
+
+                await deleteExam(
+                    examId
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // SET LATEST EXAM
-// ------------------------------------------------------------
+// ============================================================
 
-window.setLatestExam =
-    async function (id) {
-
-        const {
-            error
-        } =
-            await supabase.rpc(
-                "set_latest_exam",
-                {
-                    target_exam_id:
-                        id
-                }
-            );
-
-        if (error) {
-
-            console.error(error);
-
-            showV2Message(
-                error.message,
-                "error"
-            );
-
-            return;
-
-        }
-
-        showV2Message(
-            "Latest exam updated."
-        );
-
-        loadExams();
-
-    };
-
-
-// ------------------------------------------------------------
-// DELETE EXAM
-// ------------------------------------------------------------
-
-window.deleteExam =
-    async function (id) {
-
-        const confirmed =
-            confirm(
-                "Delete this exam and its results?"
-            );
-
-        if (!confirmed) return;
-
-        const {
-            error
-        } =
-            await supabase
-                .from("exams")
-                .delete()
-                .eq("id", id);
-
-        if (error) {
-
-            console.error(error);
-
-            showV2Message(
-                error.message,
-                "error"
-            );
-
-            return;
-
-        }
-
-        showV2Message(
-            "Exam deleted."
-        );
-
-        loadExams();
-
-    };
-
-
-// ------------------------------------------------------------
-// RESULT SUBJECTS
-// ------------------------------------------------------------
-
-function renderResultSubjects(
-    subjects
+async function setLatestExam(
+    examId
 ) {
 
-    if (!resultSubject) return;
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "set_latest_exam",
+            {
+                target_exam_id:
+                    examId
+            }
+        );
 
-    resultSubject.innerHTML =
-        `
-            <option value="">
-                Select subject
-            </option>
-        `;
+    if (error) {
 
-    subjects.forEach(
+        console.error(error);
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+    showMessage(
+        "Latest exam updated."
+    );
+
+    await loadExams();
+
+}
+
+
+// ============================================================
+// DELETE EXAM
+// ============================================================
+
+async function deleteExam(
+    examId
+) {
+
+    const confirmed =
+        window.confirm(
+            "Delete this exam and its results?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        error
+    } =
+        await supabase
+            .from("exams")
+            .delete()
+            .eq(
+                "id",
+                examId
+            );
+
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+    showMessage(
+        "Exam deleted."
+    );
+
+    await loadExams();
+
+}
+
+
+// ============================================================
+// RESULT SUBJECT SELECT
+// ============================================================
+
+function renderResultSubjectSelect() {
+
+    if (!resultSubject) {
+        return;
+    }
+
+    resultSubject.innerHTML = `
+        <option value="">
+            Select subject
+        </option>
+    `;
+
+    cachedSubjects.forEach(
         subject => {
 
             resultSubject.innerHTML += `
-                <option value="${subject.id}">
+                <option
+                    value="${subject.id}">
+
+                    ${escapeHTML(
+                        subject.code
+                    )}
+                    -
                     ${escapeHTML(
                         subject.name
                     )}
+
                 </option>
             `;
 
@@ -1367,14 +2503,9 @@ function renderResultSubjects(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // SAVE RESULT
-// ------------------------------------------------------------
-
-const resultForm =
-    document.getElementById(
-        "resultForm"
-    );
+// ============================================================
 
 if (resultForm) {
 
@@ -1395,23 +2526,16 @@ if (resultForm) {
 
             const score =
                 Number(
-                    document.getElementById(
-                        "resultScore"
-                    ).value
+                    resultScore.value
                 );
 
             const maxScore =
                 Number(
-                    document.getElementById(
-                        "resultMaxScore"
-                    ).value
+                    resultMaxScore.value
                 );
 
             const comment =
-                document.getElementById(
-                    "resultComment"
-                ).value
-                .trim();
+                resultComment.value.trim();
 
             if (
                 !examId ||
@@ -1419,7 +2543,7 @@ if (resultForm) {
                 !subjectId
             ) {
 
-                showV2Message(
+                showMessage(
                     "Select exam, student and subject.",
                     "warning"
                 );
@@ -1429,12 +2553,12 @@ if (resultForm) {
             }
 
             if (
-                score < 0 ||
                 maxScore <= 0 ||
+                score < 0 ||
                 score > maxScore
             ) {
 
-                showV2Message(
+                showMessage(
                     "Enter a valid score.",
                     "warning"
                 );
@@ -1462,6 +2586,7 @@ if (resultForm) {
                                 subjectId,
 
                             score,
+
                             max_score:
                                 maxScore,
 
@@ -1478,7 +2603,7 @@ if (resultForm) {
 
                 console.error(error);
 
-                showV2Message(
+                showMessage(
                     error.message,
                     "error"
                 );
@@ -1489,13 +2614,10 @@ if (resultForm) {
 
             resultForm.reset();
 
-            document
-                .getElementById(
-                    "resultMaxScore"
-                )
-                .value = 100;
+            resultMaxScore.value =
+                100;
 
-            showV2Message(
+            showMessage(
                 "Result saved successfully."
             );
 
@@ -1505,14 +2627,9 @@ if (resultForm) {
 }
 
 
-// ------------------------------------------------------------
-// DOCUMENT UPLOAD
-// ------------------------------------------------------------
-
-const documentForm =
-    document.getElementById(
-        "documentForm"
-    );
+// ============================================================
+// UPLOAD DOCUMENT
+// ============================================================
 
 if (documentForm) {
 
@@ -1523,38 +2640,20 @@ if (documentForm) {
             event.preventDefault();
 
             const title =
-                document
-                    .getElementById(
-                        "documentTitle"
-                    )
-                    .value
-                    .trim();
+                documentTitle.value.trim();
 
             const category =
-                document
-                    .getElementById(
-                        "documentCategory"
-                    )
-                    .value;
+                documentCategory.value;
 
             const description =
-                document
-                    .getElementById(
-                        "documentDescription"
-                    )
-                    .value
-                    .trim();
+                documentDescription.value.trim();
 
             const file =
-                document
-                    .getElementById(
-                        "documentFile"
-                    )
-                    .files[0];
+                documentFile.files[0];
 
             if (!file) {
 
-                showV2Message(
+                showMessage(
                     "Choose a file first.",
                     "warning"
                 );
@@ -1563,18 +2662,33 @@ if (documentForm) {
 
             }
 
+            if (!title) {
+
+                showMessage(
+                    "Enter a document title.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
             const safeName =
-                file.name
-                    .replace(
-                        /[^a-zA-Z0-9._-]/g,
-                        "_"
-                    );
+                file.name.replace(
+                    /[^a-zA-Z0-9._-]/g,
+                    "_"
+                );
 
-            const path =
-                `${Date.now()}_${safeName}`;
+            const storagePath =
+                Date.now() +
+                "_" +
+                safeName;
 
+
+            // Upload file
             const {
-                error: uploadError
+                error:
+                    uploadError
             } =
                 await supabase
                     .storage
@@ -1582,7 +2696,7 @@ if (documentForm) {
                         "grade-hub-documents"
                     )
                     .upload(
-                        path,
+                        storagePath,
                         file
                     );
 
@@ -1592,7 +2706,7 @@ if (documentForm) {
                     uploadError
                 );
 
-                showV2Message(
+                showMessage(
                     uploadError.message,
                     "error"
                 );
@@ -1601,35 +2715,36 @@ if (documentForm) {
 
             }
 
+
+            // Save database record
             const {
-                error: databaseError
+                error:
+                    databaseError
             } =
                 await supabase
-                    .from(
-                        "documents"
-                    )
-                    .insert(
-                        {
-                            title,
-                            description,
-                            category,
+                    .from("documents")
+                    .insert({
+                        title,
 
-                            file_name:
-                                file.name,
+                        description,
 
-                            storage_path:
-                                path,
+                        category,
 
-                            file_type:
-                                file.type,
+                        file_name:
+                            file.name,
 
-                            file_size:
-                                file.size,
+                        storage_path:
+                            storagePath,
 
-                            published:
-                                true
-                        }
-                    );
+                        file_type:
+                            file.type,
+
+                        file_size:
+                            file.size,
+
+                        published:
+                            true
+                    });
 
             if (databaseError) {
 
@@ -1637,14 +2752,19 @@ if (documentForm) {
                     databaseError
                 );
 
+
+                // Remove uploaded file
                 await supabase
                     .storage
                     .from(
                         "grade-hub-documents"
                     )
-                    .remove([path]);
+                    .remove([
+                        storagePath
+                    ]);
 
-                showV2Message(
+
+                showMessage(
                     databaseError.message,
                     "error"
                 );
@@ -1655,11 +2775,11 @@ if (documentForm) {
 
             documentForm.reset();
 
-            showV2Message(
+            showMessage(
                 "Document uploaded successfully."
             );
 
-            loadDocuments();
+            await loadDocuments();
 
         }
     );
@@ -1667,11 +2787,15 @@ if (documentForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // LOAD DOCUMENTS
-// ------------------------------------------------------------
+// ============================================================
 
 async function loadDocuments() {
+
+    if (!documentsTable) {
+        return;
+    }
 
     const {
         data,
@@ -1689,35 +2813,37 @@ async function loadDocuments() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Document error:",
+            error
+        );
+
+        documentsTable.innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="empty">
+
+                    Failed to load documents.
+
+                </td>
+            </tr>
+        `;
 
         return;
 
     }
 
-    renderDocuments(
-        data || []
-    );
-
-}
-
-
-// ------------------------------------------------------------
-// DISPLAY DOCUMENTS
-// ------------------------------------------------------------
-
-function renderDocuments(
-    documents
-) {
-
-    if (!documentsTable) return;
-
-    if (!documents.length) {
+    if (!data || !data.length) {
 
         documentsTable.innerHTML = `
             <tr>
-                <td colspan="5" class="empty">
+                <td
+                    colspan="5"
+                    class="empty">
+
                     No documents uploaded.
+
                 </td>
             </tr>
         `;
@@ -1727,7 +2853,7 @@ function renderDocuments(
     }
 
     documentsTable.innerHTML =
-        documents.map(
+        data.map(
             document => {
 
                 return `
@@ -1756,17 +2882,25 @@ function renderDocuments(
                             ${
                                 document.published
 
-                                ? `
+                                ?
+
+                                `
                                     <span
                                         class="status published">
+
                                         Published
+
                                     </span>
                                 `
 
-                                : `
+                                :
+
+                                `
                                     <span
                                         class="status unpublished">
+
                                         Hidden
+
                                     </span>
                                 `
                             }
@@ -1777,10 +2911,8 @@ function renderDocuments(
 
                             <button
                                 class="secondary-button"
-                                onclick="toggleDocument(
-                                    '${document.id}',
-                                    ${document.published}
-                                )">
+                                data-toggle-document="${document.id}"
+                                data-current-status="${document.published}">
 
                                 ${
                                     document.published
@@ -1790,14 +2922,13 @@ function renderDocuments(
 
                             </button>
 
+
                             <button
                                 class="danger-button"
-                                onclick="deleteDocument(
-                                    '${document.id}',
-                                    '${escapeAttribute(
-                                        document.storage_path
-                                    )}'
-                                )">
+                                data-delete-document="${document.id}"
+                                data-storage-path="${escapeHTML(
+                                    document.storage_path
+                                )}">
 
                                 Delete
 
@@ -1814,62 +2945,132 @@ function renderDocuments(
 }
 
 
-// ------------------------------------------------------------
-// TOGGLE DOCUMENT
-// ------------------------------------------------------------
+// ============================================================
+// DOCUMENT BUTTONS
+// ============================================================
 
-window.toggleDocument =
-    async function (
-        id,
-        current
-    ) {
+if (documentsTable) {
 
-        const {
-            error
-        } =
-            await supabase
-                .from("documents")
-                .update({
-                    published:
-                        !current
-                })
-                .eq("id", id);
+    documentsTable.addEventListener(
+        "click",
+        async event => {
 
-        if (error) {
+            const toggleButton =
+                event.target.closest(
+                    "[data-toggle-document]"
+                );
 
-            showV2Message(
-                error.message,
-                "error"
-            );
+            if (toggleButton) {
 
-            return;
+                await toggleDocument(
+                    toggleButton.dataset
+                        .toggleDocument,
+
+                    toggleButton.dataset
+                        .currentStatus ===
+                        "true"
+                );
+
+                return;
+
+            }
+
+
+            const deleteButton =
+                event.target.closest(
+                    "[data-delete-document]"
+                );
+
+            if (deleteButton) {
+
+                await deleteDocument(
+                    deleteButton.dataset
+                        .deleteDocument,
+
+                    deleteButton.dataset
+                        .storagePath
+                );
+
+            }
 
         }
+    );
 
-        loadDocuments();
-
-    };
+}
 
 
-// ------------------------------------------------------------
-// DELETE DOCUMENT
-// ------------------------------------------------------------
+// ============================================================
+// TOGGLE DOCUMENT
+// ============================================================
 
-window.deleteDocument =
-    async function (
-        id,
-        storagePath
-    ) {
+async function toggleDocument(
+    id,
+    currentStatus
+) {
 
-        const confirmed =
-            confirm(
-                "Delete this document?"
+    const {
+        error
+    } =
+        await supabase
+            .from("documents")
+            .update({
+                published:
+                    !currentStatus
+            })
+            .eq(
+                "id",
+                id
             );
 
-        if (!confirmed) return;
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+    showMessage(
+        currentStatus
+            ? "Document hidden."
+            : "Document published."
+    );
+
+    await loadDocuments();
+
+}
+
+
+// ============================================================
+// DELETE DOCUMENT
+// ============================================================
+
+async function deleteDocument(
+    id,
+    storagePath
+) {
+
+    const confirmed =
+        window.confirm(
+            "Delete this document?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    // Delete storage file
+    if (storagePath) {
 
         const {
-            error: storageError
+            error:
+                storageError
         } =
             await supabase
                 .storage
@@ -1888,42 +3089,46 @@ window.deleteDocument =
 
         }
 
-        const {
-            error
-        } =
-            await supabase
-                .from("documents")
-                .delete()
-                .eq("id", id);
+    }
 
-        if (error) {
 
-            showV2Message(
-                error.message,
-                "error"
+    // Delete database record
+    const {
+        error
+    } =
+        await supabase
+            .from("documents")
+            .delete()
+            .eq(
+                "id",
+                id
             );
 
-            return;
+    if (error) {
 
-        }
+        console.error(error);
 
-        showV2Message(
-            "Document deleted."
+        showMessage(
+            error.message,
+            "error"
         );
 
-        loadDocuments();
+        return;
 
-    };
+    }
 
-
-// ------------------------------------------------------------
-// ANNOUNCEMENT
-// ------------------------------------------------------------
-
-const announcementForm =
-    document.getElementById(
-        "announcementForm"
+    showMessage(
+        "Document deleted."
     );
+
+    await loadDocuments();
+
+}
+
+
+// ============================================================
+// ADD ANNOUNCEMENT
+// ============================================================
 
 if (announcementForm) {
 
@@ -1934,24 +3139,16 @@ if (announcementForm) {
             event.preventDefault();
 
             const title =
-                document
-                    .getElementById(
-                        "announcementTitle"
-                    )
-                    .value
+                announcementTitle.value
                     .trim();
 
             const message =
-                document
-                    .getElementById(
-                        "announcementMessage"
-                    )
-                    .value
+                announcementMessage.value
                     .trim();
 
             if (!title || !message) {
 
-                showV2Message(
+                showMessage(
                     "Enter a title and message.",
                     "warning"
                 );
@@ -1969,7 +3166,9 @@ if (announcementForm) {
                     )
                     .insert({
                         title,
+
                         message,
+
                         published:
                             true
                     });
@@ -1978,7 +3177,7 @@ if (announcementForm) {
 
                 console.error(error);
 
-                showV2Message(
+                showMessage(
                     error.message,
                     "error"
                 );
@@ -1989,11 +3188,11 @@ if (announcementForm) {
 
             announcementForm.reset();
 
-            showV2Message(
+            showMessage(
                 "Announcement published."
             );
 
-            loadAnnouncements();
+            await loadAnnouncements();
 
         }
     );
@@ -2001,11 +3200,15 @@ if (announcementForm) {
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // LOAD ANNOUNCEMENTS
-// ------------------------------------------------------------
+// ============================================================
 
 async function loadAnnouncements() {
+
+    if (!announcementsList) {
+        return;
+    }
 
     const {
         data,
@@ -2025,36 +3228,26 @@ async function loadAnnouncements() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Announcement error:",
+            error
+        );
 
         return;
 
     }
 
-    renderAnnouncements(
-        data || []
-    );
-
-}
-
-
-// ------------------------------------------------------------
-// DISPLAY ANNOUNCEMENTS
-// ------------------------------------------------------------
-
-function renderAnnouncements(
-    announcements
-) {
-
-    if (!announcementsList) return;
-
-    if (!announcements.length) {
+    if (!data || !data.length) {
 
         announcementsList.innerHTML = `
             <div class="sa-card">
+
                 <div class="empty">
-                    No announcements.
+
+                    No announcements yet.
+
                 </div>
+
             </div>
         `;
 
@@ -2063,31 +3256,39 @@ function renderAnnouncements(
     }
 
     announcementsList.innerHTML =
-        announcements.map(
+        data.map(
             announcement => {
 
                 return `
-                    <div class="sa-card"
-                         style="margin-bottom:12px;">
+                    <div
+                        class="sa-card"
+                        style="margin-bottom:12px;">
 
-                        <div class="sa-card-body">
+                        <div
+                            class="sa-card-body">
 
                             <h3>
+
                                 ${escapeHTML(
                                     announcement.title
                                 )}
+
                             </h3>
 
                             <p>
+
                                 ${escapeHTML(
                                     announcement.message
                                 )}
+
                             </p>
 
                             <small>
+
                                 ${formatDate(
                                     announcement.created_at
                                 )}
+
                             </small>
 
                             <br>
@@ -2095,9 +3296,7 @@ function renderAnnouncements(
 
                             <button
                                 class="danger-button"
-                                onclick="deleteAnnouncement(
-                                    '${announcement.id}'
-                                )">
+                                data-delete-announcement="${announcement.id}">
 
                                 Delete
 
@@ -2114,152 +3313,202 @@ function renderAnnouncements(
 }
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DELETE ANNOUNCEMENT
-// ------------------------------------------------------------
+// ============================================================
 
-window.deleteAnnouncement =
-    async function (id) {
+if (announcementsList) {
 
-        const confirmed =
-            confirm(
-                "Delete this announcement?"
-            );
+    announcementsList.addEventListener(
+        "click",
+        async event => {
 
-        if (!confirmed) return;
-
-        const {
-            error
-        } =
-            await supabase
-                .from(
-                    "announcements"
-                )
-                .delete()
-                .eq(
-                    "id",
-                    id
+            const button =
+                event.target.closest(
+                    "[data-delete-announcement]"
                 );
 
-        if (error) {
+            if (!button) {
+                return;
+            }
 
-            showV2Message(
-                error.message,
-                "error"
+            const id =
+                button.dataset
+                    .deleteAnnouncement;
+
+            const confirmed =
+                window.confirm(
+                    "Delete this announcement?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "announcements"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        id
+                    );
+
+            if (error) {
+
+                console.error(error);
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            showMessage(
+                "Announcement deleted."
             );
 
-            return;
+            await loadAnnouncements();
 
         }
-
-        showV2Message(
-            "Announcement deleted."
-        );
-
-        loadAnnouncements();
-
-    };
-
-
-// ------------------------------------------------------------
-// HELPERS
-// ------------------------------------------------------------
-
-function escapeHTML(value) {
-
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+    );
 
 }
 
 
-function escapeAttribute(value) {
+// ============================================================
+// LOGOUT
+// ============================================================
 
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /\\/g,
-            "\\\\"
-        )
-        .replace(
-            /'/g,
-            "\\'"
-        );
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        async () => {
+
+            const confirmed =
+                window.confirm(
+                    "Are you sure you want to sign out?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Signing out...";
+
+            const {
+                error
+            } =
+                await supabase.auth.signOut();
+
+            if (error) {
+
+                console.error(error);
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+
+                logoutButton.disabled =
+                    false;
+
+                logoutButton.textContent =
+                    "Sign out";
+
+                return;
+
+            }
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
 
 }
 
 
-function formatDate(
-    value
-) {
+// ============================================================
+// REFRESH
+// ============================================================
 
-    if (!value) return "-";
+if (refreshButton) {
 
-    const date =
-        new Date(value);
+    refreshButton.addEventListener(
+        "click",
+        async () => {
 
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
+            refreshButton.disabled =
+                true;
 
-        return "-";
+            refreshButton.textContent =
+                "Refreshing...";
 
+            await loadDashboard();
+
+            refreshButton.disabled =
+                false;
+
+            refreshButton.textContent =
+                "Refresh";
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+
+async function loadDashboard() {
+
+    const user =
+        await checkSuperAdmin();
+
+    if (!user) {
+        return;
     }
-
-    return date.toLocaleDateString();
-
-}
-
-
-// ------------------------------------------------------------
-// INITIALISE GRADE HUB V2
-// ------------------------------------------------------------
-
-async function initialiseGradeHubV2() {
 
     try {
 
-        await loadSubjects();
+        await Promise.all([
+            loadApprovedAdmins(),
+            loadAdminRequests(),
+            loadStudents(),
+            loadSubjects(),
+            loadCombinations(),
+            loadExams(),
+            loadDocuments(),
+            loadAnnouncements()
+        ]);
 
-        await loadCombinations();
-
-        await loadV2Students();
-
-        await loadExams();
-
-        await loadDocuments();
-
-        await loadAnnouncements();
-
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
-            "Grade Hub V2 initialization error:",
+            "Dashboard error:",
             error
+        );
+
+        showMessage(
+            error.message ||
+            "Dashboard loading failed.",
+            "error"
         );
 
     }
@@ -2267,23 +3516,8 @@ async function initialiseGradeHubV2() {
 }
 
 
-// ------------------------------------------------------------
-// REFRESH
-// ------------------------------------------------------------
+// ============================================================
+// START
+// ============================================================
 
-const refreshDashboard =
-    document.getElementById(
-        "refreshDashboard"
-    );
-
-if (refreshDashboard) {
-
-    refreshDashboard.addEventListener(
-        "click",
-        initialiseGradeHubV2
-    );
-
-}
-
-
-initialiseGradeHubV2();
+loadDashboard();
