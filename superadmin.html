@@ -500,6 +500,63 @@
     }
 
 
+
+    .management-card{
+      padding:20px;
+      margin-bottom:18px;
+    }
+
+    .management-form{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      padding-bottom:18px;
+    }
+
+    .management-form .primary-button{
+      min-height:42px;
+    }
+
+    .action-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+    }
+
+    .small-button{
+      border:0;
+      border-radius:8px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:600;
+      background:#eef2ff;
+      color:#3730a3;
+    }
+
+    .small-button.danger{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .small-button.success{
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .latest-badge{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#e0e7ff;
+      color:#3730a3;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .management-card h3{
+      margin-top:0;
+    }
+
     /* =====================================
        MOBILE
     ===================================== */
@@ -550,6 +607,10 @@
 
 
       .password-grid{
+        grid-template-columns:1fr;
+      }
+
+      .management-form{
         grid-template-columns:1fr;
       }
 
@@ -653,6 +714,34 @@
       <a href="#passwords">
 
         Password Management
+
+      </a>
+
+
+      <a href="#subjects">
+
+        Subjects
+
+      </a>
+
+
+      <a href="#combinations">
+
+        Combinations
+
+      </a>
+
+
+      <a href="#exams">
+
+        Exams & Results
+
+      </a>
+
+
+      <a href="#documents">
+
+        Newsletters
 
       </a>
 
@@ -1077,6 +1166,244 @@
     <!-- =====================================
          GRADING SYSTEM
     ====================================== -->
+
+
+    <!-- =====================================
+         SUBJECT MANAGEMENT
+    ====================================== -->
+    <section id="subjects" class="sa-section">
+      <h2>Subject Management</h2>
+      <p>Create and manage the subjects used by Grade Hub.</p>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <input id="subjectName" class="grading-input" placeholder="Subject name">
+          <input id="subjectCode" class="grading-input" placeholder="Code (e.g. MAT)">
+          <button id="addSubjectButton" class="primary-button" type="button">Add Subject</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Subject</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="subjectsTable">
+              <tr><td colspan="4" class="sa-empty">Loading subjects...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =====================================
+         COMBINATION MANAGEMENT
+    ====================================== -->
+    <section id="combinations" class="sa-section">
+      <h2>Subject Combinations</h2>
+      <p>Create combinations and choose the subjects belonging to each combination.</p>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <input id="combinationName" class="grading-input" placeholder="Combination name">
+          <input id="combinationDescription" class="grading-input" placeholder="Description">
+          <button id="addCombinationButton" class="primary-button" type="button">Create Combination</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Combination</th>
+                <th>Description</th>
+                <th>Subjects</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="combinationsTable">
+              <tr><td colspan="4" class="sa-empty">Loading combinations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =====================================
+         STUDENT COMBINATION ASSIGNMENT
+    ====================================== -->
+    <section id="student-combinations" class="sa-section">
+      <h2>Assign Student Combination</h2>
+      <p>Assign or change the current subject combination without deleting previous combination history.</p>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <select id="combinationStudent" class="grading-input">
+            <option value="">Select student</option>
+          </select>
+
+          <select id="studentCombination" class="grading-input">
+            <option value="">Select combination</option>
+          </select>
+
+          <button id="assignCombinationButton" class="primary-button" type="button">
+            Assign Combination
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =====================================
+         EXAMS & RESULTS
+    ====================================== -->
+    <section id="exams" class="sa-section">
+      <h2>Exams & Results</h2>
+      <p>Create exams, publish them and enter subject-by-subject results.</p>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <input id="examName" class="grading-input" placeholder="Exam name">
+          <input id="examYear" class="grading-input" type="number" placeholder="Academic year">
+          <input id="examTerm" class="grading-input" placeholder="Term (e.g. Term 2)">
+          <input id="examDate" class="grading-input" type="date">
+          <input id="examDescription" class="grading-input" placeholder="Description">
+          <button id="createExamButton" class="primary-button" type="button">Create Exam</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Exam</th>
+                <th>Term</th>
+                <th>Date</th>
+                <th>Published</th>
+                <th>Latest</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="examsTable">
+              <tr><td colspan="6" class="sa-empty">Loading exams...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <select id="resultExam" class="grading-input">
+            <option value="">Select exam</option>
+          </select>
+
+          <select id="resultStudent" class="grading-input">
+            <option value="">Select student</option>
+          </select>
+
+          <select id="resultSubject" class="grading-input">
+            <option value="">Select subject</option>
+          </select>
+
+          <input id="resultScore" class="grading-input" type="number" min="0" step="0.01" placeholder="Score">
+          <input id="resultMaxScore" class="grading-input" type="number" min="1" step="0.01" value="100" placeholder="Maximum score">
+          <input id="resultComment" class="grading-input" placeholder="Teacher comment">
+
+          <button id="saveResultButton" class="primary-button" type="button">Save Result</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Exam</th>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Grade</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTable">
+              <tr><td colspan="6" class="sa-empty">Loading results...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =====================================
+         DOCUMENTS / NEWSLETTERS
+    ====================================== -->
+    <section id="documents" class="sa-section">
+      <h2>Newsletters & School Documents</h2>
+      <p>Upload and publish newsletters, timetables and other school documents.</p>
+
+      <div class="sa-card management-card">
+        <div class="management-form">
+          <input id="documentTitle" class="grading-input" placeholder="Document title">
+          <input id="documentDescription" class="grading-input" placeholder="Description">
+          <select id="documentCategory" class="grading-input">
+            <option value="newsletter">Newsletter</option>
+            <option value="timetable">Timetable</option>
+            <option value="announcement">Announcement</option>
+            <option value="academic">Academic</option>
+            <option value="other">Other</option>
+          </select>
+          <input id="documentFile" class="grading-input" type="file">
+          <button id="uploadDocumentButton" class="primary-button" type="button">Upload Document</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>File</th>
+                <th>Date</th>
+                <th>Published</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="documentsTable">
+              <tr><td colspan="6" class="sa-empty">Loading documents...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sa-card management-card">
+        <h3>Announcements</h3>
+        <div class="management-form">
+          <input id="announcementTitle" class="grading-input" placeholder="Announcement title">
+          <input id="announcementMessage" class="grading-input" placeholder="Announcement message">
+          <button id="addAnnouncementButton" class="primary-button" type="button">Publish Announcement</button>
+        </div>
+
+        <div class="sa-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="announcementsTable">
+              <tr><td colspan="4" class="sa-empty">Loading announcements...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
 
     <section
       id="grading"
