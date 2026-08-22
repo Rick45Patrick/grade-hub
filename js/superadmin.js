@@ -1,494 +1,878 @@
-import { supabase } from "./supabase.js";
+// ============================================================
+// GRADE HUB V2
+// Subject combinations, exams, results, documents
+// ============================================================
+
+const subjectsTable = document.getElementById("subjectsTable");
+const combinationSubjects = document.getElementById("combinationSubjects");
+const combinationsList = document.getElementById("combinationsList");
+
+const combinationStudent =
+    document.getElementById("combinationStudent");
+
+const studentCombination =
+    document.getElementById("studentCombination");
+
+const examsTable =
+    document.getElementById("examsTable");
+
+const resultExam =
+    document.getElementById("resultExam");
+
+const resultStudent =
+    document.getElementById("resultStudent");
+
+const resultSubject =
+    document.getElementById("resultSubject");
+
+const documentsTable =
+    document.getElementById("documentsTable");
+
+const announcementsList =
+    document.getElementById("announcementsList");
 
 
-/* ==========================================
-   ELEMENTS
-========================================== */
+// ------------------------------------------------------------
+// MESSAGE
+// ------------------------------------------------------------
 
-const logoutButton =
-    document.getElementById("logoutButton");
+function showV2Message(message, type = "success") {
 
-const refreshButton =
-    document.getElementById("refreshDashboard");
+    const box =
+        document.getElementById("saMessage");
 
-const messageBox =
-    document.getElementById("saMessage");
+    if (!box) return;
 
-const totalStudents =
-    document.getElementById("totalStudents");
+    box.textContent = message;
 
-const totalAdmins =
-    document.getElementById("totalAdmins");
+    box.className =
+        `sa-message show ${type}`;
 
-const pendingAdmins =
-    document.getElementById("pendingAdmins");
+    setTimeout(() => {
 
-const adminRequests =
-    document.getElementById("adminRequests");
+        box.classList.remove("show");
 
-const approvedAdmins =
-    document.getElementById("approvedAdmins");
-
-const studentTable =
-    document.getElementById("studentTable");
-
-const gradingTable =
-    document.getElementById("gradingTable");
-
-const addGradeButton =
-    document.getElementById("addGradeButton");
-
-const resetGradesButton =
-    document.getElementById("resetGradesButton");
-
-const saveGradesButton =
-    document.getElementById("saveGradesButton");
-
-
-/* ==========================================
-   PASSWORD MANAGEMENT
-========================================== */
-
-const passwordUser =
-    document.getElementById("passwordUser");
-
-const newPassword =
-    document.getElementById("newPassword");
-
-const changePasswordButton =
-    document.getElementById(
-        "changePasswordButton"
-    );
-
-
-/* ==========================================
-   DEFAULT GRADING
-========================================== */
-
-const DEFAULT_GRADES = [
-
-    {
-        grade: "EE1",
-        min_mark: 90,
-        points: 8,
-        description: "Exceeding Expectations"
-    },
-
-    {
-        grade: "EE2",
-        min_mark: 80,
-        points: 7,
-        description: "Exceeding Expectations"
-    },
-
-    {
-        grade: "ME1",
-        min_mark: 70,
-        points: 6,
-        description: "Meeting Expectations"
-    },
-
-    {
-        grade: "ME2",
-        min_mark: 60,
-        points: 5,
-        description: "Meeting Expectations"
-    },
-
-    {
-        grade: "AE1",
-        min_mark: 50,
-        points: 4,
-        description: "Approaching Expectations"
-    },
-
-    {
-        grade: "AE2",
-        min_mark: 40,
-        points: 3,
-        description: "Approaching Expectations"
-    },
-
-    {
-        grade: "BE1",
-        min_mark: 30,
-        points: 2,
-        description: "Below Expectations"
-    },
-
-    {
-        grade: "BE2",
-        min_mark: 0,
-        points: 1,
-        description: "Below Expectations"
-    }
-
-];
-
-
-/* ==========================================
-   MESSAGE
-========================================== */
-
-function showMessage(
-    text,
-    type = "success"
-) {
-
-    if (!messageBox) {
-        return;
-    }
-
-    messageBox.textContent =
-        text;
-
-    messageBox.className =
-        "sa-message show " +
-        type;
+    }, 4000);
 }
 
 
-/* ==========================================
-   HTML SAFETY
-========================================== */
+// ------------------------------------------------------------
+// LOAD SUBJECTS
+// ------------------------------------------------------------
 
-function escapeHTML(value) {
+async function loadSubjects() {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* ==========================================
-   DATE
-========================================== */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    const date =
-        new Date(value);
-
-    if (
-        isNaN(
-            date.getTime()
-        )
-    ) {
-        return "—";
-    }
-
-    return date.toLocaleDateString();
-}
-
-
-/* ==========================================
-   SUBJECTS
-========================================== */
-
-function formatSubjects(subjects) {
-
-    if (!subjects) {
-        return "—";
-    }
-
-    if (Array.isArray(subjects)) {
-
-        return subjects
-            .map(
-                subject =>
-                    escapeHTML(subject)
-            )
-            .join(", ");
-    }
-
-    return escapeHTML(subjects);
-}
-
-
-/* ==========================================
-   CHECK LOGIN
-========================================== */
-
-async function checkLogin() {
-
-    const {
-        data,
-        error
-    } =
-        await supabase.auth.getUser();
-
-    if (error) {
-
-        console.error(
-            "Auth error:",
-            error
-        );
-
-        return null;
-    }
-
-    if (!data.user) {
-        return null;
-    }
-
-    return data.user;
-}
-
-
-/* ==========================================
-   CHECK SUPER ADMIN
-========================================== */
-
-async function checkSuperAdmin() {
-
-    const user =
-        await checkLogin();
-
-    if (!user) {
-
-        window.location.href =
-            "index.html";
-
-        return null;
-    }
-
-    const {
-        data,
-        error
-    } =
+    const { data, error } =
         await supabase
-            .from("user_roles")
-            .select(
-                "role, approved"
-            )
-            .eq(
-                "user_id",
-                user.id
-            );
+            .from("subjects")
+            .select("*")
+            .order("name");
 
     if (error) {
 
-        console.error(
-            "Role check error:",
-            error
-        );
+        console.error(error);
 
-        showMessage(
-            "Unable to verify your account role.",
+        showV2Message(
+            "Could not load subjects.",
             "error"
         );
 
-        return null;
+        return [];
+
     }
 
-    const superAdmin =
-        (data || []).find(
-            row =>
-                row.role === "super_admin" &&
-                row.approved === true
-        );
+    renderSubjects(data || []);
 
-    if (!superAdmin) {
+    renderSubjectCheckboxes(data || []);
 
-        showMessage(
-            "This account does not have an approved Super Admin role.",
-            "error"
-        );
+    renderResultSubjects(data || []);
 
-        setTimeout(
-            () => {
+    const total =
+        document.getElementById("totalSubjects");
 
-                window.location.href =
-                    "index.html";
+    if (total) {
 
-            },
-            1500
-        );
+        total.textContent =
+            data.length;
 
-        return null;
     }
 
-    return user;
+    return data || [];
 }
 
 
-/* ==========================================
-   LOAD APPROVED ADMINS
-========================================== */
+// ------------------------------------------------------------
+// DISPLAY SUBJECTS
+// ------------------------------------------------------------
 
-async function loadApprovedAdmins() {
+function renderSubjects(subjects) {
 
-    approvedAdmins.innerHTML = `
-        <tr>
-            <td colspan="4" class="sa-empty">
-                Loading...
-            </td>
-        </tr>
-    `;
+    if (!subjectsTable) return;
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from("user_roles")
-            .select(
-                "user_id, role, approved"
-            )
-            .eq(
-                "role",
-                "admin"
-            )
-            .eq(
-                "approved",
-                true
+    if (!subjects.length) {
+
+        subjectsTable.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty">
+                    No subjects found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    subjectsTable.innerHTML =
+        subjects.map(subject => {
+
+            return `
+                <tr>
+
+                    <td>
+                        ${escapeHTML(subject.code || "-")}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(subject.name)}
+                    </td>
+
+                    <td>
+                        ${formatDate(subject.created_at)}
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="danger-button"
+                            onclick="deleteSubject('${subject.id}')">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+            `;
+
+        }).join("");
+}
+
+
+// ------------------------------------------------------------
+// SUBJECT CHECKBOXES
+// ------------------------------------------------------------
+
+function renderSubjectCheckboxes(subjects) {
+
+    if (!combinationSubjects) return;
+
+    if (!subjects.length) {
+
+        combinationSubjects.innerHTML =
+            "No subjects available.";
+
+        return;
+    }
+
+    combinationSubjects.innerHTML =
+        subjects.map(subject => {
+
+            return `
+                <label class="checkbox-item">
+
+                    <input
+                        type="checkbox"
+                        value="${subject.id}">
+
+                    ${escapeHTML(subject.name)}
+
+                </label>
+            `;
+
+        }).join("");
+}
+
+
+// ------------------------------------------------------------
+// ADD SUBJECT
+// ------------------------------------------------------------
+
+const subjectForm =
+    document.getElementById("subjectForm");
+
+if (subjectForm) {
+
+    subjectForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const name =
+                document
+                    .getElementById("subjectName")
+                    .value
+                    .trim();
+
+            const code =
+                document
+                    .getElementById("subjectCode")
+                    .value
+                    .trim()
+                    .toUpperCase();
+
+            if (!name || !code) {
+
+                showV2Message(
+                    "Enter both subject name and code.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const { error } =
+                await supabase
+                    .from("subjects")
+                    .insert({
+                        name,
+                        code
+                    });
+
+            if (error) {
+
+                console.error(error);
+
+                showV2Message(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            subjectForm.reset();
+
+            showV2Message(
+                "Subject added successfully."
             );
 
-    if (error) {
-
-        console.error(
-            "Admin role error:",
-            error
-        );
-
-        approvedAdmins.innerHTML = `
-            <tr>
-                <td colspan="4" class="sa-empty">
-                    Failed to load administrators.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
-        totalAdmins.textContent =
-            "0";
-
-        approvedAdmins.innerHTML = `
-            <tr>
-                <td colspan="4" class="sa-empty">
-                    No approved administrators.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    const userIds =
-        data.map(
-            row =>
-                row.user_id
-        );
-
-    const {
-        data: profiles,
-        error: profileError
-    } =
-        await supabase
-            .from("profiles")
-            .select(
-                "id, full_name, username, email"
-            )
-            .in(
-                "id",
-                userIds
-            );
-
-    if (profileError) {
-
-        console.error(
-            "Admin profiles error:",
-            profileError
-        );
-
-        approvedAdmins.innerHTML = `
-            <tr>
-                <td colspan="4" class="sa-empty">
-                    Administrators found,
-                    but profiles could not
-                    be loaded.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    const profileMap = {};
-
-    (profiles || []).forEach(
-        profile => {
-
-            profileMap[
-                profile.id
-            ] = profile;
+            loadSubjects();
 
         }
     );
 
-    totalAdmins.textContent =
-        data.length;
+}
 
-    approvedAdmins.innerHTML =
-        data.map(
-            row => {
 
-                const profile =
-                    profileMap[
-                        row.user_id
-                    ] || {};
+// ------------------------------------------------------------
+// DELETE SUBJECT
+// ------------------------------------------------------------
+
+window.deleteSubject =
+    async function (id) {
+
+        const confirmed =
+            confirm(
+                "Delete this subject?"
+            );
+
+        if (!confirmed) return;
+
+        const { error } =
+            await supabase
+                .from("subjects")
+                .delete()
+                .eq("id", id);
+
+        if (error) {
+
+            console.error(error);
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        showV2Message(
+            "Subject deleted."
+        );
+
+        loadSubjects();
+
+    };
+
+
+// ------------------------------------------------------------
+// CREATE COMBINATION
+// ------------------------------------------------------------
+
+const combinationForm =
+    document.getElementById(
+        "combinationForm"
+    );
+
+if (combinationForm) {
+
+    combinationForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const name =
+                document
+                    .getElementById(
+                        "combinationName"
+                    )
+                    .value
+                    .trim();
+
+            const description =
+                document
+                    .getElementById(
+                        "combinationDescription"
+                    )
+                    .value
+                    .trim();
+
+            const selected =
+                [
+                    ...document.querySelectorAll(
+                        "#combinationSubjects input:checked"
+                    )
+                ].map(
+                    checkbox => checkbox.value
+                );
+
+            if (!name) {
+
+                showV2Message(
+                    "Enter a combination name.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            if (!selected.length) {
+
+                showV2Message(
+                    "Select at least one subject.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const {
+                data: combination,
+                error: combinationError
+            } =
+                await supabase
+                    .from(
+                        "subject_combinations"
+                    )
+                    .insert({
+                        name,
+                        description
+                    })
+                    .select()
+                    .single();
+
+            if (combinationError) {
+
+                console.error(
+                    combinationError
+                );
+
+                showV2Message(
+                    combinationError.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            const rows =
+                selected.map(subjectId => {
+
+                    return {
+                        combination_id:
+                            combination.id,
+
+                        subject_id:
+                            subjectId
+                    };
+
+                });
+
+            const {
+                error: subjectError
+            } =
+                await supabase
+                    .from(
+                        "combination_subjects"
+                    )
+                    .insert(rows);
+
+            if (subjectError) {
+
+                console.error(
+                    subjectError
+                );
+
+                await supabase
+                    .from(
+                        "subject_combinations"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        combination.id
+                    );
+
+                showV2Message(
+                    subjectError.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            combinationForm.reset();
+
+            showV2Message(
+                "Combination created successfully."
+            );
+
+            loadCombinations();
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// LOAD COMBINATIONS
+// ------------------------------------------------------------
+
+async function loadCombinations() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from(
+                "subject_combinations"
+            )
+            .select(`
+                id,
+                name,
+                description,
+                created_at,
+                combination_subjects (
+                    subject_id,
+                    subjects (
+                        id,
+                        name,
+                        code
+                    )
+                )
+            `)
+            .order("name");
+
+    if (error) {
+
+        console.error(error);
+
+        showV2Message(
+            "Could not load combinations.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    renderCombinations(
+        data || []
+    );
+
+    renderCombinationSelect(
+        data || []
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// DISPLAY COMBINATIONS
+// ------------------------------------------------------------
+
+function renderCombinations(
+    combinations
+) {
+
+    if (!combinationsList) return;
+
+    if (!combinations.length) {
+
+        combinationsList.innerHTML = `
+            <div class="sa-card">
+                <div class="empty">
+                    No combinations created yet.
+                </div>
+            </div>
+        `;
+
+        return;
+
+    }
+
+    combinationsList.innerHTML =
+        combinations.map(
+            combination => {
+
+                const subjects =
+                    combination
+                        .combination_subjects
+                        ?.map(
+                            row => row.subjects
+                        )
+                        .filter(Boolean)
+                        || [];
+
+                return `
+                    <div class="combination-card">
+
+                        <h4>
+                            ${escapeHTML(
+                                combination.name
+                            )}
+                        </h4>
+
+                        <p>
+                            ${escapeHTML(
+                                combination.description
+                                || "No description"
+                            )}
+                        </p>
+
+                        <div class="subject-list">
+
+                            ${
+                                subjects.length
+
+                                ? subjects.map(
+                                    subject => `
+                                        <span
+                                            class="subject-tag">
+
+                                            ${escapeHTML(
+                                                subject.name
+                                            )}
+
+                                        </span>
+                                    `
+                                ).join("")
+
+                                : `
+                                    <span>
+                                        No subjects
+                                    </span>
+                                `
+                            }
+
+                        </div>
+
+                        <br>
+
+                        <button
+                            class="danger-button"
+                            onclick="deleteCombination(
+                                '${combination.id}'
+                            )">
+
+                            Delete
+
+                        </button>
+
+                    </div>
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+// ------------------------------------------------------------
+// COMBINATION SELECT
+// ------------------------------------------------------------
+
+function renderCombinationSelect(
+    combinations
+) {
+
+    if (!studentCombination) return;
+
+    studentCombination.innerHTML =
+        `
+            <option value="">
+                Select combination
+            </option>
+        `;
+
+    combinations.forEach(
+        combination => {
+
+            studentCombination.innerHTML += `
+                <option value="${combination.id}">
+                    ${escapeHTML(
+                        combination.name
+                    )}
+                </option>
+            `;
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// DELETE COMBINATION
+// ------------------------------------------------------------
+
+window.deleteCombination =
+    async function (id) {
+
+        const confirmed =
+            confirm(
+                "Delete this combination?"
+            );
+
+        if (!confirmed) return;
+
+        const { error } =
+            await supabase
+                .from(
+                    "subject_combinations"
+                )
+                .delete()
+                .eq("id", id);
+
+        if (error) {
+
+            console.error(error);
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        showV2Message(
+            "Combination deleted."
+        );
+
+        loadCombinations();
+
+    };
+
+
+// ------------------------------------------------------------
+// LOAD STUDENTS
+// ------------------------------------------------------------
+
+async function loadV2Students() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from("students")
+            .select("*")
+            .order("full_name");
+
+    if (error) {
+
+        console.error(error);
+
+        return [];
+
+    }
+
+    renderStudentSelects(
+        data || []
+    );
+
+    renderStudentsV2(
+        data || []
+    );
+
+    const total =
+        document.getElementById(
+            "totalStudents"
+        );
+
+    if (total) {
+
+        total.textContent =
+            data.length;
+
+    }
+
+    return data || [];
+
+}
+
+
+// ------------------------------------------------------------
+// STUDENT SELECTS
+// ------------------------------------------------------------
+
+function renderStudentSelects(
+    students
+) {
+
+    if (
+        !combinationStudent &&
+        !resultStudent
+    ) return;
+
+    const options =
+        students.map(
+            student => {
+
+                const name =
+                    student.full_name
+                    || student.name
+                    || student.email
+                    || "Student";
+
+                return `
+                    <option value="${student.id}">
+                        ${escapeHTML(name)}
+                    </option>
+                `;
+
+            }
+        ).join("");
+
+    if (combinationStudent) {
+
+        combinationStudent.innerHTML =
+            `
+                <option value="">
+                    Select student
+                </option>
+            `
+            +
+            options;
+
+    }
+
+    if (resultStudent) {
+
+        resultStudent.innerHTML =
+            `
+                <option value="">
+                    Select student
+                </option>
+            `
+            +
+            options;
+
+    }
+
+}
+
+
+// ------------------------------------------------------------
+// STUDENT TABLE
+// ------------------------------------------------------------
+
+function renderStudentsV2(
+    students
+) {
+
+    const table =
+        document.getElementById(
+            "studentsTable"
+        );
+
+    if (!table) return;
+
+    if (!students.length) {
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty">
+                    No students found.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    table.innerHTML =
+        students.map(
+            student => {
+
+                const name =
+                    student.full_name
+                    || student.name
+                    || "-";
 
                 return `
                     <tr>
 
                         <td>
                             ${escapeHTML(
-                                profile.full_name ||
-                                "—"
+                                student.admission_number
+                                || student.admission_no
+                                || "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(name)}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                student.class
+                                || student.grade
+                                || "-"
                             )}
                         </td>
 
                         <td>
                             ${escapeHTML(
-                                profile.username ||
-                                "—"
+                                student.email
+                                || "-"
                             )}
-                        </td>
-
-                        <td>
-                            ${escapeHTML(
-                                profile.email ||
-                                "—"
-                            )}
-                        </td>
-
-                        <td>
-
-                            <span class="sa-status approved">
-                                Approved
-                            </span>
-
                         </td>
 
                     </tr>
@@ -496,29 +880,190 @@ async function loadApprovedAdmins() {
 
             }
         ).join("");
+
 }
 
 
-/* ==========================================
-   LOAD ADMIN REQUESTS
-========================================== */
+// ------------------------------------------------------------
+// ASSIGN STUDENT COMBINATION
+// ------------------------------------------------------------
 
-async function loadAdminRequests() {
+const studentCombinationForm =
+    document.getElementById(
+        "studentCombinationForm"
+    );
 
-    adminRequests.innerHTML = `
-        <tr>
-            <td colspan="6" class="sa-empty">
-                Loading...
-            </td>
-        </tr>
-    `;
+if (studentCombinationForm) {
+
+    studentCombinationForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const studentId =
+                combinationStudent.value;
+
+            const combinationId =
+                studentCombination.value;
+
+            if (
+                !studentId ||
+                !combinationId
+            ) {
+
+                showV2Message(
+                    "Select both student and combination.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const {
+                data,
+                error
+            } =
+                await supabase.rpc(
+                    "assign_student_combination",
+                    {
+                        target_student_id:
+                            studentId,
+
+                        target_combination_id:
+                            combinationId
+                    }
+                );
+
+            if (error) {
+
+                console.error(error);
+
+                showV2Message(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            studentCombinationForm.reset();
+
+            showV2Message(
+                "Student combination updated."
+            );
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// CREATE EXAM
+// ------------------------------------------------------------
+
+const examForm =
+    document.getElementById(
+        "examForm"
+    );
+
+if (examForm) {
+
+    examForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const name =
+                document
+                    .getElementById(
+                        "examName"
+                    )
+                    .value
+                    .trim();
+
+            const academicYear =
+                Number(
+                    document
+                        .getElementById(
+                            "examYear"
+                        )
+                        .value
+                );
+
+            const term =
+                document
+                    .getElementById(
+                        "examTerm"
+                    )
+                    .value;
+
+            const examDate =
+                document
+                    .getElementById(
+                        "examDate"
+                    )
+                    .value
+                    || null;
+
+            const {
+                error
+            } =
+                await supabase
+                    .from("exams")
+                    .insert({
+                        name,
+                        academic_year:
+                            academicYear,
+
+                        term,
+                        exam_date:
+                            examDate
+                    });
+
+            if (error) {
+
+                console.error(error);
+
+                showV2Message(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            examForm.reset();
+
+            showV2Message(
+                "Exam created."
+            );
+
+            loadExams();
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// LOAD EXAMS
+// ------------------------------------------------------------
+
+async function loadExams() {
 
     const {
         data,
         error
     } =
         await supabase
-            .from("admin_requests")
+            .from("exams")
             .select("*")
             .order(
                 "created_at",
@@ -529,174 +1074,612 @@ async function loadAdminRequests() {
 
     if (error) {
 
-        console.error(
-            "Admin request error:",
-            error
+        console.error(error);
+
+        return;
+
+    }
+
+    renderExams(
+        data || []
+    );
+
+    renderExamSelect(
+        data || []
+    );
+
+    const total =
+        document.getElementById(
+            "totalExams"
         );
 
-        adminRequests.innerHTML = `
+    if (total) {
+
+        total.textContent =
+            data.length;
+
+    }
+
+}
+
+
+// ------------------------------------------------------------
+// DISPLAY EXAMS
+// ------------------------------------------------------------
+
+function renderExams(
+    exams
+) {
+
+    if (!examsTable) return;
+
+    if (!exams.length) {
+
+        examsTable.innerHTML = `
             <tr>
-                <td colspan="6" class="sa-empty">
-                    Failed to load requests.
+                <td colspan="5" class="empty">
+                    No exams created.
                 </td>
             </tr>
         `;
 
         return;
+
     }
 
-    const requests =
-        data || [];
-
-    const pending =
-        requests.filter(
-            request =>
-                request.status === "pending"
-        );
-
-    pendingAdmins.textContent =
-        pending.length;
-
-    if (requests.length === 0) {
-
-        adminRequests.innerHTML = `
-            <tr>
-                <td colspan="6" class="sa-empty">
-                    No administrator requests.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    adminRequests.innerHTML =
-        requests.map(
-            request => {
-
-                let actions = "—";
-
-                if (
-                    request.status === "pending"
-                ) {
-
-                    actions = `
-
-                        <button
-                            class="sa-btn approve"
-                            data-action="approve"
-                            data-id="${escapeHTML(
-                                request.id
-                            )}">
-
-                            Approve
-
-                        </button>
-
-                        <button
-                            class="sa-btn reject"
-                            data-action="reject"
-                            data-id="${escapeHTML(
-                                request.id
-                            )}">
-
-                            Reject
-
-                        </button>
-
-                    `;
-                }
-
-                const statusClass =
-                    request.status === "approved"
-                        ? "approved"
-                        : "pending";
+    examsTable.innerHTML =
+        exams.map(
+            exam => {
 
                 return `
-
                     <tr>
 
                         <td>
                             ${escapeHTML(
-                                request.full_name ||
-                                "—"
+                                exam.name
                             )}
                         </td>
 
                         <td>
                             ${escapeHTML(
-                                request.username ||
-                                "—"
+                                exam.term || "-"
                             )}
                         </td>
 
                         <td>
                             ${escapeHTML(
-                                request.email ||
-                                "—"
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                request.created_at
+                                exam.exam_date || "-"
                             )}
                         </td>
 
                         <td>
 
-                            <span
-                                class="sa-status ${statusClass}">
+                            ${
+                                exam.is_latest
 
-                                ${escapeHTML(
-                                    request.status ||
-                                    "unknown"
-                                )}
+                                ? `
+                                    <span
+                                        class="status published">
+                                        Latest
+                                    </span>
+                                `
 
-                            </span>
+                                : `
+                                    <span
+                                        class="status unpublished">
+                                        Normal
+                                    </span>
+                                `
+                            }
 
                         </td>
 
                         <td>
-                            ${actions}
+
+                            ${
+                                exam.is_latest
+
+                                ? ""
+
+                                : `
+                                    <button
+                                        class="primary-button"
+                                        onclick="setLatestExam(
+                                            '${exam.id}'
+                                        )">
+
+                                        Make Latest
+
+                                    </button>
+                                `
+                            }
+
+                            <button
+                                class="danger-button"
+                                onclick="deleteExam(
+                                    '${exam.id}'
+                                )">
+
+                                Delete
+
+                            </button>
+
                         </td>
 
                     </tr>
-
                 `;
+
             }
         ).join("");
+
 }
 
 
-/* ==========================================
-   LOAD STUDENTS
-========================================== */
+// ------------------------------------------------------------
+// EXAM SELECT
+// ------------------------------------------------------------
 
-async function loadStudents() {
+function renderExamSelect(
+    exams
+) {
 
-    studentTable.innerHTML = `
-        <tr>
-            <td colspan="5" class="sa-empty">
-                Loading...
-            </td>
-        </tr>
-    `;
+    if (!resultExam) return;
+
+    resultExam.innerHTML =
+        `
+            <option value="">
+                Select exam
+            </option>
+        `;
+
+    exams.forEach(
+        exam => {
+
+            resultExam.innerHTML += `
+                <option value="${exam.id}">
+                    ${escapeHTML(
+                        exam.name
+                    )}
+                </option>
+            `;
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// SET LATEST EXAM
+// ------------------------------------------------------------
+
+window.setLatestExam =
+    async function (id) {
+
+        const {
+            error
+        } =
+            await supabase.rpc(
+                "set_latest_exam",
+                {
+                    target_exam_id:
+                        id
+                }
+            );
+
+        if (error) {
+
+            console.error(error);
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        showV2Message(
+            "Latest exam updated."
+        );
+
+        loadExams();
+
+    };
+
+
+// ------------------------------------------------------------
+// DELETE EXAM
+// ------------------------------------------------------------
+
+window.deleteExam =
+    async function (id) {
+
+        const confirmed =
+            confirm(
+                "Delete this exam and its results?"
+            );
+
+        if (!confirmed) return;
+
+        const {
+            error
+        } =
+            await supabase
+                .from("exams")
+                .delete()
+                .eq("id", id);
+
+        if (error) {
+
+            console.error(error);
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        showV2Message(
+            "Exam deleted."
+        );
+
+        loadExams();
+
+    };
+
+
+// ------------------------------------------------------------
+// RESULT SUBJECTS
+// ------------------------------------------------------------
+
+function renderResultSubjects(
+    subjects
+) {
+
+    if (!resultSubject) return;
+
+    resultSubject.innerHTML =
+        `
+            <option value="">
+                Select subject
+            </option>
+        `;
+
+    subjects.forEach(
+        subject => {
+
+            resultSubject.innerHTML += `
+                <option value="${subject.id}">
+                    ${escapeHTML(
+                        subject.name
+                    )}
+                </option>
+            `;
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// SAVE RESULT
+// ------------------------------------------------------------
+
+const resultForm =
+    document.getElementById(
+        "resultForm"
+    );
+
+if (resultForm) {
+
+    resultForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const examId =
+                resultExam.value;
+
+            const studentId =
+                resultStudent.value;
+
+            const subjectId =
+                resultSubject.value;
+
+            const score =
+                Number(
+                    document.getElementById(
+                        "resultScore"
+                    ).value
+                );
+
+            const maxScore =
+                Number(
+                    document.getElementById(
+                        "resultMaxScore"
+                    ).value
+                );
+
+            const comment =
+                document.getElementById(
+                    "resultComment"
+                ).value
+                .trim();
+
+            if (
+                !examId ||
+                !studentId ||
+                !subjectId
+            ) {
+
+                showV2Message(
+                    "Select exam, student and subject.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            if (
+                score < 0 ||
+                maxScore <= 0 ||
+                score > maxScore
+            ) {
+
+                showV2Message(
+                    "Enter a valid score.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "exam_results"
+                    )
+                    .upsert(
+                        {
+                            exam_id:
+                                examId,
+
+                            student_id:
+                                studentId,
+
+                            subject_id:
+                                subjectId,
+
+                            score,
+                            max_score:
+                                maxScore,
+
+                            teacher_comment:
+                                comment
+                        },
+                        {
+                            onConflict:
+                                "exam_id,student_id,subject_id"
+                        }
+                    );
+
+            if (error) {
+
+                console.error(error);
+
+                showV2Message(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            resultForm.reset();
+
+            document
+                .getElementById(
+                    "resultMaxScore"
+                )
+                .value = 100;
+
+            showV2Message(
+                "Result saved successfully."
+            );
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// DOCUMENT UPLOAD
+// ------------------------------------------------------------
+
+const documentForm =
+    document.getElementById(
+        "documentForm"
+    );
+
+if (documentForm) {
+
+    documentForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const title =
+                document
+                    .getElementById(
+                        "documentTitle"
+                    )
+                    .value
+                    .trim();
+
+            const category =
+                document
+                    .getElementById(
+                        "documentCategory"
+                    )
+                    .value;
+
+            const description =
+                document
+                    .getElementById(
+                        "documentDescription"
+                    )
+                    .value
+                    .trim();
+
+            const file =
+                document
+                    .getElementById(
+                        "documentFile"
+                    )
+                    .files[0];
+
+            if (!file) {
+
+                showV2Message(
+                    "Choose a file first.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const safeName =
+                file.name
+                    .replace(
+                        /[^a-zA-Z0-9._-]/g,
+                        "_"
+                    );
+
+            const path =
+                `${Date.now()}_${safeName}`;
+
+            const {
+                error: uploadError
+            } =
+                await supabase
+                    .storage
+                    .from(
+                        "grade-hub-documents"
+                    )
+                    .upload(
+                        path,
+                        file
+                    );
+
+            if (uploadError) {
+
+                console.error(
+                    uploadError
+                );
+
+                showV2Message(
+                    uploadError.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            const {
+                error: databaseError
+            } =
+                await supabase
+                    .from(
+                        "documents"
+                    )
+                    .insert(
+                        {
+                            title,
+                            description,
+                            category,
+
+                            file_name:
+                                file.name,
+
+                            storage_path:
+                                path,
+
+                            file_type:
+                                file.type,
+
+                            file_size:
+                                file.size,
+
+                            published:
+                                true
+                        }
+                    );
+
+            if (databaseError) {
+
+                console.error(
+                    databaseError
+                );
+
+                await supabase
+                    .storage
+                    .from(
+                        "grade-hub-documents"
+                    )
+                    .remove([path]);
+
+                showV2Message(
+                    databaseError.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            documentForm.reset();
+
+            showV2Message(
+                "Document uploaded successfully."
+            );
+
+            loadDocuments();
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// LOAD DOCUMENTS
+// ------------------------------------------------------------
+
+async function loadDocuments() {
 
     const {
-        data: students,
+        data,
         error
     } =
         await supabase
-            .from("students")
-            .select(`
-                id,
-                user_id,
-                admission_number,
-                class,
-                optional_subjects,
-                created_at
-            `)
+            .from("documents")
+            .select("*")
             .order(
                 "created_at",
                 {
@@ -706,436 +1689,115 @@ async function loadStudents() {
 
     if (error) {
 
-        console.error(
-            "Student error:",
-            error
-        );
-
-        studentTable.innerHTML = `
-            <tr>
-                <td colspan="5" class="sa-empty">
-                    Failed to load students.
-                </td>
-            </tr>
-        `;
+        console.error(error);
 
         return;
+
     }
 
-    const studentList =
-        students || [];
-
-    totalStudents.textContent =
-        studentList.length;
-
-    if (
-        studentList.length === 0
-    ) {
-
-        studentTable.innerHTML = `
-            <tr>
-                <td colspan="5" class="sa-empty">
-                    No students registered yet.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    const userIds =
-        studentList
-            .map(
-                student =>
-                    student.user_id
-            )
-            .filter(Boolean);
-
-    let profiles = [];
-
-    if (userIds.length > 0) {
-
-        const result =
-            await supabase
-                .from("profiles")
-                .select(
-                    "id, full_name, username, email"
-                )
-                .in(
-                    "id",
-                    userIds
-                );
-
-        if (result.error) {
-
-            console.error(
-                "Student profile error:",
-                result.error
-            );
-
-        } else {
-
-            profiles =
-                result.data || [];
-
-        }
-    }
-
-    const profileMap = {};
-
-    profiles.forEach(
-        profile => {
-
-            profileMap[
-                profile.id
-            ] = profile;
-
-        }
+    renderDocuments(
+        data || []
     );
 
-    studentTable.innerHTML =
-        studentList.map(
-            student => {
+}
 
-                const profile =
-                    profileMap[
-                        student.user_id
-                    ] || {};
+
+// ------------------------------------------------------------
+// DISPLAY DOCUMENTS
+// ------------------------------------------------------------
+
+function renderDocuments(
+    documents
+) {
+
+    if (!documentsTable) return;
+
+    if (!documents.length) {
+
+        documentsTable.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    No documents uploaded.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    documentsTable.innerHTML =
+        documents.map(
+            document => {
 
                 return `
-
                     <tr>
 
                         <td>
                             ${escapeHTML(
-                                student.admission_number ||
-                                "—"
+                                document.title
                             )}
                         </td>
 
                         <td>
                             ${escapeHTML(
-                                profile.full_name ||
-                                "—"
+                                document.category
                             )}
                         </td>
 
                         <td>
-                            ${escapeHTML(
-                                student.class ||
-                                "—"
+                            ${formatDate(
+                                document.created_at
                             )}
                         </td>
 
                         <td>
-                            ${formatSubjects(
-                                student.optional_subjects
-                            )}
-                        </td>
 
-                        <td>
-                            ${escapeHTML(
-                                profile.username ||
-                                "—"
-                            )}
-                        </td>
-
-                    </tr>
-
-                `;
-            }
-        ).join("");
-}
-
-
-/* ==========================================
-   APPROVE ADMIN
-========================================== */
-
-async function approveAdmin(
-    requestId
-) {
-
-    const confirmed =
-        window.confirm(
-            "Approve this administrator request?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    try {
-
-        showMessage(
-            "Approving administrator..."
-        );
-
-        const {
-            data,
-            error
-        } =
-            await supabase.rpc(
-                "approve_admin_request",
-                {
-                    request_id:
-                        requestId
-                }
-            );
-
-        if (error) {
-            throw error;
-        }
-
-        console.log(
-            "Approval result:",
-            data
-        );
-
-        showMessage(
-            "Administrator approved successfully.",
-            "success"
-        );
-
-        await loadAdminRequests();
-
-        await loadApprovedAdmins();
-
-        await loadPasswordUsers();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Approval error:",
-            error
-        );
-
-        showMessage(
-            "Approval failed: " +
-            (
-                error.message ||
-                "Unknown error"
-            ),
-            "error"
-        );
-    }
-}
-
-
-/* ==========================================
-   REJECT ADMIN
-========================================== */
-
-async function rejectAdmin(
-    requestId
-) {
-
-    const confirmed =
-        window.confirm(
-            "Reject this administrator request?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    try {
-
-        const {
-            error
-        } =
-            await supabase
-                .from("admin_requests")
-                .update({
-                    status:
-                        "rejected"
-                })
-                .eq(
-                    "id",
-                    requestId
-                );
-
-        if (error) {
-            throw error;
-        }
-
-        showMessage(
-            "Administrator request rejected.",
-            "success"
-        );
-
-        await loadAdminRequests();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Reject error:",
-            error
-        );
-
-        showMessage(
-            "Rejection failed: " +
-            (
-                error.message ||
-                "Unknown error"
-            ),
-            "error"
-        );
-    }
-}
-
-
-/* ==========================================
-   ADMIN REQUEST BUTTONS
-========================================== */
-
-adminRequests.addEventListener(
-    "click",
-    async event => {
-
-        const button =
-            event.target.closest(
-                "button[data-action]"
-            );
-
-        if (!button) {
-            return;
-        }
-
-        const action =
-            button.dataset.action;
-
-        const id =
-            button.dataset.id;
-
-        button.disabled =
-            true;
-
-        if (
-            action === "approve"
-        ) {
-
-            await approveAdmin(id);
-
-        }
-
-        if (
-            action === "reject"
-        ) {
-
-            await rejectAdmin(id);
-
-        }
-
-        button.disabled =
-            false;
-    }
-);
-
-
-/* ==========================================
-   GRADING TABLE
-========================================== */
-
-function renderGradingTable(
-    grades
-) {
-
-    if (
-        !grades ||
-        grades.length === 0
-    ) {
-
-        gradingTable.innerHTML = `
-            <tr>
-                <td colspan="5" class="sa-empty">
-                    No grading levels configured.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    grades.sort(
-        (a, b) =>
-            Number(b.min_mark) -
-            Number(a.min_mark)
-    );
-
-    gradingTable.innerHTML =
-        grades.map(
-            (grade, index) => {
-
-                return `
-
-                    <tr data-row="${index}">
-
-                        <td>
-
-                            <input
-                                class="grading-input"
-                                data-field="grade"
-                                value="${escapeHTML(
-                                    grade.grade
-                                )}"
-                                maxlength="20">
-
-                        </td>
-
-                        <td>
-
-                            <input
-                                class="grading-input grade-number"
-                                data-field="min_mark"
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="1"
-                                value="${Number(
-                                    grade.min_mark
-                                )}">
-
-                        </td>
-
-                        <td>
-
-                            <input
-                                class="grading-input grade-points"
-                                data-field="points"
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="1"
-                                value="${Number(
-                                    grade.points
-                                )}">
-
-                        </td>
-
-                        <td>
-
-                            <input
-                                class="grading-input"
-                                data-field="description"
-                                value="${escapeHTML(
-                                    grade.description
-                                )}">
+                            ${
+                                document.published
+
+                                ? `
+                                    <span
+                                        class="status published">
+                                        Published
+                                    </span>
+                                `
+
+                                : `
+                                    <span
+                                        class="status unpublished">
+                                        Hidden
+                                    </span>
+                                `
+                            }
 
                         </td>
 
                         <td>
 
                             <button
-                                type="button"
-                                class="sa-btn danger delete-grade"
-                                data-id="${escapeHTML(
-                                    grade.id || ""
-                                )}">
+                                class="secondary-button"
+                                onclick="toggleDocument(
+                                    '${document.id}',
+                                    ${document.published}
+                                )">
+
+                                ${
+                                    document.published
+                                    ? "Hide"
+                                    : "Publish"
+                                }
+
+                            </button>
+
+                            <button
+                                class="danger-button"
+                                onclick="deleteDocument(
+                                    '${document.id}',
+                                    '${escapeAttribute(
+                                        document.storage_path
+                                    )}'
+                                )">
 
                                 Delete
 
@@ -1144,38 +1806,218 @@ function renderGradingTable(
                         </td>
 
                     </tr>
-
                 `;
+
             }
         ).join("");
+
 }
 
 
-/* ==========================================
-   LOAD GRADING SYSTEM
-========================================== */
+// ------------------------------------------------------------
+// TOGGLE DOCUMENT
+// ------------------------------------------------------------
 
-async function loadGradingSystem() {
+window.toggleDocument =
+    async function (
+        id,
+        current
+    ) {
 
-    gradingTable.innerHTML = `
-        <tr>
-            <td colspan="5" class="sa-empty">
-                Loading grading system...
-            </td>
-        </tr>
-    `;
+        const {
+            error
+        } =
+            await supabase
+                .from("documents")
+                .update({
+                    published:
+                        !current
+                })
+                .eq("id", id);
+
+        if (error) {
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        loadDocuments();
+
+    };
+
+
+// ------------------------------------------------------------
+// DELETE DOCUMENT
+// ------------------------------------------------------------
+
+window.deleteDocument =
+    async function (
+        id,
+        storagePath
+    ) {
+
+        const confirmed =
+            confirm(
+                "Delete this document?"
+            );
+
+        if (!confirmed) return;
+
+        const {
+            error: storageError
+        } =
+            await supabase
+                .storage
+                .from(
+                    "grade-hub-documents"
+                )
+                .remove([
+                    storagePath
+                ]);
+
+        if (storageError) {
+
+            console.warn(
+                storageError
+            );
+
+        }
+
+        const {
+            error
+        } =
+            await supabase
+                .from("documents")
+                .delete()
+                .eq("id", id);
+
+        if (error) {
+
+            showV2Message(
+                error.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+        showV2Message(
+            "Document deleted."
+        );
+
+        loadDocuments();
+
+    };
+
+
+// ------------------------------------------------------------
+// ANNOUNCEMENT
+// ------------------------------------------------------------
+
+const announcementForm =
+    document.getElementById(
+        "announcementForm"
+    );
+
+if (announcementForm) {
+
+    announcementForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const title =
+                document
+                    .getElementById(
+                        "announcementTitle"
+                    )
+                    .value
+                    .trim();
+
+            const message =
+                document
+                    .getElementById(
+                        "announcementMessage"
+                    )
+                    .value
+                    .trim();
+
+            if (!title || !message) {
+
+                showV2Message(
+                    "Enter a title and message.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "announcements"
+                    )
+                    .insert({
+                        title,
+                        message,
+                        published:
+                            true
+                    });
+
+            if (error) {
+
+                console.error(error);
+
+                showV2Message(
+                    error.message,
+                    "error"
+                );
+
+                return;
+
+            }
+
+            announcementForm.reset();
+
+            showV2Message(
+                "Announcement published."
+            );
+
+            loadAnnouncements();
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// LOAD ANNOUNCEMENTS
+// ------------------------------------------------------------
+
+async function loadAnnouncements() {
 
     const {
         data,
         error
     } =
         await supabase
-            .from("grading_system")
-            .select(
-                "id, grade, min_mark, points, description"
+            .from(
+                "announcements"
             )
+            .select("*")
             .order(
-                "min_mark",
+                "created_at",
                 {
                     ascending: false
                 }
@@ -1183,173 +2025,116 @@ async function loadGradingSystem() {
 
     if (error) {
 
-        console.error(
-            "Grading system error:",
-            error
-        );
-
-        gradingTable.innerHTML = `
-            <tr>
-                <td colspan="5" class="sa-empty">
-                    Failed to load grading system.
-                </td>
-            </tr>
-        `;
+        console.error(error);
 
         return;
+
     }
 
-    renderGradingTable(
+    renderAnnouncements(
         data || []
     );
+
 }
 
 
-/* ==========================================
-   ADD GRADE
-========================================== */
+// ------------------------------------------------------------
+// DISPLAY ANNOUNCEMENTS
+// ------------------------------------------------------------
 
-addGradeButton.addEventListener(
-    "click",
-    function() {
+function renderAnnouncements(
+    announcements
+) {
 
-        const rows =
-            Array.from(
-                gradingTable.querySelectorAll(
-                    "tr[data-row]"
-                )
-            );
+    if (!announcementsList) return;
 
-        const newRow =
-            document.createElement(
-                "tr"
-            );
+    if (!announcements.length) {
 
-        newRow.dataset.row =
-            rows.length;
-
-        newRow.dataset.new =
-            "true";
-
-        newRow.innerHTML = `
-
-            <td>
-
-                <input
-                    class="grading-input"
-                    data-field="grade"
-                    value="NEW"
-                    maxlength="20">
-
-            </td>
-
-            <td>
-
-                <input
-                    class="grading-input grade-number"
-                    data-field="min_mark"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value="0">
-
-            </td>
-
-            <td>
-
-                <input
-                    class="grading-input grade-points"
-                    data-field="points"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value="1">
-
-            </td>
-
-            <td>
-
-                <input
-                    class="grading-input"
-                    data-field="description"
-                    value="New Grade">
-
-            </td>
-
-            <td>
-
-                <button
-                    type="button"
-                    class="sa-btn danger delete-grade">
-
-                    Delete
-
-                </button>
-
-            </td>
-
+        announcementsList.innerHTML = `
+            <div class="sa-card">
+                <div class="empty">
+                    No announcements.
+                </div>
+            </div>
         `;
 
-        gradingTable.appendChild(
-            newRow
-        );
+        return;
+
     }
-);
+
+    announcementsList.innerHTML =
+        announcements.map(
+            announcement => {
+
+                return `
+                    <div class="sa-card"
+                         style="margin-bottom:12px;">
+
+                        <div class="sa-card-body">
+
+                            <h3>
+                                ${escapeHTML(
+                                    announcement.title
+                                )}
+                            </h3>
+
+                            <p>
+                                ${escapeHTML(
+                                    announcement.message
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    announcement.created_at
+                                )}
+                            </small>
+
+                            <br>
+                            <br>
+
+                            <button
+                                class="danger-button"
+                                onclick="deleteAnnouncement(
+                                    '${announcement.id}'
+                                )">
+
+                                Delete
+
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+            }
+        ).join("");
+
+}
 
 
-/* ==========================================
-   DELETE GRADE
-========================================== */
+// ------------------------------------------------------------
+// DELETE ANNOUNCEMENT
+// ------------------------------------------------------------
 
-gradingTable.addEventListener(
-    "click",
-    async event => {
-
-        const button =
-            event.target.closest(
-                ".delete-grade"
-            );
-
-        if (!button) {
-            return;
-        }
-
-        const row =
-            button.closest("tr");
-
-        if (!row) {
-            return;
-        }
-
-        const id =
-            button.dataset.id;
+window.deleteAnnouncement =
+    async function (id) {
 
         const confirmed =
-            window.confirm(
-                "Delete this grading level?"
+            confirm(
+                "Delete this announcement?"
             );
 
-        if (!confirmed) {
-            return;
-        }
-
-        if (!id) {
-
-            row.remove();
-
-            return;
-        }
-
-        button.disabled =
-            true;
+        if (!confirmed) return;
 
         const {
             error
         } =
             await supabase
-                .from("grading_system")
+                .from(
+                    "announcements"
+                )
                 .delete()
                 .eq(
                     "id",
@@ -1358,1029 +2143,147 @@ gradingTable.addEventListener(
 
         if (error) {
 
-            console.error(
-                "Delete grade error:",
-                error
-            );
-
-            showMessage(
-                "Could not delete grade: " +
+            showV2Message(
                 error.message,
                 "error"
             );
 
-            button.disabled =
-                false;
-
             return;
+
         }
 
-        row.remove();
-
-        showMessage(
-            "Grading level deleted.",
-            "success"
-        );
-    }
-);
-
-
-/* ==========================================
-   READ GRADING TABLE
-========================================== */
-
-function readGradingTable() {
-
-    const rows =
-        Array.from(
-            gradingTable.querySelectorAll(
-                "tr[data-row]"
-            )
+        showV2Message(
+            "Announcement deleted."
         );
 
-    const grades = [];
+        loadAnnouncements();
 
-    for (
-        const row of rows
-    ) {
+    };
 
-        const gradeInput =
-            row.querySelector(
-                '[data-field="grade"]'
-            );
 
-        const markInput =
-            row.querySelector(
-                '[data-field="min_mark"]'
-            );
+// ------------------------------------------------------------
+// HELPERS
+// ------------------------------------------------------------
 
-        const pointsInput =
-            row.querySelector(
-                '[data-field="points"]'
-            );
+function escapeHTML(value) {
 
-        const descriptionInput =
-            row.querySelector(
-                '[data-field="description"]'
-            );
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
-        if (
-            !gradeInput ||
-            !markInput ||
-            !pointsInput ||
-            !descriptionInput
-        ) {
-            continue;
-        }
-
-        const grade =
-            gradeInput.value.trim();
-
-        const minMark =
-            Number(
-                markInput.value
-            );
-
-        const points =
-            Number(
-                pointsInput.value
-            );
-
-        const description =
-            descriptionInput
-                .value
-                .trim();
-
-        if (!grade) {
-
-            throw new Error(
-                "Every grade must have a name."
-            );
-        }
-
-        if (
-            Number.isNaN(minMark) ||
-            minMark < 0 ||
-            minMark > 100
-        ) {
-
-            throw new Error(
-                `Invalid minimum mark for ${grade}.`
-            );
-        }
-
-        if (
-            !Number.isInteger(minMark)
-        ) {
-
-            throw new Error(
-                `Minimum mark for ${grade} must be a whole number.`
-            );
-        }
-
-        if (
-            Number.isNaN(points) ||
-            points < 0
-        ) {
-
-            throw new Error(
-                `Invalid points for ${grade}.`
-            );
-        }
-
-        if (
-            !Number.isInteger(points)
-        ) {
-
-            throw new Error(
-                `Points for ${grade} must be a whole number.`
-            );
-        }
-
-        if (!description) {
-
-            throw new Error(
-                `Enter a description for ${grade}.`
-            );
-        }
-
-        grades.push({
-
-            grade,
-
-            min_mark:
-                minMark,
-
-            points,
-
-            description
-
-        });
-    }
-
-    return grades;
 }
 
 
-/* ==========================================
-   SAVE GRADING SYSTEM
-========================================== */
-
-saveGradesButton.addEventListener(
-    "click",
-    async function() {
-
-        try {
-
-            saveGradesButton.disabled =
-                true;
-
-            saveGradesButton.textContent =
-                "Saving...";
-
-            const grades =
-                readGradingTable();
-
-            if (
-                grades.length === 0
-            ) {
-
-                throw new Error(
-                    "Add at least one grading level."
-                );
-            }
-
-            const names =
-                grades.map(
-                    grade =>
-                        grade.grade
-                            .toUpperCase()
-                );
-
-            const uniqueNames =
-                new Set(names);
-
-            if (
-                uniqueNames.size !==
-                names.length
-            ) {
-
-                throw new Error(
-                    "Grade names must be unique."
-                );
-            }
-
-            const marks =
-                grades.map(
-                    grade =>
-                        Number(
-                            grade.min_mark
-                        )
-                );
-
-            const uniqueMarks =
-                new Set(marks);
-
-            if (
-                uniqueMarks.size !==
-                marks.length
-            ) {
-
-                throw new Error(
-                    "Minimum marks must be unique."
-                );
-            }
-
-            const {
-                error: deleteError
-            } =
-                await supabase
-                    .from(
-                        "grading_system"
-                    )
-                    .delete()
-                    .neq(
-                        "grade",
-                        "__never__"
-                    );
-
-            if (deleteError) {
-                throw deleteError;
-            }
-
-            const {
-                error: insertError
-            } =
-                await supabase
-                    .from(
-                        "grading_system"
-                    )
-                    .insert(
-                        grades
-                    );
-
-            if (insertError) {
-                throw insertError;
-            }
-
-            showMessage(
-                "Grading system saved successfully.",
-                "success"
-            );
-
-            await loadGradingSystem();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Save grading error:",
-                error
-            );
-
-            showMessage(
-                "Could not save grading system: " +
-                (
-                    error.message ||
-                    "Unknown error"
-                ),
-                "error"
-            );
-
-        }
-
-        finally {
-
-            saveGradesButton.disabled =
-                false;
-
-            saveGradesButton.textContent =
-                "Save Grading System";
-
-        }
-    }
-);
-
-
-/* ==========================================
-   RESET DEFAULT GRADING
-========================================== */
-
-resetGradesButton.addEventListener(
-    "click",
-    async function() {
-
-        const confirmed =
-            window.confirm(
-                "Reset the grading system to the default CBC configuration?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-
-            resetGradesButton.disabled =
-                true;
-
-            resetGradesButton.textContent =
-                "Resetting...";
-
-            const {
-                error: deleteError
-            } =
-                await supabase
-                    .from(
-                        "grading_system"
-                    )
-                    .delete()
-                    .neq(
-                        "grade",
-                        "__never__"
-                    );
-
-            if (deleteError) {
-                throw deleteError;
-            }
-
-            const {
-                error: insertError
-            } =
-                await supabase
-                    .from(
-                        "grading_system"
-                    )
-                    .insert(
-                        DEFAULT_GRADES
-                    );
-
-            if (insertError) {
-                throw insertError;
-            }
-
-            showMessage(
-                "Default CBC grading restored.",
-                "success"
-            );
-
-            await loadGradingSystem();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Reset grading error:",
-                error
-            );
-
-            showMessage(
-                "Could not reset grading system: " +
-                (
-                    error.message ||
-                    "Unknown error"
-                ),
-                "error"
-            );
-
-        }
-
-        finally {
-
-            resetGradesButton.disabled =
-                false;
-
-            resetGradesButton.textContent =
-                "Reset Defaults";
-
-        }
-    }
-);
-
-
-/* ==========================================
-   LOAD PASSWORD USERS
-========================================== */
-
-async function loadPasswordUsers() {
-
-    passwordUser.innerHTML = `
-        <option value="">
-            Loading accounts...
-        </option>
-    `;
-
-    try {
-
-        /*
-         * Get students
-         */
-
-        const {
-            data: students,
-            error: studentError
-        } =
-            await supabase
-                .from("students")
-                .select(
-                    "user_id, admission_number"
-                );
-
-        if (studentError) {
-            throw studentError;
-        }
-
-
-        /*
-         * Get approved administrators
-         */
-
-        const {
-            data: admins,
-            error: adminError
-        } =
-            await supabase
-                .from("user_roles")
-                .select(
-                    "user_id, role, approved"
-                )
-                .eq(
-                    "role",
-                    "admin"
-                )
-                .eq(
-                    "approved",
-                    true
-                );
-
-        if (adminError) {
-            throw adminError;
-        }
-
-
-        const studentList =
-            students || [];
-
-        const adminList =
-            admins || [];
-
-
-        /*
-         * Collect IDs
-         */
-
-        const userIds = [
-
-            ...studentList.map(
-                student =>
-                    student.user_id
-            ),
-
-            ...adminList.map(
-                admin =>
-                    admin.user_id
-            )
-
-        ].filter(Boolean);
-
-
-        const uniqueUserIds =
-            [
-                ...new Set(
-                    userIds
-                )
-            ];
-
-
-        let profiles = [];
-
-
-        if (
-            uniqueUserIds.length > 0
-        ) {
-
-            const {
-                data,
-                error
-            } =
-                await supabase
-                    .from("profiles")
-                    .select(
-                        "id, full_name, username, email"
-                    )
-                    .in(
-                        "id",
-                        uniqueUserIds
-                    );
-
-            if (error) {
-                throw error;
-            }
-
-            profiles =
-                data || [];
-        }
-
-
-        /*
-         * Profile map
-         */
-
-        const profileMap = {};
-
-        profiles.forEach(
-            profile => {
-
-                profileMap[
-                    profile.id
-                ] = profile;
-
-            }
+function escapeAttribute(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+        .replace(
+            /'/g,
+            "\\'"
         );
 
-
-        /*
-         * Reset dropdown
-         */
-
-        passwordUser.innerHTML = `
-            <option value="">
-                Select account
-            </option>
-        `;
-
-
-        /*
-         * Students
-         */
-
-        studentList.forEach(
-            student => {
-
-                if (!student.user_id) {
-                    return;
-                }
-
-                const profile =
-                    profileMap[
-                        student.user_id
-                    ] || {};
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value =
-                    student.user_id;
-
-                option.textContent =
-                    `Student — ${
-                        profile.full_name ||
-                        profile.username ||
-                        student.admission_number ||
-                        "Unknown"
-                    }`;
-
-                passwordUser.appendChild(
-                    option
-                );
-            }
-        );
-
-
-        /*
-         * Administrators
-         */
-
-        adminList.forEach(
-            admin => {
-
-                if (!admin.user_id) {
-                    return;
-                }
-
-                const profile =
-                    profileMap[
-                        admin.user_id
-                    ] || {};
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value =
-                    admin.user_id;
-
-                option.textContent =
-                    `Administrator — ${
-                        profile.full_name ||
-                        profile.username ||
-                        profile.email ||
-                        "Unknown"
-                    }`;
-
-                passwordUser.appendChild(
-                    option
-                );
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Password users error:",
-            error
-        );
-
-        passwordUser.innerHTML = `
-            <option value="">
-                Failed to load accounts
-            </option>
-        `;
-
-        showMessage(
-            "Could not load password accounts: " +
-            (
-                error.message ||
-                "Unknown error"
-            ),
-            "error"
-        );
-    }
 }
 
 
-/* ==========================================
-   CHANGE USER PASSWORD
-========================================== */
+function formatDate(
+    value
+) {
 
-async function changeUserPassword() {
+    if (!value) return "-";
 
-    const userId =
-        passwordUser.value;
-
-    const password =
-        newPassword.value.trim();
-
-
-    /*
-     * Validate account
-     */
-
-    if (!userId) {
-
-        showMessage(
-            "Select a student or administrator.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    /*
-     * Validate password
-     */
-
-    if (!password) {
-
-        showMessage(
-            "Enter a new password.",
-            "error"
-        );
-
-        return;
-    }
-
+    const date =
+        new Date(value);
 
     if (
-        password.length < 6
+        Number.isNaN(
+            date.getTime()
+        )
     ) {
 
-        showMessage(
-            "The password must contain at least 6 characters.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    /*
-     * Confirm
-     */
-
-    const confirmed =
-        window.confirm(
-            "Are you sure you want to change this user's password?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        changePasswordButton.disabled =
-            true;
-
-        changePasswordButton.textContent =
-            "Changing...";
-
-
-        /*
-         * Get current session.
-         *
-         * This is important because
-         * the Edge Function needs
-         * the logged-in user's token.
-         */
-
-        const {
-            data: sessionData,
-            error: sessionError
-        } =
-            await supabase.auth.getSession();
-
-        if (sessionError) {
-            throw sessionError;
-        }
-
-        const session =
-            sessionData?.session;
-
-        if (!session) {
-
-            throw new Error(
-                "Your login session has expired. Please sign in again."
-            );
-        }
-
-
-        /*
-         * Call Edge Function
-         */
-
-        const {
-            data,
-            error
-        } =
-            await supabase.functions.invoke(
-                "admin-change-password",
-                {
-                    body: {
-
-                        user_id:
-                            userId,
-
-                        new_password:
-                            password
-
-                    }
-                }
-            );
-
-
-        /*
-         * Handle function error
-         */
-
-        if (error) {
-
-            console.error(
-                "Edge Function error:",
-                error
-            );
-
-            throw new Error(
-                error.message ||
-                "Failed to contact the password service."
-            );
-        }
-
-
-        /*
-         * Handle application error
-         */
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.error ||
-                "Password change failed."
-            );
-        }
-
-
-        /*
-         * Success
-         */
-
-        showMessage(
-            "Password changed successfully.",
-            "success"
-        );
-
-
-        /*
-         * Clear fields
-         */
-
-        newPassword.value =
-            "";
-
-        passwordUser.value =
-            "";
+        return "-";
 
     }
 
-    catch (error) {
+    return date.toLocaleDateString();
 
-        console.error(
-            "Password change error:",
-            error
-        );
-
-        showMessage(
-            "Could not change password: " +
-            (
-                error.message ||
-                "Unknown error"
-            ),
-            "error"
-        );
-
-    }
-
-    finally {
-
-        changePasswordButton.disabled =
-            false;
-
-        changePasswordButton.textContent =
-            "Change Password";
-
-    }
 }
 
 
-/* ==========================================
-   PASSWORD BUTTON
-========================================== */
+// ------------------------------------------------------------
+// INITIALISE GRADE HUB V2
+// ------------------------------------------------------------
 
-if (changePasswordButton) {
+async function initialiseGradeHubV2() {
 
-    changePasswordButton.addEventListener(
+    try {
+
+        await loadSubjects();
+
+        await loadCombinations();
+
+        await loadV2Students();
+
+        await loadExams();
+
+        await loadDocuments();
+
+        await loadAnnouncements();
+
+    } catch (error) {
+
+        console.error(
+            "Grade Hub V2 initialization error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ------------------------------------------------------------
+// REFRESH
+// ------------------------------------------------------------
+
+const refreshDashboard =
+    document.getElementById(
+        "refreshDashboard"
+    );
+
+if (refreshDashboard) {
+
+    refreshDashboard.addEventListener(
         "click",
-        changeUserPassword
+        initialiseGradeHubV2
     );
 
 }
 
 
-/* ==========================================
-   REFRESH
-========================================== */
-
-refreshButton.addEventListener(
-    "click",
-    async function() {
-
-        refreshButton.disabled =
-            true;
-
-        refreshButton.textContent =
-            "Refreshing...";
-
-        await loadDashboard();
-
-        refreshButton.disabled =
-            false;
-
-        refreshButton.textContent =
-            "Refresh";
-    }
-);
-
-
-/* ==========================================
-   LOGOUT
-========================================== */
-
-logoutButton.addEventListener(
-    "click",
-    async function() {
-
-        const confirmed =
-            window.confirm(
-                "Are you sure you want to sign out?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        logoutButton.disabled =
-            true;
-
-        logoutButton.textContent =
-            "Signing out...";
-
-        const {
-            error
-        } =
-            await supabase.auth.signOut();
-
-        if (error) {
-
-            console.error(
-                "Sign out error:",
-                error
-            );
-
-            showMessage(
-                "Sign out failed: " +
-                error.message,
-                "error"
-            );
-
-            logoutButton.disabled =
-                false;
-
-            logoutButton.textContent =
-                "Sign out";
-
-            return;
-        }
-
-        window.location.href =
-            "index.html";
-    }
-);
-
-
-/* ==========================================
-   MAIN DASHBOARD
-========================================== */
-
-async function loadDashboard() {
-
-    try {
-
-        const user =
-            await checkSuperAdmin();
-
-        if (!user) {
-            return;
-        }
-
-        await Promise.all([
-
-            loadApprovedAdmins(),
-
-            loadAdminRequests(),
-
-            loadStudents(),
-
-            loadGradingSystem(),
-
-            loadPasswordUsers()
-
-        ]);
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Dashboard error:",
-            error
-        );
-
-        showMessage(
-            "Dashboard error: " +
-            (
-                error.message ||
-                "Unknown error"
-            ),
-            "error"
-        );
-    }
-}
-
-
-/* ==========================================
-   START DASHBOARD
-========================================== */
-
-loadDashboard();
+initialiseGradeHubV2();
