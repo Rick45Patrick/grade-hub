@@ -1,36 +1,36 @@
 
 import { supabase } from "./supabase.js";
 
-const $ = (id) => document.getElementById(id);
+const getElement = (id) => document.getElementById(id);
 
-const sectionNames = [
-  "overview",
-  "staff",
-  "classes",
-  "subjects",
-  "exams",
-  "documents",
-];
+const SECTION_TITLES = {
+  overview: "Overview",
+  staff: "Staff Accounts",
+  classes: "Classes",
+  subjects: "Subjects",
+  exams: "Exams & Results",
+  documents: "Newsletters",
+};
 
-function setMessage(id, text, type = "") {
-  const element = $(id);
+function showMessage(id, message, type = "") {
+  const element = getElement(id);
   if (!element) return;
 
-  element.textContent = text;
+  element.textContent = message;
   element.className = "message";
 
-  if (type) element.classList.add(type);
-}
-
-function setCount(id, value) {
-  const element = $(id);
-  if (element) {
-    element.textContent = value === null ? "Unavailable" : String(value);
+  if (type) {
+    element.classList.add(type);
   }
 }
 
+function setText(id, value) {
+  const element = getElement(id);
+  if (element) element.textContent = value;
+}
+
 function showSection(name) {
-  if (!sectionNames.includes(name)) return;
+  if (!Object.hasOwn(SECTION_TITLES, name)) return;
 
   document.querySelectorAll(".section").forEach((section) => {
     section.classList.toggle("active", section.id === `section-${name}`);
@@ -40,17 +40,9 @@ function showSection(name) {
     button.classList.toggle("active", button.dataset.section === name);
   });
 
-  const titles = {
-    overview: "Overview",
-    staff: "Staff Accounts",
-    classes: "Classes",
-    subjects: "Subjects",
-    exams: "Exams & Results",
-    documents: "Newsletters",
-  };
+  setText("pageTitle", SECTION_TITLES[name]);
 
-  $("pageTitle").textContent = titles[name];
-  $("sidebar").classList.remove("open");
+  getElement("sidebar")?.classList.remove("open");
 }
 
 async function verifySuperAdmin() {
@@ -76,13 +68,20 @@ async function verifySuperAdmin() {
     profile.role !== "super_admin" ||
     profile.is_active !== true
   ) {
+    console.error(
+      "Super Admin verification failed:",
+      profileError?.message || "Account lacks Super Admin access."
+    );
+
     await supabase.auth.signOut();
     window.location.replace("../index.html");
     return false;
   }
 
-  $("welcomeText").textContent =
-    `Signed in as ${profile.full_name || user.email}`;
+  setText(
+    "welcomeText",
+    `Signed in as ${profile.full_name || user.email}`
+  );
 
   return true;
 }
@@ -100,7 +99,7 @@ async function countRecords(table, filters = []) {
   const { count, error } = await query;
 
   if (error) {
-    console.error(`Could not count ${table}:`, error.message);
+    console.error(`Count failed for ${table}:`, error.message);
     return null;
   }
 
@@ -108,9 +107,9 @@ async function countRecords(table, filters = []) {
 }
 
 async function loadOverview() {
-  setMessage("overviewMessage", "Loading overview...");
+  showMessage("overviewMessage", "Loading overview...");
 
-  const results = await Promise.all([
+  const [students, admins, teachers, classes] = await Promise.all([
     countRecords("profiles", [["role", "student"]]),
     countRecords("profiles", [
       ["role", "admin"],
@@ -123,73 +122,83 @@ async function loadOverview() {
     countRecords("classes"),
   ]);
 
-  setCount("totalStudents", results[0]);
-  setCount("totalAdmins", results[1]);
-  setCount("totalTeachers", results[2]);
-  setCount("totalClasses", results[3]);
+  setText("totalStudents", students === null ? "Unavailable" : students);
+  setText("totalAdmins", admins === null ? "Unavailable" : admins);
+  setText("totalTeachers", teachers === null ? "Unavailable" : teachers);
+  setText("totalClasses", classes === null ? "Unavailable" : classes);
 
-  const failed = results.some((value) => value === null);
+  const failed = [students, admins, teachers, classes].some(
+    (value) => value === null
+  );
 
-  setMessage(
+  showMessage(
     "overviewMessage",
     failed
-      ? "Some counts could not load. Check your database permissions and RLS policies."
+      ? "Some totals could not load. Check your Supabase database policies."
       : "Overview updated.",
     failed ? "error" : "success"
   );
 }
 
-function addTextCell(row, value) {
+function appendCell(row, value) {
   const cell = document.createElement("td");
   cell.textContent = value ?? "";
   row.appendChild(cell);
 }
 
 async function loadStaff() {
-  const tbody = $("staffTableBody");
+  const tbody = getElement("staffTableBody");
+
+  if (!tbody) {
+    console.error(
+      'Missing HTML element "staffTableBody". Check superadmin.html.'
+    );
+    return;
+  }
+
   tbody.replaceChildren();
+  showMessage("staffMessage", "Loading staff...");
 
-  setMessage("staffMessage", "Loading staff...");
-
-  const { data, error } = await supabase
+  const { data: staff, error } = await supabase
     .from("profiles")
     .select("id, full_name, role, is_active")
     .in("role", ["admin", "class_teacher"])
     .order("full_name", { ascending: true });
 
   if (error) {
-    console.error("Staff query failed:", error.message);
+    console.error("Staff loading failed:", error.message);
 
     const row = document.createElement("tr");
-    addTextCell(row, "Unable to load staff. Check your RLS policies.");
+    appendCell(row, "Unable to load staff. Check your RLS policies.");
     tbody.appendChild(row);
 
-    setMessage("staffMessage", "Could not load staff.", "error");
+    showMessage("staffMessage", error.message, "error");
     return;
   }
 
-  if (!data || data.length === 0) {
+  if (!staff || staff.length === 0) {
     const row = document.createElement("tr");
-    addTextCell(row, "No staff accounts found.");
+    appendCell(row, "No staff accounts found.");
     tbody.appendChild(row);
-    setMessage("staffMessage", "");
+
+    showMessage("staffMessage", "No staff accounts found.");
     return;
   }
 
-  for (const staff of data) {
+  for (const person of staff) {
     const row = document.createElement("tr");
 
-    addTextCell(row, staff.full_name || "Unnamed staff");
-    addTextCell(
+    appendCell(row, person.full_name || "Unnamed staff");
+    appendCell(
       row,
-      staff.role === "admin" ? "Administrator" : "Class Teacher"
+      person.role === "admin" ? "Administrator" : "Class Teacher"
     );
 
     const statusCell = document.createElement("td");
     const badge = document.createElement("span");
 
-    badge.className = staff.is_active ? "status" : "status inactive";
-    badge.textContent = staff.is_active ? "Active" : "Inactive";
+    badge.className = person.is_active ? "status" : "status inactive";
+    badge.textContent = person.is_active ? "Active" : "Inactive";
 
     statusCell.appendChild(badge);
     row.appendChild(statusCell);
@@ -197,28 +206,47 @@ async function loadStaff() {
     tbody.appendChild(row);
   }
 
-  setMessage("staffMessage", `${data.length} staff account(s) loaded.`);
+  showMessage("staffMessage", `${staff.length} staff account(s) loaded.`);
 }
 
 async function createStaff(event) {
   event.preventDefault();
 
-  const button = $("createStaffButton");
-  const form = $("createStaffForm");
+  const form = getElement("createStaffForm");
+  const button = getElement("createStaffButton");
 
-  const name = $("staffName").value.trim();
-  const email = $("staffEmail").value.trim();
-  const role = $("staffRole").value;
-  const password = $("staffPassword").value;
+  if (!form || !button) {
+    console.error("Staff creation form or submit button is missing.");
+    return;
+  }
 
-  setMessage("createStaffMessage", "");
+  const name = getElement("staffName")?.value.trim();
+  const email = getElement("staffEmail")?.value.trim();
+  const role = getElement("staffRole")?.value;
+  const password = getElement("staffPassword")?.value;
 
-  if (password.length < 12 || password.length > 72) {
-    setMessage(
+  showMessage("createStaffMessage", "");
+
+  if (!name || !email || !role || !password) {
+    showMessage(
       "createStaffMessage",
-      "Use a temporary password between 12 and 72 characters.",
+      "Complete all fields before submitting.",
       "error"
     );
+    return;
+  }
+
+  if (password.length < 12 || password.length > 72) {
+    showMessage(
+      "createStaffMessage",
+      "The temporary password must be between 12 and 72 characters.",
+      "error"
+    );
+    return;
+  }
+
+  if (!["admin", "class_teacher"].includes(role)) {
+    showMessage("createStaffMessage", "Choose a valid staff role.", "error");
     return;
   }
 
@@ -243,8 +271,9 @@ async function createStaff(event) {
     );
 
     if (error) {
+      console.error("Edge Function request failed:", error.message);
       throw new Error(
-        data?.error || error.message || "Account creation failed."
+        data?.error || error.message || "Could not create the account."
       );
     }
 
@@ -252,7 +281,7 @@ async function createStaff(event) {
       throw new Error(data?.error || "The server did not confirm success.");
     }
 
-    setMessage(
+    showMessage(
       "createStaffMessage",
       `Created ${data.staff.full_name} as ${data.staff.role}.`,
       "success"
@@ -262,9 +291,9 @@ async function createStaff(event) {
 
     await Promise.all([loadStaff(), loadOverview()]);
   } catch (error) {
-    console.error("Create staff failed:", error);
+    console.error("Staff account creation failed:", error);
 
-    setMessage(
+    showMessage(
       "createStaffMessage",
       error.message || "An unexpected error occurred.",
       "error"
@@ -279,50 +308,51 @@ async function signOut() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    setMessage("overviewMessage", error.message, "error");
+    showMessage("overviewMessage", error.message, "error");
     return;
   }
 
   window.location.replace("../index.html");
 }
 
-function setupNavigation() {
+function initializeNavigation() {
+  // Sidebar navigation
   document.querySelectorAll(".nav-button").forEach((button) => {
     button.addEventListener("click", () => {
-      showSection(button.dataset.section);
+      if (button.dataset.section) {
+        showSection(button.dataset.section);
+      }
     });
   });
 
-  const mobileMenuButton = $("mobileMenuButton");
-  if (mobileMenuButton) {
-    mobileMenuButton.addEventListener("click", () => {
-      $("sidebar").classList.toggle("open");
-    });
-  }
+  // Mobile menu
+  getElement("mobileMenuButton")?.addEventListener("click", () => {
+    getElement("sidebar")?.classList.toggle("open");
+  });
 
-  const refreshOverviewButton = $("refreshOverviewButton");
-  if (refreshOverviewButton) {
-    refreshOverviewButton.addEventListener("click", loadOverview);
-  }
+  // Refresh buttons
+  getElement("refreshOverviewButton")?.addEventListener(
+    "click",
+    loadOverview
+  );
 
-  const refreshStaffButton = $("refreshStaffButton");
-  if (refreshStaffButton) {
-    refreshStaffButton.addEventListener("click", loadStaff);
-  }
+  getElement("refreshStaffButton")?.addEventListener(
+    "click",
+    loadStaff
+  );
 
-  const staffForm = $("createStaffForm");
-  if (staffForm) {
-    staffForm.addEventListener("submit", createStaff);
-  }
+  // Staff creation
+  getElement("createStaffForm")?.addEventListener(
+    "submit",
+    createStaff
+  );
 
-  const signOutButton = $("signOutButton");
-  if (signOutButton) {
-    signOutButton.addEventListener("click", signOut);
-  }
+  // Sign out
+  getElement("signOutButton")?.addEventListener("click", signOut);
 }
 
 async function initializeDashboard() {
-  setupNavigation();
+  initializeNavigation();
 
   const authorized = await verifySuperAdmin();
   if (!authorized) return;
@@ -332,7 +362,8 @@ async function initializeDashboard() {
 
 initializeDashboard().catch((error) => {
   console.error("Dashboard initialization failed:", error);
-  setMessage(
+
+  showMessage(
     "overviewMessage",
     "Dashboard initialization failed. Check the browser console.",
     "error"
