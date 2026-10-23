@@ -15,7 +15,7 @@
     .sidebar { width: 250px; flex-shrink: 0; padding: 24px 16px; background: #102447; color: white; }
     .brand { padding: 8px 12px 28px; font-size: 23px; font-weight: 800; }
     .brand span { color: #64b5ff; }
-    .nav-button { width: 100%; padding: 13px 14px; margin: 5px 0; border: 0; border-radius: 8px; text-align: left; background: transparent; color: #d8e2f2; font-size: 15px; cursor: pointer; }
+    .nav-button { display: block; width: 100%; padding: 13px 14px; margin: 5px 0; border: 0; border-radius: 8px; text-align: left; background: transparent; color: #d8e2f2; font-size: 15px; cursor: pointer; }
     .nav-button:hover, .nav-button.active { background: #24436f; color: white; }
     .main { flex: 1; min-width: 0; }
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 28px; background: white; border-bottom: 1px solid #e3e9f2; }
@@ -36,8 +36,9 @@
     .field { display: flex; flex-direction: column; gap: 7px; }
     .field.full { grid-column: 1 / -1; }
     label { font-size: 14px; font-weight: 600; }
-    input, select { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid #ccd6e4; border-radius: 7px; background: white; color: #17243b; font-size: 14px; }
-    input:focus, select:focus { outline: 2px solid #bfdbfe; border-color: #2563eb; }
+    input, select, textarea { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid #ccd6e4; border-radius: 7px; background: white; color: #17243b; font: inherit; font-size: 14px; }
+    textarea { min-height: 90px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid #bfdbfe; border-color: #2563eb; }
     .button { padding: 11px 16px; border: 0; border-radius: 7px; background: #1d4ed8; color: white; font-size: 14px; font-weight: 700; cursor: pointer; }
     .button:hover { background: #1e40af; }
     .button:disabled { opacity: .6; cursor: wait; }
@@ -48,11 +49,14 @@
     .message.success { color: #15803d; }
     .message.error { color: #b91c1c; }
     .table-wrap { overflow-x: auto; margin-top: 16px; }
-    table { width: 100%; min-width: 650px; border-collapse: collapse; }
-    th, td { padding: 13px 12px; border-bottom: 1px solid #e8edf4; text-align: left; font-size: 14px; }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; }
+    th, td { padding: 13px 12px; border-bottom: 1px solid #e8edf4; text-align: left; font-size: 14px; vertical-align: top; }
     th { background: #f8fafc; color: #64748b; }
     .status { display: inline-block; padding: 5px 9px; border-radius: 20px; background: #dcfce7; color: #166534; font-size: 12px; font-weight: 700; }
     .status.inactive { background: #fee2e2; color: #991b1b; }
+    .check-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    .check-item { display: flex; align-items: flex-start; gap: 9px; padding: 11px; border: 1px solid #e2e8f0; border-radius: 7px; font-weight: 400; }
+    .check-item input { width: 17px; min-height: 17px; margin: 2px 0 0; flex-shrink: 0; }
     .mobile-menu { display: none; }
     @media (max-width: 1000px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 700px) {
@@ -65,13 +69,12 @@
       .stats { gap: 10px; }
       .stat-card { padding: 16px; }
       .stat-card h3 { font-size: 24px; }
-      .form-grid { grid-template-columns: 1fr; }
+      .form-grid, .check-list { grid-template-columns: 1fr; }
       .field.full { grid-column: auto; }
     }
     @media (max-width: 380px) { .stats { grid-template-columns: 1fr; } }
   </style>
 </head>
-
 <body>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
@@ -102,14 +105,12 @@
         <section class="section active" id="section-overview">
           <h2 class="section-heading">School Overview</h2>
           <p class="muted">Monitor accounts and classes registered in Grade Hub.</p>
-
           <div class="stats">
             <article class="stat-card"><p>Student Profiles</p><h3 id="totalStudents">—</h3></article>
             <article class="stat-card"><p>Active Administrators</p><h3 id="totalAdmins">—</h3></article>
             <article class="stat-card"><p>Active Class Teachers</p><h3 id="totalTeachers">—</h3></article>
             <article class="stat-card"><p>Classes</p><h3 id="totalClasses">—</h3></article>
           </div>
-
           <div class="panel">
             <h3>Dashboard Status</h3>
             <button class="button" id="refreshOverviewButton" type="button">Refresh Overview</button>
@@ -120,45 +121,23 @@
         <section class="section" id="section-staff">
           <h2 class="section-heading">Staff Accounts</h2>
           <p class="muted">Create administrator and class teacher accounts.</p>
-
           <div class="panel">
             <h3>Create Staff Account</h3>
             <form id="createStaffForm">
               <div class="form-grid">
-                <div class="field">
-                  <label for="staffName">Full name</label>
-                  <input id="staffName" type="text" minlength="2" maxlength="100" required>
-                </div>
-                <div class="field">
-                  <label for="staffEmail">Email address</label>
-                  <input id="staffEmail" type="email" maxlength="254" required>
-                </div>
-                <div class="field">
-                  <label for="staffRole">Account role</label>
-                  <select id="staffRole" required>
-                    <option value="admin">Administrator</option>
-                    <option value="class_teacher">Class Teacher</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="staffPassword">Temporary password</label>
-                  <input id="staffPassword" type="password" minlength="12" maxlength="72" autocomplete="new-password" required>
-                </div>
+                <div class="field"><label for="staffName">Full name</label><input id="staffName" type="text" minlength="2" maxlength="100" required></div>
+                <div class="field"><label for="staffEmail">Email address</label><input id="staffEmail" type="email" maxlength="254" required></div>
+                <div class="field"><label for="staffRole">Account role</label><select id="staffRole" required><option value="admin">Administrator</option><option value="class_teacher">Class Teacher</option></select></div>
+                <div class="field"><label for="staffPassword">Temporary password</label><input id="staffPassword" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
               </div>
               <div class="button-row"><button class="button" id="createStaffButton" type="submit">Create Account</button></div>
               <p class="message" id="createStaffMessage" role="status" aria-live="polite"></p>
             </form>
           </div>
-
           <div class="panel">
             <h3>Existing Staff</h3>
             <button class="button secondary" id="refreshStaffButton" type="button">Refresh Staff</button>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Full Name</th><th>Role</th><th>Status</th></tr></thead>
-                <tbody id="staffTableBody"><tr><td colspan="3">Staff records will appear here.</td></tr></tbody>
-              </table>
-            </div>
+            <div class="table-wrap"><table><thead><tr><th>Full Name</th><th>Role</th><th>Status</th></tr></thead><tbody id="staffTableBody"><tr><td colspan="3">Staff records will appear here.</td></tr></tbody></table></div>
             <p class="message" id="staffMessage" role="status"></p>
           </div>
         </section>
@@ -166,95 +145,121 @@
         <section class="section" id="section-classes">
           <h2 class="section-heading">Classes Management</h2>
           <p class="muted">Create classes and assign active class teachers.</p>
-
           <div class="panel">
             <h3>Create a Class</h3>
             <form id="createClassForm">
               <div class="form-grid">
-                <div class="field">
-                  <label for="className">Class name</label>
-                  <input id="className" maxlength="100" placeholder="e.g. Grade 10 East" required>
-                </div>
-                <div class="field">
-                  <label for="classGrade">Grade level</label>
-                  <input id="classGrade" maxlength="50" placeholder="e.g. Grade 10" required>
-                </div>
-                <div class="field">
-                  <label for="classYear">Academic year</label>
-                  <input id="classYear" maxlength="30" placeholder="e.g. 2026" required>
-                </div>
-                <div class="field">
-                  <label for="classCapacity">Student capacity</label>
-                  <input id="classCapacity" type="number" min="1" max="500" value="45" required>
-                </div>
+                <div class="field"><label for="className">Class name</label><input id="className" maxlength="100" placeholder="e.g. Grade 10 East" required></div>
+                <div class="field"><label for="classGrade">Grade level</label><input id="classGrade" maxlength="50" placeholder="e.g. Grade 10" required></div>
+                <div class="field"><label for="classYear">Academic year</label><input id="classYear" maxlength="30" placeholder="e.g. 2026" required></div>
+                <div class="field"><label for="classCapacity">Student capacity</label><input id="classCapacity" type="number" min="1" max="500" value="45" required></div>
               </div>
-              <div class="button-row">
-                <button class="button" id="createClassButton" type="submit">Create Class</button>
-              </div>
+              <div class="button-row"><button class="button" id="createClassButton" type="submit">Create Class</button></div>
               <p class="message" id="createClassMessage" role="status" aria-live="polite"></p>
             </form>
           </div>
-
           <div class="panel">
             <h3>Assign a Class Teacher</h3>
             <form id="assignTeacherForm">
               <div class="form-grid">
-                <div class="field">
-                  <label for="assignmentClass">Select class</label>
-                  <select id="assignmentClass" required>
-                    <option value="">Load classes first</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="assignmentTeacher">Select active teacher</label>
-                  <select id="assignmentTeacher" required>
-                    <option value="">Load teachers first</option>
-                  </select>
-                </div>
+                <div class="field"><label for="assignmentClass">Select class</label><select id="assignmentClass" required><option value="">Load classes first</option></select></div>
+                <div class="field"><label for="assignmentTeacher">Select active teacher</label><select id="assignmentTeacher" required><option value="">Load teachers first</option></select></div>
               </div>
-              <div class="button-row">
-                <button class="button" id="assignTeacherButton" type="submit">Assign Teacher</button>
-              </div>
+              <div class="button-row"><button class="button" id="assignTeacherButton" type="submit">Assign Teacher</button></div>
               <p class="muted">Assigning a different teacher ends the previous active assignment for that class.</p>
               <p class="message" id="assignTeacherMessage" role="status" aria-live="polite"></p>
             </form>
           </div>
-
           <div class="panel">
             <h3>Registered Classes</h3>
             <button class="button secondary" id="refreshClassesButton" type="button">Refresh Classes</button>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr><th>Class</th><th>Grade</th><th>Academic Year</th><th>Capacity</th><th>Teacher</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody id="classesTableBody">
-                  <tr><td colspan="7">Class records will appear here.</td></tr>
-                </tbody>
-              </table>
-            </div>
+            <div class="table-wrap"><table><thead><tr><th>Class</th><th>Grade</th><th>Academic Year</th><th>Capacity</th><th>Teacher</th><th>Status</th><th>Action</th></tr></thead><tbody id="classesTableBody"><tr><td colspan="7">Class records will appear here.</td></tr></tbody></table></div>
             <p class="message" id="classesMessage" role="status"></p>
           </div>
         </section>
 
         <section class="section" id="section-subjects">
-          <h2 class="section-heading">Subjects</h2>
-          <div class="panel"><h3>Subject Management</h3><p class="muted">Subject and combination management will be implemented next.</p></div>
+          <h2 class="section-heading">Subjects &amp; Combinations</h2>
+          <p class="muted">Manage your subject catalogue and the combinations students can select.</p>
+
+          <div class="panel">
+            <h3>Add a Subject</h3>
+            <form id="createSubjectForm">
+              <div class="form-grid">
+                <div class="field"><label for="subjectName">Subject name</label><input id="subjectName" maxlength="100" placeholder="e.g. Mathematics" required></div>
+                <div class="field"><label for="subjectCode">Subject code</label><input id="subjectCode" maxlength="30" placeholder="e.g. MAT" required></div>
+                <div class="field full"><label for="subjectDescription">Description (optional)</label><textarea id="subjectDescription" maxlength="500" placeholder="Brief description"></textarea></div>
+              </div>
+              <div class="button-row"><button class="button" id="createSubjectButton" type="submit">Add Subject</button></div>
+              <p class="message" id="createSubjectMessage" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h3>Subject Catalogue</h3>
+            <button class="button secondary" id="refreshSubjectsButton" type="button">Refresh Subjects</button>
+            <div class="table-wrap"><table><thead><tr><th>Subject</th><th>Code</th><th>Description</th><th>Status</th><th>Action</th></tr></thead><tbody id="subjectsTableBody"><tr><td colspan="5">Subjects will appear here.</td></tr></tbody></table></div>
+            <p class="message" id="subjectsMessage" role="status"></p>
+          </div>
+
+          <div class="panel">
+            <h3>Create a Subject Combination</h3>
+            <form id="createCombinationForm">
+              <div class="form-grid">
+                <div class="field"><label for="combinationName">Combination name</label><input id="combinationName" maxlength="100" placeholder="e.g. Science Combination A" required></div>
+                <div class="field"><label for="combinationDescription">Description (optional)</label><input id="combinationDescription" maxlength="500" placeholder="Explain this combination"></div>
+                <div class="field full">
+                  <label>Choose subjects for this combination</label>
+                  <div id="combinationSubjectChoices" class="check-list"><p class="muted">Add subjects before creating a combination.</p></div>
+                </div>
+                <div class="field full">
+                  <label class="check-item"><input id="combinationActive" type="checkbox"> Activate this combination for future student registration</label>
+                </div>
+              </div>
+              <div class="button-row"><button class="button" id="createCombinationButton" type="submit">Create Combination</button></div>
+              <p class="message" id="createCombinationMessage" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h3>Existing Combinations</h3>
+            <button class="button secondary" id="refreshCombinationsButton" type="button">Refresh Combinations</button>
+            <div class="table-wrap"><table><thead><tr><th>Combination</th><th>Subjects</th><th>Status</th><th>Action</th></tr></thead><tbody id="combinationsTableBody"><tr><td colspan="4">Combinations will appear here.</td></tr></tbody></table></div>
+            <p class="message" id="combinationsMessage" role="status"></p>
+          </div>
+
+          <div class="panel" id="editCombinationPanel" hidden>
+            <h3>Edit Combination</h3>
+            <form id="editCombinationForm">
+              <input id="editCombinationId" type="hidden">
+              <div class="form-grid">
+                <div class="field"><label for="editCombinationName">Combination name</label><input id="editCombinationName" maxlength="100" required></div>
+                <div class="field"><label for="editCombinationDescription">Description</label><input id="editCombinationDescription" maxlength="500"></div>
+                <div class="field full"><label>Selected subjects</label><div id="editCombinationSubjectChoices" class="check-list"></div></div>
+                <div class="field full"><label class="check-item"><input id="editCombinationActive" type="checkbox"> Active for student registration</label></div>
+              </div>
+              <div class="button-row">
+                <button class="button" id="saveCombinationButton" type="submit">Save Changes</button>
+                <button class="button secondary" id="cancelEditCombinationButton" type="button">Cancel</button>
+              </div>
+              <p class="message" id="editCombinationMessage" role="status" aria-live="polite"></p>
+            </form>
+          </div>
         </section>
 
         <section class="section" id="section-exams">
           <h2 class="section-heading">Exams &amp; Results</h2>
-          <div class="panel"><h3>Examination Management</h3><p class="muted">Exam creation, marks, publication, and merit lists will be implemented next.</p></div>
+          <div class="panel"><h3>Examination Management</h3><p class="muted">Exam creation, marks, publication, grading, and merit lists are still to be implemented.</p></div>
         </section>
 
         <section class="section" id="section-documents">
           <h2 class="section-heading">Newsletters</h2>
-          <div class="panel"><h3>School Documents</h3><p class="muted">Secure file uploads and document publication will be implemented next.</p></div>
+          <div class="panel"><h3>School Documents</h3><p class="muted">Secure file uploads and document publication are still to be implemented.</p></div>
         </section>
       </div>
     </main>
   </div>
 
-  <script type="module" src="../js/superadmin.js?v=5"></script>
+  <script type="module" src="../js/superadmin.js?v=6"></script>
 </body>
 </html>
