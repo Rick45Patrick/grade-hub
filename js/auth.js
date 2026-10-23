@@ -52,7 +52,6 @@ if (loginForm) {
     });
 }
 
-// REGISTRATION
 if (registerForm) {
     registerForm.addEventListener("submit", async (event) => {
         event.preventDefault();
