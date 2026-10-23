@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Hub 2.0 | Super Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        :root {
+            --primary: #3157d5;
+            --primary-dark: #203fa9;
+            --background: #f4f6fb;
+            --surface: #ffffff;
+            --text: #202b43;
+            --muted: #718096;
+            --border: #e5e9f2;
+            --danger: #c53030;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .layout {
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            inset: 0 auto 0 0;
+            padding: 24px 16px;
+            background: #172554;
+            color: white;
+            overflow-y: auto;
+            z-index: 20;
+        }
+
+        .brand {
+            padding: 4px 12px 25px;
+            border-bottom: 1px solid #334477;
+            margin-bottom: 20px;
+        }
+
+        .brand h2 {
+            margin: 0 0 7px;
+            font-size: 22px;
+        }
+
+        .brand p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 12px;
+        }
+
+        .nav-label {
+            padding: 12px;
+            color: #aab8d8;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .nav-link {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 5px;
+            border: 0;
+            border-radius: 8px;
+            color: #e2e8f0;
+            background: transparent;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            background: #3157d5;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 28px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 7px;
+            font-size: 27px;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            color: white;
+            background: var(--primary);
+            font-weight: bold;
+        }
+
+        .admin-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .admin-role {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .logout-button {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            color: var(--danger);
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background: #fff5f5;
+        }
+
+        .notice {
+            padding: 13px 16px;
+            margin-bottom: 22px;
+            border: 1px solid #c9d7ff;
+            border-radius: 10px;
+            background: #edf2ff;
+            color: #263e8b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .section {
+            margin-bottom: 32px;
+            scroll-margin-top: 20px;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .section-heading p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card,
+        .management-card {
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: var(--surface);
+            box-shadow: 0 3px 12px rgba(20, 35, 70, 0.03);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stat-value {
+            margin: 12px 0 8px;
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        .stat-note {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .management-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .management-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .card-icon {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            background: #edf2ff;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .management-card h3 {
+            margin: 0 0 9px;
+            font-size: 16px;
+        }
+
+        .management-card p {
+            flex: 1;
+            margin: 0 0 18px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .card-button {
+            display: inline-block;
+            padding: 10px 13px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .card-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .status-message {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .status-message.error {
+            color: var(--danger);
+        }
+
+        .mobile-menu {
+            display: none;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+        }
+
+        @media (max-width: 1100px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .management-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-backdrop.visible {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 10;
+                background: rgba(0, 0, 0, 0.4);
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 18px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .mobile-menu {
+                display: inline-block;
+            }
+
+            .topbar h1 {
+                font-size: 23px;
+            }
+
+            .stats-grid,
+            .management-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-info {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="layout">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <h2>Grade Hub</h2>
+            <p>School Management System · 2.0</p>
+        </div>
+
+        <div class="nav-label">Dashboard</div>
+        <a class="nav-link active" href="#overview">Overview</a>
+
+        <div class="nav-label">People</div>
+        <a class="nav-link" href="#users">Administrators & Teachers</a>
+        <a class="nav-link" href="#students">Students</a>
+        <a class="nav-link" href="#classes">Classes</a>
+
+        <div class="nav-label">Academics</div>
+        <a class="nav-link" href="#subjects">Subjects</a>
+        <a class="nav-link" href="#combinations">Subject Combinations</a>
+        <a class="nav-link" href="#grading">Grading Systems</a>
+        <a class="nav-link" href="#exams">Exams & Results</a>
+        <a class="nav-link" href="#merit">Merit Lists</a>
+
+        <div class="nav-label">Communication</div>
+        <a class="nav-link" href="#documents">Newsletters & Documents</a>
+        <a class="nav-link" href="#announcements">Announcements</a>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <button class="mobile-menu" id="mobileMenu" type="button"
+                        aria-label="Open navigation">☰ Menu</button>
+                <h1>Super Admin Dashboard</h1>
+                <p class="subtitle">Manage your school from one place.</p>
+            </div>
+
+            <div class="admin-info">
+                <div class="avatar" id="adminAvatar">P</div>
+                <div>
+                    <div class="admin-name" id="adminName">Loading account...</div>
+                    <div class="admin-role">Super Administrator</div>
+                </div>
+                <button class="logout-button" id="logoutButton" type="button">
+                    Sign out
+                </button>
+            </div>
+        </header>
+
+        <div class="notice">
+            <strong>Setup status:</strong>
+            This dashboard interface is ready. Database counts and management
+            actions will be connected as we configure the required database
+            permissions and individual features.
+        </div>
+
+        <section class="section" id="overview">
+            <div class="section-heading">
+                <div>
+                    <h2>School Overview</h2>
+                    <p>Summary of the school's records.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-label">Registered Students</div>
+                    <div class="stat-value" id="totalStudents">—</div>
+                    <div class="stat-note">Student records</div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-label">Administrators & Teachers</div>
+                    <div class="stat-value" id="totalStaff">—</div>
+                    <div class="stat-note">Active staff accounts</div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-label">Classes</div>
+                    <div class="stat-value" id="totalClasses">—</div>
+                    <div class="stat-note">School classes</div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-label">Exams</div>
+                    <div class="stat-value" id="totalExams">—</div>
+                    <div class="stat-note">Exam records</div>
+                </article>
+            </div>
+
+            <p class="status-message" id="dashboardMessage" role="status">
+                Verifying your account...
+            </p>
+        </section>
+
+        <section class="section" id="users">
+            <div class="section-heading">
+                <div>
+                    <h2>Administrators & Teachers</h2>
+                    <p>Manage staff accounts and permissions.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">♙</div>
+                    <h3>Administrators</h3>
+                    <p>Manage administrator accounts and their access.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Administrators">
+                        Manage administrators
+                    </button>
+                </article>
+
+                <article class="management-card">
+                    <div class="card-icon">♧</div>
+                    <h3>Class Teachers</h3>
+                    <p>Assign teachers to classes and manage assignments.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Class Teachers">
+                        Manage teachers
+                    </button>
+                </article>
+
+                <article class="management-card">
+                    <div class="card-icon">⚿</div>
+                    <h3>Account Management</h3>
+                    <p>Review account status and handle access issues.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Account Management">
+                        Manage accounts
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="students">
+            <div class="section-heading">
+                <div>
+                    <h2>Student Management</h2>
+                    <p>Registration, admission, and class placement.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">♙</div>
+                    <h3>Student Records</h3>
+                    <p>Review student profiles and registration status.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Student Records">
+                        Manage students
+                    </button>
+                </article>
+
+                <article class="management-card">
+                    <div class="card-icon">✓</div>
+                    <h3>Registration Requests</h3>
+                    <p>Review and approve eligible student registrations.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Registration Requests">
+                        Review requests
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="classes">
+            <div class="section-heading">
+                <div>
+                    <h2>Classes</h2>
+                    <p>Create classes and manage student placements.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▤</div>
+                    <h3>Class Management</h3>
+                    <p>Create classes, set academic years, and manage capacity.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Class Management">
+                        Manage classes
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="subjects">
+            <div class="section-heading">
+                <div>
+                    <h2>Subjects</h2>
+                    <p>Configure subjects offered by the school.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▣</div>
+                    <h3>Subject Catalogue</h3>
+                    <p>Add, edit, and deactivate school subjects.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Subject Catalogue">
+                        Manage subjects
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="combinations">
+            <div class="section-heading">
+                <div>
+                    <h2>Subject Combinations</h2>
+                    <p>Define combinations that students can be assigned.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▦</div>
+                    <h3>Combination Builder</h3>
+                    <p>Create combinations from the subject catalogue and activate
+                       them for student registration.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Subject Combination Builder">
+                        Manage combinations
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="grading">
+            <div class="section-heading">
+                <div>
+                    <h2>Grading Systems</h2>
+                    <p>Configure score ranges and grade labels.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">％</div>
+                    <h3>Grading Configuration</h3>
+                    <p>Set grade boundaries and maintain grading-system versions.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Grading Configuration">
+                        Configure grades
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="exams">
+            <div class="section-heading">
+                <div>
+                    <h2>Exams & Results</h2>
+                    <p>Create exams, manage marks, and publish results.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▤</div>
+                    <h3>Exam Management</h3>
+                    <p>Create exams, set terms, and select grading systems.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Exam Management">
+                        Manage exams
+                    </button>
+                </article>
+
+                <article class="management-card">
+                    <div class="card-icon">✓</div>
+                    <h3>Results</h3>
+                    <p>Enter marks, review scores, and publish approved results.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Results Management">
+                        Manage results
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="merit">
+            <div class="section-heading">
+                <div>
+                    <h2>Merit Lists</h2>
+                    <p>Prepare class-wide and school-wide rankings from published results.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">★</div>
+                    <h3>Merit Reports</h3>
+                    <p>View subject scores, class rankings, and school-wide results.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Merit Reports">
+                        Open merit lists
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="documents">
+            <div class="section-heading">
+                <div>
+                    <h2>Newsletters & Documents</h2>
+                    <p>Publish approved school files and newsletters.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▧</div>
+                    <h3>Document Library</h3>
+                    <p>Prepare a library for newsletters and school documents.</p>
+                    <button class="card-button" type="button"
+                            data-feature="Document Library">
+                        Manage documents
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="announcements">
+            <div class="section-heading">
+                <div>
+                    <h2>Announcements</h2>
+                    <p>Prepare school notices for the relevant users.</p>
+                </div>
+            </div>
+
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="card-icon">▤</div>
+                    <h3>School Notices</h3>
+                    <p>Create and manage announcements for the school community.</p>
+                    <button class="card-button" type="button"
+                            data-feature="School Notices">
+                        Manage announcements
+                    </button>
+                </article>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script type="module" src="../js/superadmin.js"></script>
+</body>
+</html>
