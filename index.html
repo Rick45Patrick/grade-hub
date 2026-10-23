@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Grade Hub | Login</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <main class="auth-container">
+        <section class="auth-card">
+
+            <div class="logo">GH</div>
+
+            <h1>Grade Hub</h1>
+            <p class="subtitle">Your academic journey starts here.</p>
+
+            <form id="loginForm">
+
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" id="loginButton">
+                    Sign In
+                </button>
+
+                <p id="message" role="status" aria-live="polite"></p>
+
+            </form>
+
+            <p class="auth-footer">
+                Don't have an account?
+                <a href="register.html">Register here</a>
+            </p>
+
+        </section>
+    </main>
+
+    <script type="module" src="js/auth.js"></script>
+
+</body>
+</html>
