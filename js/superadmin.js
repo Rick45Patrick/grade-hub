@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 
 const $ = (id) => document.getElementById(id);
