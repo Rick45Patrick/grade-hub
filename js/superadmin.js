@@ -65,7 +65,12 @@ function busyButton(id, isBusy, temporaryText = "Please wait...") {
 }
 
 function errorText(error) {
-  console.error(error);
+  console.error("Grading system save failed:", {
+  message: error?.message,
+  code: error?.code,
+  details: error?.details,
+  hint: error?.hint
+});
   return error?.message || String(error || "Unknown error");
 }
 
