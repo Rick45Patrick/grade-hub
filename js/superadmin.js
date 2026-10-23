@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 
 const $ = (id) => document.getElementById(id);
@@ -297,7 +296,6 @@ function renderSubjectChoices(containerId, checked = []) {
     </label>
   `).join("");
 }
-
 function renderSubjects() {
   const body = $("subjectsTableBody");
 
@@ -640,7 +638,6 @@ async function addCombination(event) {
     busyButton("createCombinationButton", false);
   }
 }
-
 async function toggleCombination(id, active) {
   try {
     await currentSuperAdmin();
@@ -899,28 +896,17 @@ async function loadClasses() {
   if (select) {
     select.innerHTML =
       '<option value="">Select a class</option>' +
-      classes.filter((item) => item.is_active).map((item) => `
-        <option value="${esc(item.id)}">
-          ${esc(item.name)} — ${esc(item.grade_level)}
-        </option>
-      `).join("");
-  }
-
-  const examClass = $("examClass");
-
-  if (examClass) {
-    examClass.innerHTML =
-      '<option value="">All classes</option>' +
-      classes.filter((item) => item.is_active).map((item) => `
-        <option value="${esc(item.id)}">
-          ${esc(item.name)} — ${esc(item.grade_level)}
-        </option>
-      `).join("");
+      classes
+        .filter((item) => item.is_active)
+        .map((item) => `
+          <option value="${esc(item.id)}">
+            ${esc(item.name)} — ${esc(item.grade_level)}
+          </option>
+        `).join("");
   }
 
   clearMessage("classesMessage");
 }
-
 async function addClass(event) {
   event.preventDefault();
 
@@ -1191,7 +1177,6 @@ async function createStaff(event) {
 /* =====================================================
    EXAMS
 ===================================================== */
-
 async function loadGradingSystemsForExams() {
   const select = $("examGradingSystem");
 
@@ -1438,154 +1423,52 @@ async function updateExamStatus(id, status) {
    CBC GRADING SYSTEM
 ===================================================== */
 
-const CBC_LEVELS = [
-  "EE1",
-  "EE2",
-  "ME1",
-  "ME2",
-  "AE1",
-  "AE2",
-  "BE1",
-  "BE2"
-];
-
-/*
-  Editable table:
-  Level | Minimum Score | Maximum Score | Grade Points
-
-  Display table:
-  Grade Name | Minimum Score | Points
-*/
-
+const CBC_LEVELS = ["EE1", "EE2", "ME1", "ME2", "AE1", "AE2", "BE1", "BE2"];
 function renderGradingRows(bands = []) {
   const body = $("gradingBandsBody");
-
   if (!body) return;
 
-  body.innerHTML = CBC_LEVELS.map((level) => {
-    const band = bands.find(
-      (item) => item.grade_name === level
-    );
+  const rows = bands.length ? bands : CBC_LEVELS.map((grade_name) => ({
+    grade_name, minimum_score: "", maximum_score: "", grade_points: ""
+  }));
 
-    return `
-      <tr>
-        <td><strong>${esc(level)}</strong></td>
-
-        <td>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            data-grade="${esc(level)}"
-            data-field="minimum_score"
-            aria-label="${esc(level)} minimum score"
-            value="${band?.minimum_score ?? ""}"
-            required
-          >
-        </td>
-
-        <td>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            data-grade="${esc(level)}"
-            data-field="maximum_score"
-            aria-label="${esc(level)} maximum score"
-            value="${band?.maximum_score ?? ""}"
-            required
-          >
-        </td>
-
-        <td>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            data-grade="${esc(level)}"
-            data-field="grade_points"
-            aria-label="${esc(level)} grade points"
-            value="${band?.grade_points ?? ""}"
-            placeholder="Optional"
-          >
-        </td>
-      </tr>
-    `;
-  }).join("");
+  body.innerHTML = rows.map((band, index) => `
+    <tr>
+      <td><input type="text" data-field="grade_name" value="${esc(band.grade_name || "")}" maxlength="30" aria-label="Grade name" required></td>
+      <td><input type="number" data-field="minimum_score" value="${band.minimum_score ?? ""}" min="0" max="100" step="0.01" aria-label="Minimum score" required></td>
+      <td><input type="number" data-field="maximum_score" value="${band.maximum_score ?? ""}" min="0" max="100" step="0.01" aria-label="Maximum score" required></td>
+      <td><input type="number" data-field="grade_points" value="${band.grade_points ?? ""}" min="0" step="0.01" aria-label="Grade points" placeholder="Optional"></td>
+      <td><button class="button secondary" type="button" data-delete-grade="${index}">Delete</button></td>
+    </tr>
+  `).join("");
 }
-
-/*
-  THIS IS THE REQUESTED GRADE SYSTEM TABLE.
-  It displays only:
-  1. Grade Name
-  2. Minimum Score
-  3. Points
-
-  Values come directly from Supabase.
-*/
 
 function renderGradingSummary(bands = []) {
   const body = $("gradingSummaryBody");
-
   if (!body) return;
 
-  const byLevel = new Map(
-    bands.map((band) => [band.grade_name, band])
-  );
-
-  body.innerHTML = CBC_LEVELS.map((level) => {
-    const band = byLevel.get(level);
-
-    if (!band) {
-      return `
+  body.innerHTML = bands.length
+    ? [...bands].sort((a, b) => Number(a.minimum_score) - Number(b.minimum_score)).map((band) => `
         <tr>
-          <td><strong>${esc(level)}</strong></td>
-          <td>—</td>
-          <td>—</td>
+          <td><strong>${esc(band.grade_name)}</strong></td>
+          <td>${esc(band.minimum_score)}</td>
+          <td>${band.grade_points == null ? "—" : esc(band.grade_points)}</td>
         </tr>
-      `;
-    }
-
-    return `
-      <tr>
-        <td><strong>${esc(band.grade_name)}</strong></td>
-        <td>${esc(band.minimum_score)}</td>
-        <td>
-          ${
-            band.grade_points == null
-              ? "—"
-              : esc(band.grade_points)
-          }
-        </td>
-      </tr>
-    `;
-  }).join("");
+      `).join("")
+    : '<tr><td colspan="3">No grades to display yet.</td></tr>';
 }
 
 function clearGradingForm() {
-  if ($("gradingSystemSelect")) {
-    $("gradingSystemSelect").value = "";
-  }
-
-  if ($("gradingSystemName")) {
-    $("gradingSystemName").value = "Grade Hub Standard";
-  }
-
-  if ($("gradingDescription")) {
-    $("gradingDescription").value = "";
-  }
-
+  if ($("gradingSystemSelect")) $("gradingSystemSelect").value = "";
+  if ($("gradingSystemName")) $("gradingSystemName").value = "Grade Hub Standard";
+  if ($("gradingDescription")) $("gradingDescription").value = "";
   renderGradingRows([]);
   renderGradingSummary([]);
-
   clearMessage("gradingMessage");
 }
 
 function renderGradingSystemsTable() {
   const body = $("gradingSystemsTableBody");
-
   if (!body) return;
 
   body.innerHTML = gradingSystems.length
@@ -1593,13 +1476,7 @@ function renderGradingSystemsTable() {
         <tr>
           <td>${esc(system.name)}</td>
           <td>${esc(system.version)}</td>
-          <td>
-            <span class="status ${
-              system.is_active ? "" : "inactive"
-            }">
-              ${system.is_active ? "Active" : "Inactive"}
-            </span>
-          </td>
+          <td><span class="status ${system.is_active ? "" : "inactive"}">${system.is_active ? "Active" : "Inactive"}</span></td>
           <td>${esc(system.description || "—")}</td>
         </tr>
       `).join("")
@@ -1608,182 +1485,104 @@ function renderGradingSystemsTable() {
 
 async function loadGradingEditor() {
   const select = $("gradingSystemSelect");
-
   if (!select) return;
 
   const { data, error } = await supabase
     .from("grading_systems")
-    .select(
-      "id, name, version, description, is_active, created_at"
-    )
+    .select("id, name, version, description, is_active, created_at")
     .order("name")
     .order("version", { ascending: false });
-
   if (error) throw error;
 
   gradingSystems = data || [];
-
-  select.innerHTML =
-    '<option value="">Create a new grading system</option>' +
+  select.innerHTML = '<option value="">Create a new grading system</option>' +
     gradingSystems.map((system) => `
-      <option value="${esc(system.id)}">
-        ${esc(system.name)} — v${esc(system.version)}${
-          system.is_active ? " (Active)" : ""
-        }
-      </option>
+      <option value="${esc(system.id)}">${esc(system.name)} — v${esc(system.version)}${system.is_active ? " (Active)" : ""}</option>
     `).join("");
-
   renderGradingSystemsTable();
 
-  const activeSystem = gradingSystems.find(
-    (system) => system.is_active
-  );
-
+  const activeSystem = gradingSystems.find((system) => system.is_active);
   if (activeSystem) {
     select.value = activeSystem.id;
     await loadSelectedGradingSystem();
   } else {
     clearGradingForm();
-    renderGradingSystemsTable();
   }
 }
 
 async function loadSelectedGradingSystem() {
   const id = $("gradingSystemSelect")?.value || "";
-
   clearMessage("gradingMessage");
 
   if (!id) {
-    if ($("gradingSystemName")) {
-      $("gradingSystemName").value = "Grade Hub Standard";
-    }
-
-    if ($("gradingDescription")) {
-      $("gradingDescription").value = "";
-    }
-
+    if ($("gradingSystemName")) $("gradingSystemName").value = "Grade Hub Standard";
+    if ($("gradingDescription")) $("gradingDescription").value = "";
     renderGradingRows([]);
     renderGradingSummary([]);
-
     return;
   }
 
-  const system = gradingSystems.find(
-    (item) => item.id === id
-  );
-
-  if (!system) {
-    throw new Error("Selected grading system was not found.");
-  }
+  const system = gradingSystems.find((item) => item.id === id);
+  if (!system) throw new Error("Selected grading system was not found.");
 
   const { data: bands, error } = await supabase
     .from("grade_bands")
-    .select(
-      "grade_name, minimum_score, maximum_score, grade_points"
-    )
+    .select("grade_name, minimum_score, maximum_score, grade_points")
     .eq("grading_system_id", id);
-
   if (error) throw error;
 
   $("gradingSystemName").value = system.name;
   $("gradingDescription").value = system.description || "";
-
   renderGradingRows(bands || []);
   renderGradingSummary(bands || []);
 }
 
 function readGradingBands() {
-  const rows = [
-    ...$("gradingBandsBody").querySelectorAll("tr")
-  ];
+  const body = $("gradingBandsBody");
+  if (!body) throw new Error("The grading table could not be found.");
+
+  const rows = [...body.querySelectorAll("tr")].filter((row) => row.querySelector('[data-field="grade_name"]'));
+  if (!rows.length) throw new Error("Add at least one grade row.");
 
   const bands = rows.map((row) => {
-    const get = (field) =>
-      row.querySelector(`[data-field="${field}"]`).value.trim();
-
-    const level =
-      row.querySelector("[data-grade]").dataset.grade;
-
+    const get = (field) => row.querySelector(`[data-field="${field}"]`)?.value.trim() ?? "";
+    const grade_name = get("grade_name");
     const minText = get("minimum_score");
     const maxText = get("maximum_score");
     const pointsText = get("grade_points");
-
     const minimum_score = Number(minText);
     const maximum_score = Number(maxText);
+    const grade_points = pointsText === "" ? null : Number(pointsText);
 
-    const grade_points =
-      pointsText === "" ? null : Number(pointsText);
-
-    if (
-      minText === "" ||
-      maxText === "" ||
-      !Number.isFinite(minimum_score) ||
-      !Number.isFinite(maximum_score) ||
-      minimum_score < 0 ||
-      maximum_score > 100 ||
-      minimum_score >= maximum_score
-    ) {
-      throw new Error(
-        `Enter a valid 0–100 score range for ${level}.`
-      );
+    if (!grade_name) throw new Error("Every grade must have a name.");
+    if (minText === "" || maxText === "") throw new Error(`Enter both score boundaries for ${grade_name}.`);
+    if (!Number.isFinite(minimum_score) || !Number.isFinite(maximum_score) || minimum_score < 0 || maximum_score > 100 || minimum_score >= maximum_score) {
+      throw new Error(`Enter a valid score range from 0 to 100 for ${grade_name}.`);
     }
-
-    if (
-      grade_points !== null &&
-      (!Number.isFinite(grade_points) || grade_points < 0)
-    ) {
-      throw new Error(
-        `Grade points for ${level} must be zero or higher.`
-      );
+    if (grade_points !== null && (!Number.isFinite(grade_points) || grade_points < 0)) {
+      throw new Error(`Points for ${grade_name} must be zero or higher.`);
     }
-
-    return {
-      grade_name: level,
-      minimum_score,
-      maximum_score,
-      grade_points
-    };
+    return { grade_name, minimum_score, maximum_score, grade_points };
   });
 
-  const sorted = [...bands].sort(
-    (a, b) => a.minimum_score - b.minimum_score
-  );
+  const names = bands.map((band) => band.grade_name.toLowerCase());
+  if (new Set(names).size !== names.length) throw new Error("Each grade name must be unique.");
 
-  if (sorted[0].minimum_score !== 0) {
-    throw new Error(
-      "The lowest score range must start at 0."
-    );
-  }
+  const sorted = [...bands].sort((a, b) => a.minimum_score - b.minimum_score);
+  if (sorted[0].minimum_score !== 0) throw new Error("The lowest score range must start at 0.");
+  if (sorted[sorted.length - 1].maximum_score !== 100) throw new Error("The highest score range must end at 100.");
 
-  if (sorted[sorted.length - 1].maximum_score !== 100) {
-    throw new Error(
-      "The highest score range must end at 100."
-    );
-  }
-
-  for (let index = 1; index < sorted.length; index++) {
-    if (
-      Math.abs(
-        sorted[index].minimum_score -
-        sorted[index - 1].maximum_score
-      ) > 0.000001
-    ) {
-      throw new Error(
-        `Ranges must meet exactly without gaps or overlaps: check ${
-          sorted[index - 1].grade_name
-        } and ${sorted[index].grade_name}.`
-      );
+  for (let i = 1; i < sorted.length; i++) {
+    if (Math.abs(sorted[i].minimum_score - sorted[i - 1].maximum_score) > 0.000001) {
+      throw new Error(`Score ranges must meet without gaps or overlaps: check ${sorted[i - 1].grade_name} and ${sorted[i].grade_name}.`);
     }
   }
-
   return bands;
 }
 
 async function saveGradingVersion(event) {
   event.preventDefault();
-
   if (busy.has("grading")) return;
-
   busy.add("grading");
   busyButton("saveGradingButton", true, "Saving...");
   clearMessage("gradingMessage");
@@ -1794,126 +1593,183 @@ async function saveGradingVersion(event) {
 
   try {
     await currentSuperAdmin();
-
-    const name = $("gradingSystemName").value.trim();
-    const description =
-      $("gradingDescription").value.trim();
-
-    if (!name) {
-      throw new Error("Enter a grading system name.");
-    }
-
+    const name = $("gradingSystemName")?.value.trim() || "";
+    const description = $("gradingDescription")?.value.trim() || "";
+    if (!name) throw new Error("Enter a grading system name.");
     const bands = readGradingBands();
 
-    const { data: authData, error: authError } =
-      await supabase.auth.getUser();
-
+    const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
+    if (!authData.user) throw new Error("Your session has expired. Please sign in again.");
 
-    if (!authData.user) {
-      throw new Error(
-        "Your session has expired. Please sign in again."
-      );
-    }
+    const versions = gradingSystems.filter((system) => system.name.toLowerCase() === name.toLowerCase());
+    const nextVersion = versions.length ? Math.max(...versions.map((system) => Number(system.version) || 1)) + 1 : 1;
 
-    const versions = gradingSystems.filter(
-      (system) =>
-        system.name.toLowerCase() === name.toLowerCase()
-    );
-
-    const nextVersion = versions.length
-      ? Math.max(
-          ...versions.map(
-            (system) => Number(system.version) || 1
-          )
-        ) + 1
-      : 1;
-
-    const { data: created, error: createError } =
-      await supabase
-        .from("grading_systems")
-        .insert({
-          name,
-          version: nextVersion,
-          description: description || null,
-          is_active: false,
-          created_by: authData.user.id
-        })
-        .select("id")
-        .single();
-
+    const { data: created, error: createError } = await supabase
+      .from("grading_systems")
+      .insert({ name, version: nextVersion, description: description || null, is_active: false, created_by: authData.user.id })
+      .select("id")
+      .single();
     if (createError) throw createError;
-
     newSystemId = created.id;
 
-    const { error: bandError } = await supabase
-      .from("grade_bands")
-      .insert(
-        bands.map((band) => ({
-          ...band,
-          grading_system_id: newSystemId
-        }))
-      );
-
+    const { error: bandError } = await supabase.from("grade_bands").insert(
+      bands.map((band) => ({ ...band, grading_system_id: newSystemId }))
+    );
     if (bandError) throw bandError;
-
     bandsInserted = true;
 
-    const oldActiveIds = gradingSystems
-      .filter((system) => system.is_active)
-      .map((system) => system.id);
-
+    const oldActiveIds = gradingSystems.filter((system) => system.is_active).map((system) => system.id);
     if (oldActiveIds.length) {
-      const { error: deactivateError } = await supabase
-        .from("grading_systems")
-        .update({ is_active: false })
-        .in("id", oldActiveIds);
-
+      const { error: deactivateError } = await supabase.from("grading_systems").update({ is_active: false }).in("id", oldActiveIds);
       if (deactivateError) throw deactivateError;
     }
 
-    const { error: activateError } = await supabase
-      .from("grading_systems")
-      .update({ is_active: true })
-      .eq("id", newSystemId);
-
+    const { error: activateError } = await supabase.from("grading_systems").update({ is_active: true }).eq("id", newSystemId);
     if (activateError) throw activateError;
-
     activated = true;
 
-    message(
-      "gradingMessage",
-      `Saved ${name}, version ${nextVersion}. Existing exams still reference their original grading system.`
-    );
-
+    message("gradingMessage", `Saved ${name}, version ${nextVersion}. Existing exams retain their original grading-system references.`);
     await loadGradingEditor();
-
     $("gradingSystemSelect").value = newSystemId;
-
     await loadSelectedGradingSystem();
   } catch (error) {
     if (newSystemId && !activated) {
-      if (bandsInserted) {
-        await supabase
-          .from("grade_bands")
-          .delete()
-          .eq("grading_system_id", newSystemId);
-      }
-
-      await supabase
-        .from("grading_systems")
-        .delete()
-        .eq("id", newSystemId);
+      if (bandsInserted) await supabase.from("grade_bands").delete().eq("grading_system_id", newSystemId);
+      await supabase.from("grading_systems").delete().eq("id", newSystemId);
     }
-
-    message(
-      "gradingMessage",
-      `Could not save grading system: ${errorText(error)}`,
-      "error"
-    );
+    message("gradingMessage", `Could not save grading system: ${errorText(error)}`, "error");
   } finally {
     busy.delete("grading");
     busyButton("saveGradingButton", false);
+  }
+}
+
+/* =====================================================
+   NEWSLETTERS / SCHOOL DOCUMENTS
+   Uses Supabase Storage bucket: newsletters
+===================================================== */
+const NEWSLETTER_BUCKET = "newsletters";
+const MAX_NEWSLETTER_BYTES = 20 * 1024 * 1024;
+
+function formatFileSize(bytes) {
+  if (!Number.isFinite(Number(bytes))) return "—";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = Number(bytes);
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit++;
+  }
+  return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function safeStorageName(name) {
+  return String(name || "document")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(-120) || "document";
+}
+
+async function loadNewsletters() {
+  const body = $("newslettersTableBody");
+  if (!body) return;
+  body.innerHTML = '<tr><td colspan="4">Loading documents...</td></tr>';
+
+  const { data, error } = await supabase.storage
+    .from(NEWSLETTER_BUCKET)
+    .list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+  if (error) throw error;
+
+  const files = (data || []).filter((file) => file.name && file.id);
+  if (!files.length) {
+    body.innerHTML = '<tr><td colspan="4">No newsletters have been uploaded yet.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = files.map((file) => {
+    const nameParts = file.name.split("__");
+    const title = nameParts.length > 1 ? nameParts[0].replace(/^\d+_/, "").replace(/-/g, " ") : file.name;
+    const size = file.metadata?.size ?? null;
+    const date = file.created_at ? new Date(file.created_at).toLocaleString() : "—";
+    return `<tr>
+      <td class="file-name"><strong>${esc(title)}</strong><br><small>${esc(file.name)}</small></td>
+      <td>${formatFileSize(size)}</td>
+      <td>${esc(date)}</td>
+      <td>
+        <button class="button secondary" type="button" data-newsletter-download="${esc(file.name)}">Download</button>
+        <button class="button secondary" type="button" data-newsletter-delete="${esc(file.name)}">Delete</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+async function uploadNewsletter(event) {
+  event.preventDefault();
+  if (busy.has("newsletterUpload")) return;
+
+  const title = $("newsletterTitle")?.value.trim() || "";
+  const file = $("newsletterFile")?.files?.[0];
+  if (!title) {
+    message("newslettersMessage", "Enter a document title.", "error");
+    return;
+  }
+  if (!file) {
+    message("newslettersMessage", "Choose a file to upload.", "error");
+    return;
+  }
+  if (file.size > MAX_NEWSLETTER_BYTES) {
+    message("newslettersMessage", "The file is larger than 20 MB. Choose a smaller file.", "error");
+    return;
+  }
+
+  busy.add("newsletterUpload");
+  busyButton("uploadNewsletterButton", true, "Uploading...");
+  clearMessage("newslettersMessage");
+  try {
+    await currentSuperAdmin();
+    const storageName = `${Date.now()}_${safeStorageName(title)}__${safeStorageName(file.name)}`;
+    const { error } = await supabase.storage.from(NEWSLETTER_BUCKET).upload(storageName, file, {
+      upsert: false,
+      contentType: file.type || "application/octet-stream",
+      cacheControl: "3600",
+    });
+    if (error) throw error;
+
+    message("newslettersMessage", `Uploaded "${title}" successfully.`);
+    $("newsletterUploadForm")?.reset();
+    await loadNewsletters();
+  } catch (error) {
+    message("newslettersMessage", `Upload failed: ${errorText(error)}. Confirm the '${NEWSLETTER_BUCKET}' bucket and its storage policies exist in Supabase.`, "error");
+  } finally {
+    busy.delete("newsletterUpload");
+    busyButton("uploadNewsletterButton", false);
+  }
+}
+
+async function downloadNewsletter(path) {
+  try {
+    await currentSuperAdmin();
+    const { data, error } = await supabase.storage.from(NEWSLETTER_BUCKET).createSignedUrl(path, 60);
+    if (error) throw error;
+    if (!data?.signedUrl) throw new Error("Could not create a download link.");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    message("newslettersMessage", `Download failed: ${errorText(error)}`, "error");
+  }
+}
+
+async function deleteNewsletter(path) {
+  if (!window.confirm(`Delete this newsletter file?\n\n${path}`)) return;
+  try {
+    await currentSuperAdmin();
+    const { error } = await supabase.storage.from(NEWSLETTER_BUCKET).remove([path]);
+    if (error) throw error;
+    message("newslettersMessage", "Document deleted.");
+    await loadNewsletters();
+  } catch (error) {
+    message("newslettersMessage", `Delete failed: ${errorText(error)}`, "error");
   }
 }
 
@@ -2023,7 +1879,7 @@ function bindEvents() {
   });
 
   $("classesTableBody")?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-class-toggle]");
+        const button = event.target.closest("[data-class-toggle]");
 
     if (button) {
       toggleClass(
@@ -2094,6 +1950,60 @@ function bindEvents() {
     loadGradingEditor().catch((error) => {
       message("gradingMessage", errorText(error), "error");
     });
+  });
+
+  $("addGradeRowButton")?.addEventListener("click", () => {
+    const body = $("gradingBandsBody");
+    if (!body) return;
+    const bands = [...body.querySelectorAll("tr")]
+      .filter((row) => row.querySelector('[data-field="grade_name"]'))
+      .map((row) => ({
+        grade_name: row.querySelector('[data-field="grade_name"]')?.value ?? "",
+        minimum_score: row.querySelector('[data-field="minimum_score"]')?.value ?? "",
+        maximum_score: row.querySelector('[data-field="maximum_score"]')?.value ?? "",
+        grade_points: row.querySelector('[data-field="grade_points"]')?.value ?? ""
+      }));
+    bands.push({ grade_name: "", minimum_score: "", maximum_score: "", grade_points: "" });
+    renderGradingRows(bands);
+    const inputs = body.querySelectorAll('[data-field="grade_name"]');
+    inputs[inputs.length - 1]?.focus();
+    clearMessage("gradingMessage");
+  });
+
+  $("gradingBandsBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-delete-grade]");
+    if (!button) return;
+    const body = $("gradingBandsBody");
+    const rows = [...body.querySelectorAll("tr")]
+      .filter((row) => row.querySelector('[data-field="grade_name"]'));
+    const index = Number(button.dataset.deleteGrade);
+    if (!Number.isInteger(index) || !rows[index]) return;
+    if (rows.length === 1) {
+      message("gradingMessage", "Keep at least one grade row.", "error");
+      return;
+    }
+    const bands = rows.filter((_, rowIndex) => rowIndex !== index).map((row) => ({
+      grade_name: row.querySelector('[data-field="grade_name"]').value,
+      minimum_score: row.querySelector('[data-field="minimum_score"]').value,
+      maximum_score: row.querySelector('[data-field="maximum_score"]').value,
+      grade_points: row.querySelector('[data-field="grade_points"]').value
+    }));
+    renderGradingRows(bands);
+    clearMessage("gradingMessage");
+  });
+
+  $("newsletterUploadForm")?.addEventListener("submit", uploadNewsletter);
+  $("refreshNewslettersButton")?.addEventListener("click", () => {
+    loadNewsletters().catch((error) => message("newslettersMessage", errorText(error), "error"));
+  });
+  $("newslettersTableBody")?.addEventListener("click", (event) => {
+    const downloadButton = event.target.closest("[data-newsletter-download]");
+    if (downloadButton) {
+      downloadNewsletter(downloadButton.dataset.newsletterDownload);
+      return;
+    }
+    const deleteButton = event.target.closest("[data-newsletter-delete]");
+    if (deleteButton) deleteNewsletter(deleteButton.dataset.newsletterDelete);
   });
 }
 
@@ -2181,6 +2091,12 @@ async function initialize() {
       "Final subject/combination refresh failed:",
       error
     );
+  }
+
+  try {
+    await loadNewsletters();
+  } catch (error) {
+    message("newslettersMessage", `Could not load newsletters: ${errorText(error)}`, "error");
   }
 }
 
