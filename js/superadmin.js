@@ -244,7 +244,6 @@ function selectedIds(containerId) {
 
 function renderSubjectChoices(containerId, checked = []) {
   const container = $(containerId);
-
   if (!container) return;
 
   const activeSubjects = subjects.filter(
@@ -359,7 +358,6 @@ async function addSubject(event) {
 
   busy.add("subject");
   busyButton("createSubjectButton", true, "Adding...");
-  clearMessage("createSubjectMessage");
 
   try {
     await currentSuperAdmin();
@@ -443,7 +441,7 @@ async function loadCombinations() {
       .select("combination_id, subject_id")
       .in(
         "combination_id",
-        combinations.map((combination) => combination.id)
+        combinations.map((item) => item.id)
       );
 
     if (linkError) throw linkError;
@@ -458,43 +456,43 @@ async function loadCombinations() {
       subjectMap.get(link.combination_id).push(link.subject_id);
     });
 
-    combinations = combinations.map((combination) => ({
-      ...combination,
-      subject_ids: subjectMap.get(combination.id) || []
+    combinations = combinations.map((item) => ({
+      ...item,
+      subject_ids: subjectMap.get(item.id) || []
     }));
   }
 
   if (body) {
     body.innerHTML = combinations.length
-      ? combinations.map((combination) => {
-          const names = (combination.subject_ids || [])
+      ? combinations.map((item) => {
+          const names = (item.subject_ids || [])
             .map((id) => subjects.find((subject) => subject.id === id)?.name)
             .filter(Boolean)
             .join(", ");
 
           return `
             <tr>
-              <td>${esc(combination.name)}</td>
+              <td>${esc(item.name)}</td>
               <td>${esc(names || "No subjects linked")}</td>
               <td>
-                <span class="status ${combination.is_active ? "" : "inactive"}">
-                  ${combination.is_active ? "Active" : "Inactive"}
+                <span class="status ${item.is_active ? "" : "inactive"}">
+                  ${item.is_active ? "Active" : "Inactive"}
                 </span>
               </td>
               <td>
                 <button
                   class="button secondary"
                   type="button"
-                  data-combo-edit="${esc(combination.id)}"
+                  data-combo-edit="${esc(item.id)}"
                 >Edit</button>
 
                 <button
                   class="button secondary"
                   type="button"
-                  data-combo-active="${esc(combination.id)}"
-                  data-active="${!combination.is_active}"
+                  data-combo-active="${esc(item.id)}"
+                  data-active="${!item.is_active}"
                 >
-                  ${combination.is_active ? "Deactivate" : "Activate"}
+                  ${item.is_active ? "Deactivate" : "Activate"}
                 </button>
               </td>
             </tr>
@@ -846,6 +844,20 @@ async function loadClasses() {
         `).join("");
   }
 
+  const examClass = $("examClass");
+
+  if (examClass) {
+    examClass.innerHTML =
+      '<option value="">All classes</option>' +
+      classes
+        .filter((item) => item.is_active)
+        .map((item) => `
+          <option value="${esc(item.id)}">
+            ${esc(item.name)} — ${esc(item.grade_level)}
+          </option>
+        `).join("");
+  }
+
   clearMessage("classesMessage");
 }
 
@@ -893,10 +905,7 @@ async function addClass(event) {
     await loadClasses();
     await loadOverview();
 
-    message(
-      "createClassMessage",
-      "Class created successfully."
-    );
+    message("createClassMessage", "Class created successfully.");
   } catch (error) {
     message(
       "createClassMessage",
@@ -937,10 +946,7 @@ async function assignTeacher(event) {
 
     await loadClasses();
 
-    message(
-      "assignTeacherMessage",
-      "Teacher assigned successfully."
-    );
+    message("assignTeacherMessage", "Teacher assigned successfully.");
   } catch (error) {
     message(
       "assignTeacherMessage",
@@ -1101,6 +1107,223 @@ async function createStaff(event) {
   }
 }
 
+/* EXAMS MANAGEMENT */
+
+async function loadGradingSystems() {
+  const select = $("examGradingSystem");
+  if (!select) return;
+
+  const { data, error } = await supabase
+    .from("grading_systems")
+    .select("id, name")
+    .order("name");
+
+  if (error) {
+    console.warn("Could not load grading systems:", error.message);
+
+    select.innerHTML =
+      '<option value="">No grading systems available</option>';
+
+    return;
+  }
+
+  select.innerHTML =
+    '<option value="">Choose a grading system (optional)</option>' +
+    (data || []).map((item) => `
+      <option value="${esc(item.id)}">${esc(item.name)}</option>
+    `).join("");
+}
+
+async function loadExams() {
+  const body = $("examsTableBody");
+
+  if (body) {
+    body.innerHTML =
+      '<tr><td colspan="6">Loading exams...</td></tr>';
+  }
+
+  const { data, error } = await supabase
+    .from("exams")
+    .select(
+      "id, name, academic_year, term, class_id, grading_system_id, status, created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (body) {
+      body.innerHTML =
+        '<tr><td colspan="6">Could not load exams.</td></tr>';
+    }
+
+    throw error;
+  }
+
+  const rows = data || [];
+  const classMap = new Map(
+    classes.map((item) => [item.id, item.name])
+  );
+
+  if (body) {
+    body.innerHTML = rows.length
+      ? rows.map((exam) => {
+          const status = String(exam.status || "draft").toLowerCase();
+
+          const actions = status === "draft"
+            ? `
+              <button
+                class="button secondary"
+                type="button"
+                data-exam-status="${esc(exam.id)}"
+                data-status="published"
+              >Publish</button>
+
+              <button
+                class="button secondary"
+                type="button"
+                data-exam-status="${esc(exam.id)}"
+                data-status="archived"
+              >Archive</button>
+            `
+            : status === "published"
+              ? `
+                <button
+                  class="button secondary"
+                  type="button"
+                  data-exam-status="${esc(exam.id)}"
+                  data-status="archived"
+                >Archive</button>
+              `
+              : `
+                <button
+                  class="button secondary"
+                  type="button"
+                  data-exam-status="${esc(exam.id)}"
+                  data-status="draft"
+                >Return to Draft</button>
+              `;
+
+          return `
+            <tr>
+              <td>${esc(exam.name)}</td>
+              <td>${esc(exam.academic_year)}</td>
+              <td>${esc(exam.term)}</td>
+              <td>
+                ${esc(
+                  exam.class_id
+                    ? (classMap.get(exam.class_id) || "Assigned class")
+                    : "All classes"
+                )}
+              </td>
+              <td>
+                <span class="status ${status === "published" ? "" : "inactive"}">
+                  ${esc(status.charAt(0).toUpperCase() + status.slice(1))}
+                </span>
+              </td>
+              <td>${actions}</td>
+            </tr>
+          `;
+        }).join("")
+      : '<tr><td colspan="6">No exams created yet.</td></tr>';
+  }
+
+  clearMessage("examsMessage");
+}
+
+async function createExam(event) {
+  event.preventDefault();
+
+  if (busy.has("exam")) return;
+
+  const name = $("examName")?.value.trim() || "";
+  const academic_year =
+    $("examAcademicYear")?.value.trim() || "";
+  const term = $("examTerm")?.value.trim() || "";
+  const class_id = $("examClass")?.value || null;
+  const grading_system_id =
+    $("examGradingSystem")?.value || null;
+
+  if (!name || !academic_year || !term) {
+    return message(
+      "createExamMessage",
+      "Enter the exam name, academic year, and term.",
+      "error"
+    );
+  }
+
+  busy.add("exam");
+  busyButton("createExamButton", true, "Creating...");
+
+  try {
+    const { user } = await currentSuperAdmin();
+
+    const { error } = await supabase.from("exams").insert({
+      name,
+      academic_year,
+      term,
+      class_id,
+      grading_system_id,
+      status: "draft",
+      created_by: user.id
+    });
+
+    if (error) throw error;
+
+    $("createExamForm")?.reset();
+
+    await loadExams();
+
+    message(
+      "createExamMessage",
+      "Exam created as a draft. It is not published yet."
+    );
+  } catch (error) {
+    message(
+      "createExamMessage",
+      `Could not create exam: ${errorText(error)}`,
+      "error"
+    );
+  } finally {
+    busy.delete("exam");
+    busyButton("createExamButton", false);
+  }
+}
+
+async function updateExamStatus(id, status) {
+  if (!["draft", "published", "archived"].includes(status)) {
+    return;
+  }
+
+  const promptText = status === "published"
+    ? "Publish this exam? Confirm that the exam is ready to be visible as published."
+    : `Change this exam status to ${status}?`;
+
+  if (!window.confirm(promptText)) return;
+
+  try {
+    await currentSuperAdmin();
+
+    const { error } = await supabase
+      .from("exams")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    await loadExams();
+
+    message(
+      "examsMessage",
+      `Exam status changed to ${status}.`
+    );
+  } catch (error) {
+    message(
+      "examsMessage",
+      `Could not update exam: ${errorText(error)}`,
+      "error"
+    );
+  }
+}
+
 /* EVENT LISTENERS */
 
 function bindEvents() {
@@ -1196,6 +1419,32 @@ function bindEvents() {
     }
   });
 
+  $("createExamForm")?.addEventListener("submit", createExam);
+
+  $("refreshExamsButton")?.addEventListener("click", async () => {
+    try {
+      await Promise.all([
+        loadClasses(),
+        loadGradingSystems()
+      ]);
+
+      await loadExams();
+    } catch (error) {
+      message("examsMessage", errorText(error), "error");
+    }
+  });
+
+  $("examsTableBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-exam-status]");
+
+    if (button) {
+      updateExamStatus(
+        button.dataset.examStatus,
+        button.dataset.status
+      );
+    }
+  });
+
   $("createStaffForm")?.addEventListener("submit", createStaff);
 
   $("refreshStaffButton")?.addEventListener("click", () => {
@@ -1244,6 +1493,17 @@ async function initialize() {
   });
 
   try {
+    await loadGradingSystems();
+    await loadExams();
+  } catch (error) {
+    message(
+      "examsMessage",
+      `Could not initialize exams: ${errorText(error)}`,
+      "error"
+    );
+  }
+
+  try {
     await loadCombinations();
   } catch (error) {
     message(
@@ -1253,7 +1513,7 @@ async function initialize() {
     );
   }
 
-  // Reload subjects first so combination names render correctly.
+  // Load subjects before rendering combination subject names.
   try {
     await loadSubjects();
     await loadCombinations();
