@@ -374,6 +374,24 @@
         grid-template-columns: 1fr;
       }
     }
+
+    #gradingBandsBody input {
+      width: 100%;
+      min-width: 95px;
+      padding: 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    #gradingBandsBody td:last-child,
+    #newslettersTableBody td:last-child {
+      white-space: nowrap;
+    }
+
+    .file-name {
+      overflow-wrap: anywhere;
+    }
   </style>
 </head>
 
@@ -894,7 +912,7 @@
                       <th>Grade Name</th>
                       <th>Minimum Score</th>
                       <th>Maximum Score</th>
-                      <th>Points</th>
+                      <th>Points (optional)</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -970,13 +988,43 @@
 
         <!-- NEWSLETTERS -->
         <section class="section" id="section-documents">
-          <h2 class="section-heading">Newsletters</h2>
+          <h2 class="section-heading">Newsletters &amp; School Documents</h2>
+          <p class="muted">Upload school newsletters and approved documents. Files are stored in the private Supabase Storage bucket named <code>newsletters</code>.</p>
 
           <div class="panel">
-            <h3>School Documents</h3>
-            <p class="muted">
-              Secure file uploads and document publication have not yet been implemented.
-            </p>
+            <h3>Upload a Newsletter</h3>
+            <form id="newsletterUploadForm">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="newsletterTitle">Document title</label>
+                  <input id="newsletterTitle" type="text" maxlength="120" placeholder="e.g. Term 1 Newsletter" required>
+                </div>
+                <div class="field">
+                  <label for="newsletterFile">Choose file (PDF, Word, or image)</label>
+                  <input id="newsletterFile" type="file" accept=".pdf,.doc,.docx,.odt,.png,.jpg,.jpeg,.webp" required>
+                </div>
+              </div>
+              <p class="muted">Maximum file size: 20 MB. Uploads require the private `newsletters` storage bucket and its policies to be configured in Supabase.</p>
+              <div class="button-row">
+                <button class="button" id="uploadNewsletterButton" type="submit">Upload Document</button>
+                <button class="button secondary" id="refreshNewslettersButton" type="button">Refresh Documents</button>
+              </div>
+              <p class="message" id="newslettersMessage" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h3>Uploaded Documents</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Title / File</th><th>File size</th><th>Uploaded</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="newslettersTableBody">
+                  <tr><td colspan="4">Loading documents...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -985,6 +1033,6 @@
   </div>
 
   <!-- Keep this path aligned with your project folder structure. -->
-  <script type="module" src="../js/superadmin.js?v=12"></script>
+  <script type="module" src="../js/superadmin.js?v=11"></script>
 </body>
 </html>
