@@ -1,43 +1,34 @@
 
 import { supabase } from "./supabase.js";
 
-/* =========================================================
-   GRADE HUB — SUPER ADMIN DASHBOARD
-   Subjects use subject_code, NOT code.
-   ========================================================= */
-
 const $ = (id) => document.getElementById(id);
 
-let cachedSubjects = [];
-let cachedClasses = [];
-let cachedTeachers = [];
-let cachedCombinations = [];
-let savingSubject = false;
-let savingCombination = false;
-let savingClass = false;
-let savingStaff = false;
-
-/* -------------------- GENERAL HELPERS -------------------- */
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+const esc = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
   })[char]);
-}
 
-function showMessage(id, message, type = "success") {
+let subjects = [];
+let combinations = [];
+let classes = [];
+let teachers = [];
+let staff = [];
+
+const busy = new Set();
+
+function message(id, text, type = "success") {
   const element = $(id);
+
   if (!element) {
-    console[type === "error" ? "error" : "log"](message);
+    if (type === "error") console.error(text);
     return;
   }
 
-  element.textContent = message;
-  element.dataset.type = type;
+  element.textContent = text;
   element.classList.remove("success", "error");
   element.classList.add(type);
   element.style.display = "block";
@@ -45,56 +36,54 @@ function showMessage(id, message, type = "success") {
 
 function clearMessage(id) {
   const element = $(id);
-  if (!element) return;
-  element.textContent = "";
-  element.style.display = "none";
+
+  if (element) {
+    element.textContent = "";
+    element.style.display = "none";
+  }
 }
 
-function setBusy(button, busy, busyText = "Please wait...") {
+function busyButton(id, loading, text = "Please wait...") {
+  const button = $(id);
   if (!button) return;
 
-  if (busy) {
-    button.dataset.originalText ??= button.textContent;
+  if (loading) {
+    if (!button.dataset.oldText) {
+      button.dataset.oldText = button.textContent;
+    }
+
     button.disabled = true;
-    button.textContent = busyText;
+    button.textContent = text;
   } else {
     button.disabled = false;
-    if (button.dataset.originalText) {
-      button.textContent = button.dataset.originalText;
+
+    if (button.dataset.oldText) {
+      button.textContent = button.dataset.oldText;
     }
   }
 }
 
-function formatDate(value) {
-  if (!value) return "—";
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "—"
-    : date.toLocaleDateString();
+function errorText(error) {
+  console.error(error);
+  return error?.message || String(error || "Unknown error");
 }
 
-function reportError(context, error) {
-  console.error(`[Grade Hub] ${context}:`, error);
-  return error?.message || "An unexpected error occurred.";
-}
+/* AUTHORIZATION */
 
-async function getCurrentUser() {
-  const { data, error } = await supabase.auth.getUser();
+async function currentSuperAdmin() {
+  const { data: auth, error: authError } =
+    await supabase.auth.getUser();
 
-  if (error) throw error;
-  if (!data?.user) throw new Error("Your session has expired. Sign in again.");
+  if (authError) throw authError;
 
-  return data.user;
-}
-
-async function verifySuperAdmin() {
-  const user = await getCurrentUser();
+  if (!auth.user) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
 
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("id, full_name, role, is_active")
-    .eq("id", user.id)
+    .eq("id", auth.user.id)
     .maybeSingle();
 
   if (error) throw error;
@@ -104,632 +93,585 @@ async function verifySuperAdmin() {
     profile.role !== "super_admin" ||
     profile.is_active !== true
   ) {
-    throw new Error("Access denied. An active Super Admin account is required.");
+    throw new Error(
+      "Access denied. An active Super Admin account is required."
+    );
   }
 
-  const nameElement = $("adminName");
-  if (nameElement) {
-    nameElement.textContent = profile.full_name || user.email || "Super Admin";
+  const welcome = $("welcomeText");
+
+  if (welcome) {
+    welcome.textContent =
+      `Signed in as ${profile.full_name || auth.user.email || "Super Admin"}`;
   }
 
-  const emailElement = $("adminEmail");
-  if (emailElement) emailElement.textContent = user.email || "";
-
-  return { user, profile };
+  return { user: auth.user, profile };
 }
 
-/* -------------------- NAVIGATION -------------------- */
+/* NAVIGATION */
 
-function initializeNavigation() {
-  const navItems = document.querySelectorAll(
-    "[data-section], .sidebar-link[data-target], [data-nav-target]"
-  );
+function initNavigation() {
+  const sections = [
+    ...document.querySelectorAll(".section[id^='section-']")
+  ];
 
-  navItems.forEach((item) => {
-    item.addEventListener("click", (event) => {
-      const target =
-        item.dataset.section ||
-        item.dataset.target ||
-        item.dataset.navTarget;
+  document.querySelectorAll("[data-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = $("section-" + button.dataset.section);
 
       if (!target) return;
 
-      const section =
-        $(target) ||
-        $(`${target}Section`) ||
-        $(`${target}-section`);
-
-      if (!section) return;
-
-      event.preventDefault();
-
-      document.querySelectorAll(
-        ".dashboard-section, .content-section, [data-dashboard-section]"
-      ).forEach((candidate) => {
-        candidate.hidden = true;
-        candidate.classList.remove("active");
+      sections.forEach((section) => {
+        section.classList.toggle("active", section === target);
       });
 
-      section.hidden = false;
-      section.classList.add("active");
+      document.querySelectorAll("[data-section]").forEach((nav) => {
+        nav.classList.toggle("active", nav === button);
+      });
 
-      navItems.forEach((nav) => nav.classList.remove("active"));
-      item.classList.add("active");
+      const title = $("pageTitle");
+
+      if (title) {
+        title.textContent = button.textContent.trim();
+      }
+
+      $("sidebar")?.classList.remove("open");
     });
   });
 
-  $("logoutButton")?.addEventListener("click", logout);
-  $("logoutBtn")?.addEventListener("click", logout);
+  $("mobileMenuButton")?.addEventListener("click", () => {
+    $("sidebar")?.classList.toggle("open");
+  });
+
+  $("signOutButton")?.addEventListener("click", async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      message("overviewMessage", error.message, "error");
+      return;
+    }
+
+    window.location.href = "../index.html";
+  });
+
+  $("refreshOverviewButton")?.addEventListener("click", () => {
+    loadOverview().catch((error) => {
+      message("overviewMessage", errorText(error), "error");
+    });
+  });
 }
 
-async function logout() {
-  const { error } = await supabase.auth.signOut();
+/* OVERVIEW */
 
-  if (error) {
-    alert(`Could not sign out: ${error.message}`);
-    return;
-  }
-
-  window.location.href = "../index.html";
-}
-
-/* -------------------- OVERVIEW -------------------- */
-
-async function countRows(table, filters = []) {
+async function count(table, filters = []) {
   let query = supabase
     .from(table)
     .select("*", { count: "exact", head: true });
 
-  for (const [column, operator, value] of filters) {
-    query = query.filter(column, operator, value);
-  }
+  filters.forEach(([column, value]) => {
+    query = query.eq(column, value);
+  });
 
-  const { count, error } = await query;
+  const { count: total, error } = await query;
+
   if (error) throw error;
 
-  return count ?? 0;
+  return total ?? 0;
 }
 
 async function loadOverview() {
-  const tasks = [
-    ["totalStudents", () => countRows("students")],
-    ["totalAdmins", () => countRows("profiles", [["role", "eq", "admin"]])],
-    ["totalTeachers", () => countRows("profiles", [["role", "eq", "class_teacher"]])],
-    ["totalClasses", () => countRows("classes")]
+  clearMessage("overviewMessage");
+
+  const items = [
+    ["totalStudents", () => count("students")],
+    [
+      "totalAdmins",
+      () => count("profiles", [
+        ["role", "admin"],
+        ["is_active", true]
+      ])
+    ],
+    [
+      "totalTeachers",
+      () => count("profiles", [
+        ["role", "class_teacher"],
+        ["is_active", true]
+      ])
+    ],
+    [
+      "totalClasses",
+      () => count("classes", [["is_active", true]])
+    ]
   ];
 
   const results = await Promise.allSettled(
-    tasks.map(([, load]) => load())
+    items.map((item) => item[1]())
   );
 
+  const failures = [];
+
   results.forEach((result, index) => {
-    const [elementId] = tasks[index];
-    const element = $(elementId);
+    const element = $(items[index][0]);
 
-    if (!element) return;
-
-    element.textContent = result.status === "fulfilled"
-      ? String(result.value)
-      : "—";
+    if (element) {
+      element.textContent =
+        result.status === "fulfilled" ? result.value : "—";
+    }
 
     if (result.status === "rejected") {
-      console.error(`Could not load ${elementId}:`, result.reason);
-    }
-  });
-}
-
-/* =========================================================
-   SUBJECTS
-   Actual database columns:
-   id, name, subject_code, description, is_active, created_at
-   ========================================================= */
-
-function subjectTableElement() {
-  return $("subjectsTableBody") || $("subjectsTable");
-}
-
-function renderSubjects() {
-  const table = subjectTableElement();
-  if (!table) {
-    console.warn("Subjects table body was not found in the HTML.");
-    return;
-  }
-
-  if (cachedSubjects.length === 0) {
-    table.innerHTML = `
-      <tr>
-        <td colspan="5">No subjects found. Add your first subject above.</td>
-      </tr>`;
-    refreshCombinationChoices();
-    return;
-  }
-
-  table.innerHTML = cachedSubjects.map((subject) => {
-    const active = subject.is_active === true;
-
-    return `
-      <tr>
-        <td>${escapeHTML(subject.subject_code || "—")}</td>
-        <td>${escapeHTML(subject.name)}</td>
-        <td>${escapeHTML(subject.description || "—")}</td>
-        <td>${active ? "Active" : "Inactive"}</td>
-        <td>
-          <button
-            type="button"
-            data-toggle-subject="${escapeHTML(subject.id)}"
-            data-next-active="${active ? "false" : "true"}">
-            ${active ? "Deactivate" : "Activate"}
-          </button>
-        </td>
-      </tr>`;
-  }).join("");
-
-  refreshCombinationChoices();
-}
-
-async function loadSubjects() {
-  const table = subjectTableElement();
-
-  if (table) {
-    table.innerHTML = `
-      <tr><td colspan="5">Loading subjects...</td></tr>`;
-  }
-
-  const { data, error } = await supabase
-    .from("subjects")
-    .select("id, name, subject_code, description, is_active, created_at")
-    .order("name", { ascending: true });
-
-  if (error) {
-    if (table) {
-      table.innerHTML = `
-        <tr><td colspan="5">Could not load subjects.</td></tr>`;
-    }
-
-    showMessage(
-      "subjectsMessage",
-      `Could not load subjects: ${reportError("Loading subjects", error)}`,
-      "error"
-    );
-
-    throw error;
-  }
-
-  cachedSubjects = data || [];
-  renderSubjects();
-  clearMessage("subjectsMessage");
-}
-
-async function addSubject(event) {
-  event?.preventDefault();
-
-  if (savingSubject) return;
-
-  const nameInput = $("subjectName");
-  const codeInput = $("subjectCode");
-  const descriptionInput = $("subjectDescription");
-  const button = $("createSubjectButton");
-
-  if (!nameInput) {
-    showMessage(
-      "createSubjectMessage",
-      "The subjectName input is missing from the HTML.",
-      "error"
-    );
-    return;
-  }
-
-  const name = nameInput.value.trim();
-  const subjectCode = codeInput?.value.trim().toUpperCase() || "";
-  const description = descriptionInput?.value.trim() || "";
-
-  if (!name) {
-    showMessage("createSubjectMessage", "Enter a subject name.", "error");
-    nameInput.focus();
-    return;
-  }
-
-  savingSubject = true;
-  setBusy(button, true, "Adding...");
-  clearMessage("createSubjectMessage");
-
-  try {
-    await verifySuperAdmin();
-
-    const newSubject = {
-      name,
-      subject_code: subjectCode || null,
-      description: description || null,
-      is_active: true
-    };
-
-    const { error } = await supabase
-      .from("subjects")
-      .insert(newSubject);
-
-    if (error) throw error;
-
-    nameInput.value = "";
-    if (codeInput) codeInput.value = "";
-    if (descriptionInput) descriptionInput.value = "";
-
-    showMessage(
-      "createSubjectMessage",
-      "Subject added successfully."
-    );
-
-    await loadSubjects();
-    await loadCombinations();
-  } catch (error) {
-    showMessage(
-      "createSubjectMessage",
-      reportError("Adding subject", error),
-      "error"
-    );
-  } finally {
-    savingSubject = false;
-    setBusy(button, false);
-  }
-}
-
-async function toggleSubject(id, nextActive) {
-  const subject = cachedSubjects.find((item) => item.id === id);
-  if (!subject) return;
-
-  try {
-    await verifySuperAdmin();
-
-    const { error } = await supabase
-      .from("subjects")
-      .update({ is_active: nextActive })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    await loadSubjects();
-
-    showMessage(
-      "subjectsMessage",
-      `${subject.name} ${nextActive ? "activated" : "deactivated"}.`
-    );
-  } catch (error) {
-    showMessage(
-      "subjectsMessage",
-      reportError("Updating subject", error),
-      "error"
-    );
-  }
-}
-
-function initializeSubjectEvents() {
-  $("createSubjectForm")?.addEventListener("submit", addSubject);
-
-  // Do not add a second click handler to the submit button.
-  $("refreshSubjectsButton")?.addEventListener("click", async () => {
-    try {
-      await loadSubjects();
-    } catch {
-      // Error message is already shown by loadSubjects().
+      failures.push(
+        `${items[index][0]}: ${errorText(result.reason)}`
+      );
     }
   });
 
-  const table = subjectTableElement();
-  table?.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-toggle-subject]");
-    if (!button) return;
-
-    await toggleSubject(
-      button.dataset.toggleSubject,
-      button.dataset.nextActive === "true"
-    );
-  });
+  if (failures.length) {
+    message("overviewMessage", failures.join(" | "), "error");
+  } else {
+    message("overviewMessage", "Overview refreshed.");
+  }
 }
 
-/* =========================================================
-   SUBJECT COMBINATIONS
-   ========================================================= */
+/* SUBJECTS */
 
-function getSelectedSubjectIds(containerId) {
+function selectedIds(containerId) {
+  return [
+    ...($(containerId)?.querySelectorAll(
+      'input[type="checkbox"]:checked'
+    ) || [])
+  ].map((checkbox) => checkbox.value);
+}
+
+function renderSubjectChoices(containerId, checked = []) {
   const container = $(containerId);
-  if (!container) return [];
 
-  return Array.from(
-    container.querySelectorAll('input[type="checkbox"]:checked')
-  ).map((input) => input.value);
-}
-
-function renderSubjectChoices(containerId, selectedIds = []) {
-  const container = $(containerId);
   if (!container) return;
 
-  const activeSubjects = cachedSubjects.filter(
-    (subject) => subject.is_active === true
+  const activeSubjects = subjects.filter(
+    (subject) => subject.is_active
   );
 
   if (!activeSubjects.length) {
-    container.innerHTML = "<p>No active subjects available. Add or activate subjects first.</p>";
+    container.innerHTML =
+      '<p class="muted">No active subjects. Add or activate subjects first.</p>';
     return;
   }
 
   container.innerHTML = activeSubjects.map((subject) => `
-    <label class="subject-choice">
+    <label class="check-item">
       <input
         type="checkbox"
-        name="${escapeHTML(containerId)}"
-        value="${escapeHTML(subject.id)}"
-        ${selectedIds.includes(subject.id) ? "checked" : ""}>
+        value="${esc(subject.id)}"
+        ${checked.includes(subject.id) ? "checked" : ""}
+      >
       <span>
-        ${escapeHTML(subject.name)}
+        ${esc(subject.name)}
         ${subject.subject_code
-          ? ` (${escapeHTML(subject.subject_code)})`
+          ? ` (${esc(subject.subject_code)})`
           : ""}
       </span>
     </label>
   `).join("");
 }
 
-function refreshCombinationChoices() {
-  renderSubjectChoices("combinationSubjectChoices");
+function renderSubjects() {
+  const body = $("subjectsTableBody");
 
-  // Preserve selected values when refreshing the edit form.
-  const editContainer = $("editCombinationSubjectChoices");
-  if (editContainer) {
-    const selected = getSelectedSubjectIds("editCombinationSubjectChoices");
-    renderSubjectChoices("editCombinationSubjectChoices", selected);
+  if (body) {
+    body.innerHTML = subjects.length
+      ? subjects.map((subject) => `
+          <tr>
+            <td>${esc(subject.name)}</td>
+            <td>${esc(subject.subject_code || "—")}</td>
+            <td>${esc(subject.description || "—")}</td>
+            <td>
+              <span class="status ${subject.is_active ? "" : "inactive"}">
+                ${subject.is_active ? "Active" : "Inactive"}
+              </span>
+            </td>
+            <td>
+              <button
+                class="button secondary"
+                type="button"
+                data-subject-toggle="${esc(subject.id)}"
+                data-active="${!subject.is_active}"
+              >
+                ${subject.is_active ? "Deactivate" : "Activate"}
+              </button>
+            </td>
+          </tr>
+        `).join("")
+      : '<tr><td colspan="5">No subjects yet. Add your first subject above.</td></tr>';
   }
+
+  const oldSelection = selectedIds("editCombinationSubjectChoices");
+
+  renderSubjectChoices("combinationSubjectChoices");
+  renderSubjectChoices("editCombinationSubjectChoices", oldSelection);
 }
 
-async function loadCombinations() {
-  const table = $("combinationsTableBody");
+async function loadSubjects() {
+  const body = $("subjectsTableBody");
+
+  if (body) {
+    body.innerHTML =
+      '<tr><td colspan="5">Loading subjects...</td></tr>';
+  }
 
   const { data, error } = await supabase
-    .from("subject_combinations")
-    .select("id, name, description, is_active, created_at")
-    .order("name", { ascending: true });
+    .from("subjects")
+    .select("id, name, subject_code, description, is_active, created_at")
+    .order("name");
 
   if (error) {
-    if (table) {
-      table.innerHTML = `
-        <tr><td colspan="4">Could not load combinations.</td></tr>`;
+    if (body) {
+      body.innerHTML =
+        '<tr><td colspan="5">Could not load subjects.</td></tr>';
     }
-
-    showMessage(
-      "combinationsMessage",
-      reportError("Loading combinations", error),
-      "error"
-    );
 
     throw error;
   }
 
-  cachedCombinations = data || [];
+  subjects = data || [];
 
-  if (table) {
-    if (!cachedCombinations.length) {
-      table.innerHTML = `
-        <tr><td colspan="4">No subject combinations created yet.</td></tr>`;
-    } else {
-      table.innerHTML = cachedCombinations.map((combination) => `
-        <tr>
-          <td>${escapeHTML(combination.name)}</td>
-          <td>${escapeHTML(combination.description || "—")}</td>
-          <td>${combination.is_active ? "Active" : "Inactive"}</td>
-          <td>
-            <button
-              type="button"
-              data-edit-combination="${escapeHTML(combination.id)}">
-              Edit
-            </button>
-            <button
-              type="button"
-              data-toggle-combination="${escapeHTML(combination.id)}"
-              data-next-active="${combination.is_active ? "false" : "true"}">
-              ${combination.is_active ? "Deactivate" : "Activate"}
-            </button>
-          </td>
-        </tr>
-      `).join("");
-    }
+  renderSubjects();
+  clearMessage("subjectsMessage");
+}
+
+async function addSubject(event) {
+  event.preventDefault();
+
+  if (busy.has("subject")) return;
+
+  const name = $("subjectName")?.value.trim() || "";
+  const subjectCode =
+    $("subjectCode")?.value.trim().toUpperCase() || "";
+  const description =
+    $("subjectDescription")?.value.trim() || "";
+
+  if (!name) {
+    return message(
+      "createSubjectMessage",
+      "Enter a subject name.",
+      "error"
+    );
   }
 
-  await loadCombinationSubjectLinks();
+  busy.add("subject");
+  busyButton("createSubjectButton", true, "Adding...");
+  clearMessage("createSubjectMessage");
+
+  try {
+    await currentSuperAdmin();
+
+    const { error } = await supabase.from("subjects").insert({
+      name,
+      subject_code: subjectCode || null,
+      description: description || null,
+      is_active: true
+    });
+
+    if (error) throw error;
+
+    $("createSubjectForm")?.reset();
+
+    await loadSubjects();
+
+    message("createSubjectMessage", "Subject added successfully.");
+  } catch (error) {
+    message(
+      "createSubjectMessage",
+      `Could not add subject: ${errorText(error)}`,
+      "error"
+    );
+  } finally {
+    busy.delete("subject");
+    busyButton("createSubjectButton", false);
+  }
+}
+
+async function toggleSubject(id, active) {
+  try {
+    await currentSuperAdmin();
+
+    const { error } = await supabase
+      .from("subjects")
+      .update({ is_active: active })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    await loadSubjects();
+
+    message(
+      "subjectsMessage",
+      `Subject ${active ? "activated" : "deactivated"}.`
+    );
+  } catch (error) {
+    message(
+      "subjectsMessage",
+      `Could not update subject: ${errorText(error)}`,
+      "error"
+    );
+  }
+}
+
+/* SUBJECT COMBINATIONS */
+
+async function loadCombinations() {
+  const body = $("combinationsTableBody");
+
+  const { data, error } = await supabase
+    .from("subject_combinations")
+    .select("id, name, description, is_active, created_at")
+    .order("name");
+
+  if (error) {
+    if (body) {
+      body.innerHTML =
+        '<tr><td colspan="4">Could not load combinations.</td></tr>';
+    }
+
+    throw error;
+  }
+
+  combinations = data || [];
+
+  if (combinations.length) {
+    const { data: links, error: linkError } = await supabase
+      .from("combination_subjects")
+      .select("combination_id, subject_id")
+      .in(
+        "combination_id",
+        combinations.map((combination) => combination.id)
+      );
+
+    if (linkError) throw linkError;
+
+    const subjectMap = new Map();
+
+    (links || []).forEach((link) => {
+      if (!subjectMap.has(link.combination_id)) {
+        subjectMap.set(link.combination_id, []);
+      }
+
+      subjectMap.get(link.combination_id).push(link.subject_id);
+    });
+
+    combinations = combinations.map((combination) => ({
+      ...combination,
+      subject_ids: subjectMap.get(combination.id) || []
+    }));
+  }
+
+  if (body) {
+    body.innerHTML = combinations.length
+      ? combinations.map((combination) => {
+          const names = (combination.subject_ids || [])
+            .map((id) => subjects.find((subject) => subject.id === id)?.name)
+            .filter(Boolean)
+            .join(", ");
+
+          return `
+            <tr>
+              <td>${esc(combination.name)}</td>
+              <td>${esc(names || "No subjects linked")}</td>
+              <td>
+                <span class="status ${combination.is_active ? "" : "inactive"}">
+                  ${combination.is_active ? "Active" : "Inactive"}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="button secondary"
+                  type="button"
+                  data-combo-edit="${esc(combination.id)}"
+                >Edit</button>
+
+                <button
+                  class="button secondary"
+                  type="button"
+                  data-combo-active="${esc(combination.id)}"
+                  data-active="${!combination.is_active}"
+                >
+                  ${combination.is_active ? "Deactivate" : "Activate"}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("")
+      : '<tr><td colspan="4">No combinations created yet.</td></tr>';
+  }
+
   clearMessage("combinationsMessage");
 }
 
-async function loadCombinationSubjectLinks() {
-  if (!cachedCombinations.length) return;
-
-  const ids = cachedCombinations.map((item) => item.id);
-
-  const { data, error } = await supabase
-    .from("combination_subjects")
-    .select("combination_id, subject_id")
-    .in("combination_id", ids);
-
-  if (error) {
-    console.error("Could not load combination subject links:", error);
-    return;
-  }
-
-  const subjectsByCombination = new Map();
-
-  (data || []).forEach((link) => {
-    if (!subjectsByCombination.has(link.combination_id)) {
-      subjectsByCombination.set(link.combination_id, []);
-    }
-
-    subjectsByCombination.get(link.combination_id).push(link.subject_id);
-  });
-
-  cachedCombinations = cachedCombinations.map((combination) => ({
-    ...combination,
-    subject_ids: subjectsByCombination.get(combination.id) || []
-  }));
-}
-
 async function addCombination(event) {
-  event?.preventDefault();
+  event.preventDefault();
 
-  if (savingCombination) return;
+  if (busy.has("combination")) return;
 
-  const nameInput = $("combinationName");
-  const descriptionInput = $("combinationDescription");
-  const button = $("createCombinationButton");
-
-  const name = nameInput?.value.trim() || "";
-  const description = descriptionInput?.value.trim() || "";
-  const subjectIds = getSelectedSubjectIds("combinationSubjectChoices");
-  const isActive = $("combinationActive")?.checked === true;
+  const name = $("combinationName")?.value.trim() || "";
+  const description =
+    $("combinationDescription")?.value.trim() || "";
+  const ids = selectedIds("combinationSubjectChoices");
+  const active = $("combinationActive")?.checked === true;
 
   if (!name) {
-    showMessage("createCombinationMessage", "Enter a combination name.", "error");
-    return;
-  }
-
-  if (!subjectIds.length) {
-    showMessage(
+    return message(
       "createCombinationMessage",
-      "Select at least one active subject.",
+      "Enter a combination name.",
       "error"
     );
-    return;
   }
 
-  savingCombination = true;
-  setBusy(button, true, "Creating...");
-  clearMessage("createCombinationMessage");
+  if (!ids.length) {
+    return message(
+      "createCombinationMessage",
+      "Select at least one subject.",
+      "error"
+    );
+  }
 
-  let createdId = null;
+  busy.add("combination");
+  busyButton("createCombinationButton", true, "Creating...");
+
+  let newId = null;
 
   try {
-    const { user } = await verifySuperAdmin();
+    const { user } = await currentSuperAdmin();
 
-    const { data: combination, error: combinationError } = await supabase
+    const { data, error } = await supabase
       .from("subject_combinations")
       .insert({
         name,
         description: description || null,
-        is_active: isActive,
+        is_active: active,
         created_by: user.id
       })
       .select("id")
       .single();
 
-    if (combinationError) throw combinationError;
-    createdId = combination.id;
+    if (error) throw error;
 
-    const rows = subjectIds.map((subjectId) => ({
-      combination_id: createdId,
-      subject_id: subjectId
-    }));
+    newId = data.id;
 
     const { error: linksError } = await supabase
       .from("combination_subjects")
-      .insert(rows);
+      .insert(
+        ids.map((subject_id) => ({
+          combination_id: newId,
+          subject_id
+        }))
+      );
 
     if (linksError) {
-      // Roll back the parent record if inserting its subject links fails.
       await supabase
         .from("subject_combinations")
         .delete()
-        .eq("id", createdId);
+        .eq("id", newId);
 
       throw linksError;
     }
 
-    if (nameInput) nameInput.value = "";
-    if (descriptionInput) descriptionInput.value = "";
-
-    renderSubjectChoices("combinationSubjectChoices");
-
-    showMessage(
-      "createCombinationMessage",
-      "Subject combination created successfully."
-    );
+    $("createCombinationForm")?.reset();
 
     await loadCombinations();
-  } catch (error) {
-    showMessage(
+
+    message(
       "createCombinationMessage",
-      reportError("Creating combination", error),
+      "Combination created successfully."
+    );
+  } catch (error) {
+    message(
+      "createCombinationMessage",
+      `Could not create combination: ${errorText(error)}`,
       "error"
     );
   } finally {
-    savingCombination = false;
-    setBusy(button, false);
+    busy.delete("combination");
+    busyButton("createCombinationButton", false);
   }
 }
 
-async function editCombination(id) {
-  const combination = cachedCombinations.find((item) => item.id === id);
+async function toggleCombination(id, active) {
+  try {
+    await currentSuperAdmin();
+
+    const { error } = await supabase
+      .from("subject_combinations")
+      .update({ is_active: active })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    await loadCombinations();
+
+    message(
+      "combinationsMessage",
+      `Combination ${active ? "activated" : "deactivated"}.`
+    );
+  } catch (error) {
+    message(
+      "combinationsMessage",
+      `Could not update combination: ${errorText(error)}`,
+      "error"
+    );
+  }
+}
+
+function editCombination(id) {
+  const combination = combinations.find((item) => item.id === id);
+
   if (!combination) return;
 
-  if ($("editCombinationPanel")) {
-    $("editCombinationPanel").hidden = false;
-  }
-
-  if ($("editCombinationId")) $("editCombinationId").value = combination.id;
-  if ($("editCombinationName")) $("editCombinationName").value = combination.name;
-  if ($("editCombinationDescription")) {
-    $("editCombinationDescription").value = combination.description || "";
-  }
-  if ($("editCombinationActive")) {
-    $("editCombinationActive").checked = combination.is_active === true;
-  }
+  $("editCombinationPanel").hidden = false;
+  $("editCombinationId").value = combination.id;
+  $("editCombinationName").value = combination.name;
+  $("editCombinationDescription").value =
+    combination.description || "";
+  $("editCombinationActive").checked = !!combination.is_active;
 
   renderSubjectChoices(
     "editCombinationSubjectChoices",
     combination.subject_ids || []
   );
 
-  $("editCombinationPanel")?.scrollIntoView({
+  $("editCombinationPanel").scrollIntoView({
     behavior: "smooth",
     block: "start"
   });
 }
 
-async function saveCombinationEdit(event) {
-  event?.preventDefault();
+async function saveCombination(event) {
+  event.preventDefault();
 
-  const id = $("editCombinationId")?.value;
-  const name = $("editCombinationName")?.value.trim() || "";
-  const description = $("editCombinationDescription")?.value.trim() || "";
-  const isActive = $("editCombinationActive")?.checked === true;
-  const subjectIds = getSelectedSubjectIds("editCombinationSubjectChoices");
-  const button = $("saveCombinationButton");
+  const id = $("editCombinationId").value;
+  const name = $("editCombinationName").value.trim();
+  const description =
+    $("editCombinationDescription").value.trim();
+  const active = $("editCombinationActive").checked;
+  const ids = selectedIds("editCombinationSubjectChoices");
 
-  if (!id) {
-    showMessage("editCombinationMessage", "No combination selected.", "error");
-    return;
-  }
-
-  if (!name) {
-    showMessage("editCombinationMessage", "Enter a combination name.", "error");
-    return;
-  }
-
-  if (!subjectIds.length) {
-    showMessage(
+  if (!name || !ids.length) {
+    return message(
       "editCombinationMessage",
-      "Select at least one active subject.",
+      "Enter a name and select at least one subject.",
       "error"
     );
-    return;
   }
 
-  setBusy(button, true, "Saving...");
-  clearMessage("editCombinationMessage");
+  busyButton("saveCombinationButton", true, "Saving...");
 
   try {
-    await verifySuperAdmin();
+    await currentSuperAdmin();
 
-    // This client-side update is sequential, not transactional.
     const { error: updateError } = await supabase
       .from("subject_combinations")
       .update({
         name,
         description: description || null,
-        is_active: isActive
+        is_active: active
       })
       .eq("id", id);
 
@@ -740,108 +682,39 @@ async function saveCombinationEdit(event) {
       .delete()
       .eq("combination_id", id);
 
-    if (deleteError) {
-      throw new Error(
-        `Combination details saved, but old subject links could not be replaced: ${deleteError.message}`
-      );
-    }
-
-    const links = subjectIds.map((subjectId) => ({
-      combination_id: id,
-      subject_id: subjectId
-    }));
+    if (deleteError) throw deleteError;
 
     const { error: insertError } = await supabase
       .from("combination_subjects")
-      .insert(links);
-
-    if (insertError) {
-      throw new Error(
-        `Combination details saved, but new subject links could not be saved: ${insertError.message}`
+      .insert(
+        ids.map((subject_id) => ({
+          combination_id: id,
+          subject_id
+        }))
       );
-    }
 
-    showMessage("editCombinationMessage", "Combination updated.");
+    if (insertError) throw insertError;
+
     await loadCombinations();
 
-    if ($("editCombinationPanel")) {
-      $("editCombinationPanel").hidden = true;
-    }
-  } catch (error) {
-    showMessage(
+    $("editCombinationPanel").hidden = true;
+
+    message(
       "editCombinationMessage",
-      reportError("Saving combination", error),
+      "Combination updated."
+    );
+  } catch (error) {
+    message(
+      "editCombinationMessage",
+      `Could not save combination: ${errorText(error)}`,
       "error"
     );
   } finally {
-    setBusy(button, false);
+    busyButton("saveCombinationButton", false);
   }
 }
 
-async function toggleCombination(id, nextActive) {
-  try {
-    await verifySuperAdmin();
-
-    const { error } = await supabase
-      .from("subject_combinations")
-      .update({ is_active: nextActive })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    await loadCombinations();
-
-    showMessage(
-      "combinationsMessage",
-      `Combination ${nextActive ? "activated" : "deactivated"}.`
-    );
-  } catch (error) {
-    showMessage(
-      "combinationsMessage",
-      reportError("Updating combination", error),
-      "error"
-    );
-  }
-}
-
-function initializeCombinationEvents() {
-  $("createCombinationForm")?.addEventListener("submit", addCombination);
-  $("editCombinationForm")?.addEventListener("submit", saveCombinationEdit);
-
-  $("cancelEditCombinationButton")?.addEventListener("click", () => {
-    if ($("editCombinationPanel")) {
-      $("editCombinationPanel").hidden = true;
-    }
-  });
-
-  $("refreshCombinationsButton")?.addEventListener("click", async () => {
-    try {
-      await loadCombinations();
-    } catch {
-      // Error message is already shown by loadCombinations().
-    }
-  });
-
-  $("combinationsTableBody")?.addEventListener("click", async (event) => {
-    const editButton = event.target.closest("[data-edit-combination]");
-    if (editButton) {
-      await editCombination(editButton.dataset.editCombination);
-      return;
-    }
-
-    const toggleButton = event.target.closest("[data-toggle-combination]");
-    if (toggleButton) {
-      await toggleCombination(
-        toggleButton.dataset.toggleCombination,
-        toggleButton.dataset.nextActive === "true"
-      );
-    }
-  });
-}
-
-/* =========================================================
-   CLASSES AND TEACHER ASSIGNMENTS
-   ========================================================= */
+/* TEACHERS */
 
 async function loadTeachers() {
   const { data, error } = await supabase
@@ -853,185 +726,239 @@ async function loadTeachers() {
 
   if (error) throw error;
 
-  cachedTeachers = data || [];
+  teachers = data || [];
 
   const select = $("assignmentTeacher");
+
   if (select) {
     select.innerHTML =
       '<option value="">Select a teacher</option>' +
-      cachedTeachers.map((teacher) => `
-        <option value="${escapeHTML(teacher.id)}">
-          ${escapeHTML(teacher.full_name || "Unnamed teacher")}
+      teachers.map((teacher) => `
+        <option value="${esc(teacher.id)}">
+          ${esc(teacher.full_name || "Unnamed teacher")}
         </option>
       `).join("");
   }
 }
 
-async function loadClasses() {
-  const table = $("classesTableBody");
+/* CLASSES */
 
+async function loadClasses() {
   const { data, error } = await supabase
     .from("classes")
     .select("id, name, grade_level, academic_year, capacity, is_active")
     .order("name");
 
-  if (error) {
-    showMessage(
-      "classesMessage",
-      reportError("Loading classes", error),
-      "error"
-    );
-    throw error;
+  if (error) throw error;
+
+  classes = data || [];
+
+  let assignments = [];
+
+  if (classes.length) {
+    const { data: rows, error: assignmentError } = await supabase
+      .from("class_teacher_assignments")
+      .select("class_id, teacher_id")
+      .is("ended_at", null)
+      .in("class_id", classes.map((item) => item.id));
+
+    if (assignmentError) {
+      console.warn(
+        "Could not load teacher assignments:",
+        assignmentError.message
+      );
+    } else {
+      assignments = rows || [];
+    }
   }
 
-  cachedClasses = data || [];
+  const teacherIds = [
+    ...new Set(assignments.map((item) => item.teacher_id))
+  ];
 
-  if (table) {
-    table.innerHTML = cachedClasses.length
-      ? cachedClasses.map((item) => `
+  let teacherNames = new Map();
+
+  if (teacherIds.length) {
+    const { data: rows, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", teacherIds);
+
+    if (!profileError) {
+      teacherNames = new Map(
+        (rows || []).map((profile) => [
+          profile.id,
+          profile.full_name
+        ])
+      );
+    }
+  }
+
+  const assignedTeachers = new Map(
+    assignments.map((item) => [
+      item.class_id,
+      teacherNames.get(item.teacher_id) || "Assigned teacher"
+    ])
+  );
+
+  const body = $("classesTableBody");
+
+  if (body) {
+    body.innerHTML = classes.length
+      ? classes.map((item) => `
           <tr>
-            <td>${escapeHTML(item.name)}</td>
-            <td>${escapeHTML(item.grade_level)}</td>
-            <td>${escapeHTML(item.academic_year)}</td>
-            <td>${escapeHTML(item.capacity ?? "—")}</td>
-            <td>${item.is_active ? "Active" : "Inactive"}</td>
+            <td>${esc(item.name)}</td>
+            <td>${esc(item.grade_level)}</td>
+            <td>${esc(item.academic_year)}</td>
+            <td>${esc(item.capacity ?? "—")}</td>
+            <td>${esc(assignedTeachers.get(item.id) || "Unassigned")}</td>
+            <td>
+              <span class="status ${item.is_active ? "" : "inactive"}">
+                ${item.is_active ? "Active" : "Inactive"}
+              </span>
+            </td>
             <td>
               <button
+                class="button secondary"
                 type="button"
-                data-toggle-class="${escapeHTML(item.id)}"
-                data-next-active="${item.is_active ? "false" : "true"}">
+                data-class-toggle="${esc(item.id)}"
+                data-active="${!item.is_active}"
+              >
                 ${item.is_active ? "Deactivate" : "Activate"}
               </button>
             </td>
           </tr>
         `).join("")
-      : '<tr><td colspan="6">No classes created yet.</td></tr>';
+      : '<tr><td colspan="7">No classes created yet.</td></tr>';
   }
 
   const select = $("assignmentClass");
+
   if (select) {
     select.innerHTML =
       '<option value="">Select a class</option>' +
-      cachedClasses.filter((item) => item.is_active).map((item) => `
-        <option value="${escapeHTML(item.id)}">
-          ${escapeHTML(item.name)} — ${escapeHTML(item.grade_level)}
-        </option>
-      `).join("");
+      classes
+        .filter((item) => item.is_active)
+        .map((item) => `
+          <option value="${esc(item.id)}">
+            ${esc(item.name)} — ${esc(item.grade_level)}
+          </option>
+        `).join("");
   }
+
+  clearMessage("classesMessage");
 }
 
 async function addClass(event) {
-  event?.preventDefault();
-  if (savingClass) return;
+  event.preventDefault();
 
-  const name = $("className")?.value.trim() || "";
-  const gradeLevel = $("classGrade")?.value.trim() || "";
-  const academicYear = $("classYear")?.value.trim() || "";
-  const capacityValue = $("classCapacity")?.value.trim() || "";
-  const capacity = capacityValue ? Number(capacityValue) : null;
-  const button = $("createClassButton");
+  if (busy.has("class")) return;
 
-  if (!name || !gradeLevel || !academicYear) {
-    showMessage(
-      "createClassMessage",
-      "Enter the class name, grade level, and academic year.",
-      "error"
-    );
-    return;
-  }
+  const name = $("className").value.trim();
+  const grade_level = $("classGrade").value.trim();
+  const academic_year = $("classYear").value.trim();
+  const capacity = Number($("classCapacity").value);
 
   if (
-    capacity !== null &&
-    (!Number.isInteger(capacity) || capacity < 1)
+    !name ||
+    !grade_level ||
+    !academic_year ||
+    !Number.isInteger(capacity) ||
+    capacity < 1
   ) {
-    showMessage(
+    return message(
       "createClassMessage",
-      "Capacity must be a positive whole number.",
+      "Enter valid class details and a positive capacity.",
       "error"
     );
-    return;
   }
 
-  savingClass = true;
-  setBusy(button, true, "Creating...");
+  busy.add("class");
+  busyButton("createClassButton", true, "Creating...");
 
   try {
-    await verifySuperAdmin();
+    await currentSuperAdmin();
 
-    const { error } = await supabase
-      .from("classes")
-      .insert({
-        name,
-        grade_level: gradeLevel,
-        academic_year: academicYear,
-        capacity
-      });
-
-    if (error) throw error;
-
-    $("createClassForm")?.reset();
-    showMessage("createClassMessage", "Class created successfully.");
-    await loadClasses();
-    await loadOverview();
-  } catch (error) {
-    showMessage(
-      "createClassMessage",
-      reportError("Creating class", error),
-      "error"
-    );
-  } finally {
-    savingClass = false;
-    setBusy(button, false);
-  }
-}
-
-async function assignTeacher(event) {
-  event?.preventDefault();
-
-  const classId = $("assignmentClass")?.value;
-  const teacherId = $("assignmentTeacher")?.value;
-  const button = $("assignTeacherButton");
-
-  if (!classId || !teacherId) {
-    showMessage(
-      "assignTeacherMessage",
-      "Select both a class and a teacher.",
-      "error"
-    );
-    return;
-  }
-
-  setBusy(button, true, "Assigning...");
-
-  try {
-    await verifySuperAdmin();
-
-    const { error } = await supabase.rpc("assign_class_teacher", {
-      p_class_id: classId,
-      p_teacher_id: teacherId
+    const { error } = await supabase.from("classes").insert({
+      name,
+      grade_level,
+      academic_year,
+      capacity
     });
 
     if (error) throw error;
 
-    showMessage("assignTeacherMessage", "Teacher assigned successfully.");
+    $("createClassForm").reset();
+
+    await loadClasses();
+    await loadOverview();
+
+    message(
+      "createClassMessage",
+      "Class created successfully."
+    );
   } catch (error) {
-    showMessage(
-      "assignTeacherMessage",
-      reportError("Assigning teacher", error),
+    message(
+      "createClassMessage",
+      `Could not create class: ${errorText(error)}`,
       "error"
     );
   } finally {
-    setBusy(button, false);
+    busy.delete("class");
+    busyButton("createClassButton", false);
   }
 }
 
-async function toggleClass(id, nextActive) {
+async function assignTeacher(event) {
+  event.preventDefault();
+
+  const p_class_id = $("assignmentClass").value;
+  const p_teacher_id = $("assignmentTeacher").value;
+
+  if (!p_class_id || !p_teacher_id) {
+    return message(
+      "assignTeacherMessage",
+      "Select both a class and a teacher.",
+      "error"
+    );
+  }
+
+  busyButton("assignTeacherButton", true, "Assigning...");
+
   try {
-    await verifySuperAdmin();
+    await currentSuperAdmin();
+
+    const { error } = await supabase.rpc(
+      "assign_class_teacher",
+      { p_class_id, p_teacher_id }
+    );
+
+    if (error) throw error;
+
+    await loadClasses();
+
+    message(
+      "assignTeacherMessage",
+      "Teacher assigned successfully."
+    );
+  } catch (error) {
+    message(
+      "assignTeacherMessage",
+      `Could not assign teacher: ${errorText(error)}`,
+      "error"
+    );
+  } finally {
+    busyButton("assignTeacherButton", false);
+  }
+}
+
+async function toggleClass(id, active) {
+  try {
+    await currentSuperAdmin();
 
     const { error } = await supabase
       .from("classes")
-      .update({ is_active: nextActive })
+      .update({ is_active: active })
       .eq("id", id);
 
     if (error) throw error;
@@ -1039,258 +966,303 @@ async function toggleClass(id, nextActive) {
     await loadClasses();
     await loadOverview();
 
-    showMessage(
+    message(
       "classesMessage",
-      `Class ${nextActive ? "activated" : "deactivated"}.`
+      `Class ${active ? "activated" : "deactivated"}.`
     );
   } catch (error) {
-    showMessage(
+    message(
       "classesMessage",
-      reportError("Updating class", error),
+      `Could not update class: ${errorText(error)}`,
       "error"
     );
   }
 }
 
-function initializeClassEvents() {
-  $("createClassForm")?.addEventListener("submit", addClass);
-  $("assignTeacherForm")?.addEventListener("submit", assignTeacher);
-
-  $("refreshClassesButton")?.addEventListener("click", async () => {
-    try {
-      await Promise.all([loadClasses(), loadTeachers()]);
-    } catch (error) {
-      showMessage("classesMessage", reportError("Refreshing classes", error), "error");
-    }
-  });
-
-  $("classesTableBody")?.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-toggle-class]");
-    if (!button) return;
-
-    await toggleClass(
-      button.dataset.toggleClass,
-      button.dataset.nextActive === "true"
-    );
-  });
-}
-
-/* =========================================================
-   STAFF MANAGEMENT
-   ========================================================= */
+/* STAFF MANAGEMENT */
 
 async function loadStaff() {
-  const table = $("staffTableBody");
-  if (!table) return;
-
   const { data, error } = await supabase
     .from("profiles")
     .select("id, full_name, role, is_active, created_at")
     .in("role", ["admin", "class_teacher"])
     .order("created_at", { ascending: false });
 
-  if (error) {
-    showMessage("staffMessage", reportError("Loading staff", error), "error");
-    throw error;
+  if (error) throw error;
+
+  staff = data || [];
+
+  const body = $("staffTableBody");
+
+  if (body) {
+    body.innerHTML = staff.length
+      ? staff.map((person) => `
+          <tr>
+            <td>${esc(person.full_name || "—")}</td>
+            <td>
+              ${esc(
+                person.role === "admin"
+                  ? "Administrator"
+                  : "Class Teacher"
+              )}
+            </td>
+            <td>
+              <span class="status ${person.is_active ? "" : "inactive"}">
+                ${person.is_active ? "Active" : "Inactive"}
+              </span>
+            </td>
+          </tr>
+        `).join("")
+      : '<tr><td colspan="3">No staff accounts found.</td></tr>';
   }
 
-  table.innerHTML = (data || []).length
-    ? data.map((staff) => `
-        <tr>
-          <td>${escapeHTML(staff.full_name || "—")}</td>
-          <td>${escapeHTML(staff.role)}</td>
-          <td>${staff.is_active ? "Active" : "Inactive"}</td>
-          <td>${formatDate(staff.created_at)}</td>
-          <td>
-            <button
-              type="button"
-              data-toggle-staff="${escapeHTML(staff.id)}"
-              data-next-active="${staff.is_active ? "false" : "true"}">
-              ${staff.is_active ? "Deactivate" : "Activate"}
-            </button>
-          </td>
-        </tr>
-      `).join("")
-    : '<tr><td colspan="5">No staff accounts found.</td></tr>';
+  clearMessage("staffMessage");
 }
 
 async function createStaff(event) {
-  event?.preventDefault();
-  if (savingStaff) return;
+  event.preventDefault();
 
-  const fullName = $("staffName")?.value.trim() || "";
-  const email = $("staffEmail")?.value.trim() || "";
-  const role = $("staffRole")?.value || "";
-  const password = $("staffPassword")?.value || "";
-  const button = $("createStaffButton");
+  if (busy.has("staff")) return;
 
-  if (!fullName || !email || !role || !password) {
-    showMessage("createStaffMessage", "Complete all staff fields.", "error");
-    return;
-  }
+  const full_name = $("staffName").value.trim();
+  const email = $("staffEmail").value.trim();
+  const role = $("staffRole").value;
+  const password = $("staffPassword").value;
 
-  if (!["admin", "class_teacher"].includes(role)) {
-    showMessage("createStaffMessage", "Choose a valid staff role.", "error");
-    return;
-  }
-
-  if (password.length < 8) {
-    showMessage(
+  if (
+    !full_name ||
+    !email ||
+    !password ||
+    !["admin", "class_teacher"].includes(role)
+  ) {
+    return message(
       "createStaffMessage",
-      "The temporary password must be at least 8 characters.",
+      "Complete all fields and select a valid role.",
       "error"
     );
-    return;
   }
 
-  savingStaff = true;
-  setBusy(button, true, "Creating...");
+  if (password.length < 12) {
+    return message(
+      "createStaffMessage",
+      "Use a temporary password of at least 12 characters.",
+      "error"
+    );
+  }
+
+  busy.add("staff");
+  busyButton("createStaffButton", true, "Creating...");
 
   try {
+    await currentSuperAdmin();
+
     const { data: sessionData, error: sessionError } =
       await supabase.auth.getSession();
 
     if (sessionError) throw sessionError;
 
     const token = sessionData.session?.access_token;
-    if (!token) throw new Error("Sign in again before creating staff.");
 
-    const { data, error } = await supabase.functions.invoke("create-staff", {
-      body: {
-        full_name: fullName,
-        email,
-        role,
-        password
-      },
-      headers: {
-        Authorization: `Bearer ${token}`
+    if (!token) {
+      throw new Error("Your session expired. Sign in again.");
+    }
+
+    const { data, error } = await supabase.functions.invoke(
+      "create-staff",
+      {
+        body: { full_name, email, role, password },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
-    });
+    );
 
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 
-    $("createStaffForm")?.reset();
-    showMessage("createStaffMessage", "Staff account created successfully.");
+    $("createStaffForm").reset();
 
-    await Promise.all([loadStaff(), loadOverview()]);
-  } catch (error) {
-    showMessage(
+    await loadStaff();
+    await loadOverview();
+
+    message(
       "createStaffMessage",
-      reportError("Creating staff account", error),
+      "Staff account created successfully."
+    );
+  } catch (error) {
+    message(
+      "createStaffMessage",
+      `Could not create staff account: ${errorText(error)}`,
       "error"
     );
   } finally {
-    savingStaff = false;
-    setBusy(button, false);
+    busy.delete("staff");
+    busyButton("createStaffButton", false);
   }
 }
 
-async function toggleStaff(id, nextActive) {
-  try {
-    await verifySuperAdmin();
+/* EVENT LISTENERS */
 
-    const { error } = await supabase.rpc("manage_staff_account", {
-      target_user_id: id,
-      new_role: null,
-      new_is_active: nextActive
+function bindEvents() {
+  $("createSubjectForm")?.addEventListener("submit", addSubject);
+
+  $("refreshSubjectsButton")?.addEventListener("click", () => {
+    loadSubjects().catch((error) => {
+      message("subjectsMessage", errorText(error), "error");
     });
+  });
 
-    if (error) throw error;
+  $("subjectsTableBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-subject-toggle]");
 
-    await Promise.all([loadStaff(), loadOverview()]);
-    showMessage("staffMessage", `Staff account ${nextActive ? "activated" : "deactivated"}.`);
-  } catch (error) {
-    showMessage(
-      "staffMessage",
-      reportError("Updating staff account", error),
-      "error"
-    );
-  }
-}
-
-function initializeStaffEvents() {
-  $("createStaffForm")?.addEventListener("submit", createStaff);
-
-  $("refreshStaffButton")?.addEventListener("click", async () => {
-    try {
-      await loadStaff();
-    } catch {
-      // Error message is already displayed.
+    if (button) {
+      toggleSubject(
+        button.dataset.subjectToggle,
+        button.dataset.active === "true"
+      );
     }
   });
 
-  $("staffTableBody")?.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-toggle-staff]");
-    if (!button) return;
+  $("createCombinationForm")?.addEventListener(
+    "submit",
+    addCombination
+  );
 
-    await toggleStaff(
-      button.dataset.toggleStaff,
-      button.dataset.nextActive === "true"
-    );
+  $("editCombinationForm")?.addEventListener(
+    "submit",
+    saveCombination
+  );
+
+  $("cancelEditCombinationButton")?.addEventListener("click", () => {
+    $("editCombinationPanel").hidden = true;
+  });
+
+  $("refreshCombinationsButton")?.addEventListener(
+    "click",
+    async () => {
+      try {
+        await loadCombinations();
+      } catch (error) {
+        message(
+          "combinationsMessage",
+          errorText(error),
+          "error"
+        );
+      }
+    }
+  );
+
+  $("combinationsTableBody")?.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-combo-edit]");
+
+    if (editButton) {
+      editCombination(editButton.dataset.comboEdit);
+      return;
+    }
+
+    const toggleButton = event.target.closest("[data-combo-active]");
+
+    if (toggleButton) {
+      toggleCombination(
+        toggleButton.dataset.comboActive,
+        toggleButton.dataset.active === "true"
+      );
+    }
+  });
+
+  $("createClassForm")?.addEventListener("submit", addClass);
+
+  $("assignTeacherForm")?.addEventListener(
+    "submit",
+    assignTeacher
+  );
+
+  $("refreshClassesButton")?.addEventListener("click", async () => {
+    try {
+      await Promise.all([loadClasses(), loadTeachers()]);
+    } catch (error) {
+      message("classesMessage", errorText(error), "error");
+    }
+  });
+
+  $("classesTableBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-class-toggle]");
+
+    if (button) {
+      toggleClass(
+        button.dataset.classToggle,
+        button.dataset.active === "true"
+      );
+    }
+  });
+
+  $("createStaffForm")?.addEventListener("submit", createStaff);
+
+  $("refreshStaffButton")?.addEventListener("click", () => {
+    loadStaff().catch((error) => {
+      message("staffMessage", errorText(error), "error");
+    });
   });
 }
 
-/* -------------------- DOCUMENTS AND EXAMS -------------------- */
+/* INITIALIZATION */
 
-function initializePlaceholderSections() {
-  const examMessage = $("examsMessage");
-  if (examMessage) {
-    examMessage.textContent =
-      "Exam management has not been connected in this JavaScript version.";
-  }
-
-  const documentMessage = $("documentsMessage");
-  if (documentMessage) {
-    documentMessage.textContent =
-      "Document uploads have not been connected in this JavaScript version.";
-  }
-}
-
-/* -------------------- INITIALIZATION -------------------- */
-
-async function initializeDashboard() {
-  initializeNavigation();
-  initializeSubjectEvents();
-  initializeCombinationEvents();
-  initializeClassEvents();
-  initializeStaffEvents();
-  initializePlaceholderSections();
+async function initialize() {
+  initNavigation();
+  bindEvents();
 
   try {
-    await verifySuperAdmin();
+    await currentSuperAdmin();
   } catch (error) {
     console.error("Dashboard authorization failed:", error);
-    document.body.innerHTML = `
-      <main style="max-width:650px;margin:60px auto;padding:24px;font-family:Arial,sans-serif">
-        <h1>Grade Hub</h1>
-        <p>${escapeHTML(error.message)}</p>
-        <a href="../index.html">Return to sign in</a>
-      </main>`;
+
+    const welcome = $("welcomeText");
+
+    if (welcome) {
+      welcome.textContent = errorText(error);
+    }
+
+    message("overviewMessage", errorText(error), "error");
     return;
   }
 
-  const jobs = [
-    ["overview", loadOverview],
-    ["subjects", loadSubjects],
-    ["combinations", loadCombinations],
-    ["classes", loadClasses],
-    ["teachers", loadTeachers],
-    ["staff", loadStaff]
-  ];
-
-  const results = await Promise.allSettled(
-    jobs.map(([, task]) => task())
-  );
+  const results = await Promise.allSettled([
+    loadOverview(),
+    loadSubjects(),
+    loadClasses(),
+    loadTeachers(),
+    loadStaff()
+  ]);
 
   results.forEach((result, index) => {
     if (result.status === "rejected") {
-      console.error(`Dashboard section "${jobs[index][0]}" failed:`, result.reason);
+      console.error(
+        `Dashboard startup task ${index + 1} failed:`,
+        result.reason
+      );
     }
   });
 
-  // Ensure subject choices render even if no combinations exist.
-  refreshCombinationChoices();
+  try {
+    await loadCombinations();
+  } catch (error) {
+    message(
+      "combinationsMessage",
+      `Could not load combinations: ${errorText(error)}`,
+      "error"
+    );
+  }
+
+  // Reload subjects first so combination names render correctly.
+  try {
+    await loadSubjects();
+    await loadCombinations();
+  } catch (error) {
+    console.error(
+      "Final subject/combination refresh failed:",
+      error
+    );
+  }
 }
 
-document.addEventListener("DOMContentLoaded", initializeDashboard);
+document.addEventListener("DOMContentLoaded", initialize);
