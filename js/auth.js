@@ -42,7 +42,7 @@ if (loginForm) {
 
             // This is a temporary destination.
             // We'll replace it with role-based routing later.
-            window.location.href = "register.html";
+            window.location.href = "dashboard.html";
 
         } catch (error) {
             showMessage(error.message);
