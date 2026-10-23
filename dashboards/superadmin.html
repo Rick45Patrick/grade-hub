@@ -1,794 +1,532 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#172554">
-
-    <title>Grade Hub 2.0 | Super Admin</title>
-
-    <style>
-        :root {
-            --primary: #3157d5;
-            --primary-dark: #203fa9;
-            --navy: #172554;
-            --background: #f4f6fb;
-            --surface: #ffffff;
-            --text: #202b43;
-            --muted: #718096;
-            --border: #e5e9f2;
-            --success: #15803d;
-            --danger: #c53030;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: var(--background);
-            color: var(--text);
-        }
-
-        button,
-        input,
-        select {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .sidebar {
-            position: fixed;
-            inset: 0 auto 0 0;
-            z-index: 20;
-            width: 250px;
-            padding: 24px 16px;
-            overflow-y: auto;
-            background: var(--navy);
-            color: white;
-            transition: transform 0.2s ease;
-        }
-
-        .brand {
-            padding: 4px 12px 24px;
-            margin-bottom: 18px;
-            border-bottom: 1px solid #334477;
-        }
-
-        .brand h2 {
-            margin: 0 0 7px;
-            font-size: 23px;
-        }
-
-        .brand p {
-            margin: 0;
-            color: #cbd5e1;
-            font-size: 12px;
-        }
-
-        .nav-label {
-            padding: 12px;
-            color: #aab8d8;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .nav-link {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 4px;
-            border: 0;
-            border-radius: 8px;
-            color: #e2e8f0;
-            background: transparent;
-            text-align: left;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .main {
-            min-height: 100vh;
-            margin-left: 250px;
-            padding: 28px;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            margin-bottom: 25px;
-        }
-
-        .page-title {
-            margin: 0 0 8px;
-            font-size: 27px;
-        }
-
-        .subtitle {
-            margin: 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .account-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .avatar {
-            display: grid;
-            place-items: center;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-        }
-
-        .account-name {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .account-role {
-            margin-top: 4px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .button {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 7px;
-            padding: 10px 14px;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            background: var(--primary);
-            color: white;
-            font-size: 13px;
-        }
-
-        .button:hover {
-            background: var(--primary-dark);
-        }
-
-        .button-secondary {
-            background: white;
-            color: var(--text);
-            border-color: var(--border);
-        }
-
-        .button-secondary:hover {
-            background: #f8fafc;
-        }
-
-        .button-danger {
-            background: var(--danger);
-        }
-
-        .button-danger:hover {
-            background: #9b2222;
-        }
-
-        .button-small {
-            padding: 7px 10px;
-            font-size: 12px;
-        }
-
-        .notice {
-            padding: 14px 16px;
-            margin-bottom: 24px;
-            border: 1px solid #c9d7ff;
-            border-radius: 10px;
-            background: #edf2ff;
-            color: #263e8b;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .section {
-            margin-bottom: 32px;
-            scroll-margin-top: 20px;
-        }
-
-        .section-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .section-heading h2 {
-            margin: 0;
-            font-size: 19px;
-        }
-
-        .section-heading p {
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
-        }
-
-        .stat-card,
-        .panel,
-        .management-card {
-            min-width: 0;
-            padding: 20px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--surface);
-            box-shadow: 0 3px 12px rgba(20, 35, 70, 0.03);
-        }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .stat-value {
-            margin: 12px 0 8px;
-            font-size: 30px;
-            font-weight: 700;
-        }
-
-        .stat-note {
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .management-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
-        }
-
-        .management-card {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .card-icon {
-            display: grid;
-            place-items: center;
-            width: 42px;
-            height: 42px;
-            margin-bottom: 14px;
-            border-radius: 10px;
-            background: #edf2ff;
-            color: var(--primary);
-            font-size: 20px;
-        }
-
-        .management-card h3 {
-            margin: 0 0 9px;
-            font-size: 16px;
-        }
-
-        .management-card p {
-            flex: 1;
-            margin: 0 0 18px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .table-wrap {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th,
-        td {
-            padding: 13px 10px;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
-            vertical-align: middle;
-        }
-
-        th {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        select,
-        input {
-            max-width: 100%;
-            padding: 9px;
-            border: 1px solid var(--border);
-            border-radius: 7px;
-            background: white;
-            color: var(--text);
-        }
-
-        .status {
-            display: inline-block;
-            padding: 5px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .status-active {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status-inactive {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .message {
-            margin: 12px 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .message.error {
-            color: var(--danger);
-        }
-
-        .message.success {
-            color: var(--success);
-        }
-
-        .mobile-menu {
-            display: none;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-        }
-
-        .empty-state {
-            padding: 25px;
-            color: var(--muted);
-            text-align: center;
-        }
-
-        @media (max-width: 1100px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .management-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 720px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .sidebar-backdrop.visible {
-                display: block;
-                position: fixed;
-                inset: 0;
-                z-index: 10;
-                background: rgba(0, 0, 0, 0.4);
-            }
-
-            .main {
-                margin-left: 0;
-                padding: 18px;
-            }
-
-            .topbar {
-                align-items: flex-start;
-                flex-wrap: wrap;
-            }
-
-            .mobile-menu {
-                display: inline-block;
-                padding: 8px 10px;
-                margin-bottom: 12px;
-                border: 1px solid var(--border);
-                border-radius: 7px;
-                background: white;
-            }
-
-            .page-title {
-                font-size: 23px;
-            }
-
-            .management-grid,
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .account-area {
-                flex-wrap: wrap;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade Hub 2.0 | Super Admin</title>
+  <link rel="icon" href="../assets/logo.png">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6fb;
+      color: #182235;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 245px;
+      background: #14213d;
+      color: white;
+      padding: 25px 16px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    .sidebar nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-button {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-radius: 7px;
+      padding: 12px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .nav-button:hover,
+    .nav-button.active {
+      background: #28436e;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: 27px;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .muted {
+      color: #657187;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .button {
+      border: 0;
+      background: #2457d6;
+      color: white;
+      border-radius: 7px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .button:hover {
+      background: #1745b7;
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .button.secondary {
+      background: #e7edf8;
+      color: #203452;
+    }
+
+    .button.danger {
+      background: #a52b38;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat,
+    .card {
+      background: white;
+      border: 1px solid #e3e8f1;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 12px #17255408;
+    }
+
+    .stat p {
+      color: #657187;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .stat strong {
+      font-size: 28px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    form {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd5e3;
+      border-radius: 7px;
+      font: inherit;
+      background: white;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid #a9c1ff;
+      border-color: #2457d6;
+    }
+
+    .message {
+      min-height: 22px;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .message.error {
+      color: #b42332;
+    }
+
+    .message.success {
+      color: #137547;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 520px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #e7ebf2;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #59677e;
+      background: #f8faff;
+    }
+
+    td select {
+      min-width: 130px;
+      padding: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: #e8eefb;
+      font-size: 12px;
+    }
+
+    .badge.inactive {
+      background: #fce7e9;
+      color: #982b35;
+    }
+
+    .mobile-menu {
+      display: none;
+    }
+
+    .notice {
+      background: #fff7df;
+      border: 1px solid #f0d992;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1000px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .layout {
+        display: block;
+      }
+
+      .sidebar {
+        display: none;
+        width: 100%;
+      }
+
+      .sidebar.open {
+        display: block;
+      }
+
+      .mobile-menu {
+        display: inline-block;
+      }
+
+      .main {
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <aside class="sidebar" id="sidebar">
-        <div class="brand">
-            <h2>Grade Hub</h2>
-            <p>School Management System · 2.0</p>
-        </div>
+<div class="layout">
 
-        <div class="nav-label">Dashboard</div>
-        <a class="nav-link active" href="#overview">Overview</a>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">Grade Hub 2.0</div>
 
-        <div class="nav-label">People</div>
-        <a class="nav-link" href="#users">Administrators & Teachers</a>
-        <a class="nav-link" href="#students">Students</a>
-        <a class="nav-link" href="#classes">Classes</a>
+    <nav aria-label="Super Admin navigation">
+      <button class="nav-button active" data-section="overview">
+        Overview
+      </button>
+      <button class="nav-button" data-section="staff">
+        Staff Accounts
+      </button>
+      <button class="nav-button" data-section="classes">
+        Classes
+      </button>
+      <button class="nav-button" data-section="subjects">
+        Subjects
+      </button>
+      <button class="nav-button" data-section="exams">
+        Exams & Results
+      </button>
+      <button class="nav-button" data-section="documents">
+        Newsletters & Documents
+      </button>
+    </nav>
+  </aside>
 
-        <div class="nav-label">Academics</div>
-        <a class="nav-link" href="#subjects">Subjects</a>
-        <a class="nav-link" href="#combinations">Subject Combinations</a>
-        <a class="nav-link" href="#grading">Grading Systems</a>
-        <a class="nav-link" href="#exams">Exams & Results</a>
-        <a class="nav-link" href="#merit">Merit Lists</a>
+  <main class="main">
+    <header class="topbar">
+      <button class="button secondary mobile-menu" id="mobileMenu">
+        Menu
+      </button>
 
-        <div class="nav-label">Communication</div>
-        <a class="nav-link" href="#documents">Newsletters & Documents</a>
-        <a class="nav-link" href="#announcements">Announcements</a>
-    </aside>
+      <div>
+        <h1 id="pageTitle">Super Admin Overview</h1>
+        <p class="muted" id="welcomeText">Checking your account...</p>
+      </div>
 
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <button class="button danger" id="signOutButton">
+        Sign Out
+      </button>
+    </header>
 
-    <main class="main">
-        <header class="topbar">
-            <div>
-                <button class="mobile-menu" id="mobileMenu" type="button">
-                    ☰ Menu
-                </button>
+    <div class="notice">
+      Staff accounts can be created and managed here. The Classes, Subjects,
+      Exams and Documents sections are placeholders for the next implementation
+  . Do not assume they are already functional.
+    </div>
 
-                <h1 class="page-title">Super Admin Dashboard</h1>
-                <p class="subtitle">Manage your school from one place.</p>
-            </div>
+    <section class="section active" id="section-overview">
+      <div class="stats">
+        <article class="stat">
+          <p>Total Students</p>
+          <strong id="totalStudents">—</strong>
+        </article>
 
-            <div class="account-area">
-                <div class="avatar" id="adminAvatar">P</div>
+        <article class="stat">
+          <p>Administrators</p>
+          <strong id="totalAdmins">—</strong>
+        </article>
 
-                <div>
-                    <div class="account-name" id="adminName">Loading...</div>
-                    <div class="account-role">Super Administrator</div>
-                </div>
+        <article class="stat">
+          <p>Class Teachers</p>
+          <strong id="totalTeachers">—</strong>
+        </article>
 
-                <button class="button button-secondary" id="logoutButton">
-                    Sign out
-                </button>
-            </div>
-        </header>
+        <article class="stat">
+          <p>Classes</p>
+          <strong id="totalClasses">—</strong>
+        </article>
+      </div>
 
-        <div class="notice">
-            <strong>Grade Hub 2.0:</strong>
-            Your Super Admin account is verified through Supabase.
-            Staff management is connected to the database. Other management
-            sections will be implemented as separate features.
-        </div>
+      <article class="card">
+        <h2>System Overview</h2>
+        <p class="muted">
+          Manage staff accounts and monitor basic school records from this
+          dashboard. Additional management features will be connected separately.
+        </p>
+        <p id="overviewMessage" class="message" role="status"></p>
+        <button class="button" id="refreshOverviewButton">
+          Refresh Overview
+        </button>
+      </article>
+    </section>
 
-        <section class="section" id="overview">
-            <div class="section-heading">
-                <div>
-                    <h2>School Overview</h2>
-                    <p>Summary of the records currently in your database.</p>
-                </div>
+    <section class="section" id="section-staff">
+      <div class="section-grid">
+        <article class="card">
+          <h2>Create Staff Account</h2>
+          <p class="muted">
+            Create an account for an authorized administrator or class teacher.
+          </p>
 
-                <button class="button button-secondary" id="refreshOverview">
-                    Refresh
-                </button>
-            </div>
+          <form id="createStaffForm">
+            <label for="staffName">Full Name</label>
+            <input
+              id="staffName"
+              type="text"
+              minlength="2"
+              maxlength="100"
+              autocomplete="name"
+              required
+            >
 
-            <div class="stats-grid">
-                <article class="stat-card">
-                    <div class="stat-label">Student Profiles</div>
-                    <div class="stat-value" id="totalStudents">—</div>
-                    <div class="stat-note">Registered student accounts</div>
-                </article>
+            <label for="staffEmail">Email Address</label>
+            <input
+              id="staffEmail"
+              type="email"
+              maxlength="254"
+              autocomplete="email"
+              required
+            >
 
-                <article class="stat-card">
-                    <div class="stat-label">Administrators</div>
-                    <div class="stat-value" id="totalAdmins">—</div>
-                    <div class="stat-note">Active administrator accounts</div>
-                </article>
+            <label for="staffRole">Role</label>
+            <select id="staffRole" required>
+              <option value="">Select role</option>
+              <option value="admin">Administrator</option>
+              <option value="class_teacher">Class Teacher</option>
+            </select>
 
-                <article class="stat-card">
-                    <div class="stat-label">Class Teachers</div>
-                    <div class="stat-value" id="totalTeachers">—</div>
-                    <div class="stat-note">Active teacher accounts</div>
-                </article>
+            <label for="staffPassword">Temporary Password</label>
+            <input
+              id="staffPassword"
+              type="password"
+              minlength="12"
+              maxlength="72"
+              autocomplete="new-password"
+              required
+            >
 
-                <article class="stat-card">
-                    <div class="stat-label">Classes</div>
-                    <div class="stat-value" id="totalClasses">—</div>
-                    <div class="stat-note">Configured classes</div>
-                </article>
-            </div>
-
-            <p class="message" id="dashboardMessage" role="status">
-                Verifying account...
+            <p class="muted">
+              Use a unique temporary password of at least 12 characters.
+              Share it securely with the staff member.
             </p>
-        </section>
 
-        <section class="section" id="users">
-            <div class="section-heading">
-                <div>
-                    <h2>Staff Management</h2>
-                    <p>Manage existing administrator and class-teacher profiles.</p>
-                </div>
+            <button class="button" id="createStaffButton" type="submit">
+              Create Account
+            </button>
 
-                <button class="button" id="refreshStaffButton">
-                    Refresh Staff
-                </button>
-            </div>
+            <p id="createStaffMessage" class="message"
+               role="status" aria-live="polite"></p>
+          </form>
+        </article>
 
-            <div class="panel">
-                <p class="message" id="staffMessage" role="status">
-                    Loading staff...
-                </p>
+        <article class="card">
+          <h2>Existing Staff</h2>
+          <p class="muted">
+            Change staff roles or activate and deactivate accounts.
+          </p>
 
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Staff Member</th>
-                                <th>Role</th>
-                                <th>Account Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
+          <button class="button secondary" id="refreshStaffButton">
+            Refresh Staff
+          </button>
 
-                        <tbody id="staffTableBody">
-                            <tr>
-                                <td colspan="4" class="empty-state">
-                                    Loading staff records...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+          <p id="staffMessage" class="message"
+             role="status" aria-live="polite"></p>
 
-        <section class="section" id="students">
-            <div class="section-heading">
-                <div>
-                    <h2>Students</h2>
-                    <p>Registration, admission and student records.</p>
-                </div>
-            </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody">
+                <tr>
+                  <td colspan="4">Loading staff...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
 
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">♙</div>
-                    <h3>Student Records</h3>
-                    <p>Manage student profiles and registration status.</p>
-                    <button class="button" data-feature="Student Records">
-                        Open
-                    </button>
-                </article>
+    <section class="section" id="section-classes">
+      <article class="card">
+        <h2>Classes</h2>
+        <p class="muted">
+          Class creation, teacher assignments, and student placement will be
+          implemented in the next stage.
+        </p>
+      </article>
+    </section>
 
-                <article class="management-card">
-                    <div class="card-icon">✓</div>
-                    <h3>Registration Requests</h3>
-                    <p>Review student registrations before approval.</p>
-                    <button class="button" data-feature="Registration Requests">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
+    <section class="section" id="section-subjects">
+      <article class="card">
+        <h2>Subjects & Combinations</h2>
+        <p class="muted">
+          Subject creation and configurable student subject combinations are
+          not connected yet.
+        </p>
+      </article>
+    </section>
 
-        <section class="section" id="classes">
-            <div class="section-heading">
-                <div>
-                    <h2>Classes</h2>
-                    <p>Create classes and assign class teachers.</p>
-                </div>
-            </div>
+    <section class="section" id="section-exams">
+      <article class="card">
+        <h2>Exams & Results</h2>
+        <p class="muted">
+          Exam creation, grading bands, result entry, and merit lists will be
+          connected after the staff management flow is verified.
+        </p>
+      </article>
+    </section>
 
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▤</div>
-                    <h3>Class Management</h3>
-                    <p>Manage class names, grade levels, academic years and capacity.</p>
-                    <button class="button" data-feature="Class Management">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
+    <section class="section" id="section-documents">
+      <article class="card">
+        <h2>Newsletters & Documents</h2>
+        <p class="muted">
+          File uploads and publication controls require a configured Supabase
+          Storage bucket and access policies.
+        </p>
+      </article>
+    </section>
+  </main>
+</div>
 
-        <section class="section" id="subjects">
-            <div class="section-heading">
-                <div>
-                    <h2>Subjects</h2>
-                    <p>Configure subjects offered by the school.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▣</div>
-                    <h3>Subject Catalogue</h3>
-                    <p>Add, edit and deactivate subjects.</p>
-                    <button class="button" data-feature="Subject Catalogue">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="combinations">
-            <div class="section-heading">
-                <div>
-                    <h2>Subject Combinations</h2>
-                    <p>Create combinations from the subject catalogue.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▦</div>
-                    <h3>Combination Builder</h3>
-                    <p>Activate combinations that should appear during registration.</p>
-                    <button class="button" data-feature="Subject Combination Builder">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="grading">
-            <div class="section-heading">
-                <div>
-                    <h2>Grading Systems</h2>
-                    <p>Configure score ranges and grade labels.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">%</div>
-                    <h3>Grading Configuration</h3>
-                    <p>Manage grading systems and grade boundaries.</p>
-                    <button class="button" data-feature="Grading Configuration">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="exams">
-            <div class="section-heading">
-                <div>
-                    <h2>Exams & Results</h2>
-                    <p>Manage examinations and published results.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▤</div>
-                    <h3>Exam Management</h3>
-                    <p>Create exams and configure academic terms.</p>
-                    <button class="button" data-feature="Exam Management">
-                        Open
-                    </button>
-                </article>
-
-                <article class="management-card">
-                    <div class="card-icon">✓</div>
-                    <h3>Results</h3>
-                    <p>Manage marks, grades and published results.</p>
-                    <button class="button" data-feature="Results Management">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="merit">
-            <div class="section-heading">
-                <div>
-                    <h2>Merit Lists</h2>
-                    <p>Prepare class and school-wide rankings.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">★</div>
-                    <h3>Merit Reports</h3>
-                    <p>Review student subject scores and rankings.</p>
-                    <button class="button" data-feature="Merit Reports">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="documents">
-            <div class="section-heading">
-                <div>
-                    <h2>Newsletters & Documents</h2>
-                    <p>Manage school newsletters and downloadable documents.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▧</div>
-                    <h3>Document Library</h3>
-                    <p>Publish newsletters and school documents.</p>
-                    <button class="button" data-feature="Document Library">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" id="announcements">
-            <div class="section-heading">
-                <div>
-                    <h2>Announcements</h2>
-                    <p>Publish school notices.</p>
-                </div>
-            </div>
-
-            <div class="management-grid">
-                <article class="management-card">
-                    <div class="card-icon">▤</div>
-                    <h3>School Notices</h3>
-                    <p>Manage announcements for the school community.</p>
-                    <button class="button" data-feature="School Notices">
-                        Open
-                    </button>
-                </article>
-            </div>
-        </section>
-    </main>
-
-    <script type="module" src="../js/superadmin.js"></script>
+<script type="module" src="../js/superadmin.js"></script>
 </body>
 </html>
