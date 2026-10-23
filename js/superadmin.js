@@ -1568,15 +1568,17 @@ function readGradingBands() {
   const names = bands.map((band) => band.grade_name.toLowerCase());
   if (new Set(names).size !== names.length) throw new Error("Each grade name must be unique.");
 
-  const sorted = [...bands].sort((a, b) => a.minimum_score - b.minimum_score);
-  if (sorted[0].minimum_score !== 0) throw new Error("The lowest score range must start at 0.");
-  if (sorted[sorted.length - 1].maximum_score !== 100) throw new Error("The highest score range must end at 100.");
+ const sorted = [...bands].sort(
+  (a, b) => a.minimum_score - b.minimum_score
+);
 
-  for (let i = 1; i < sorted.length; i++) {
-    if (Math.abs(sorted[i].minimum_score - sorted[i - 1].maximum_score) > 0.000001) {
-      throw new Error(`Score ranges must meet without gaps or overlaps: check ${sorted[i - 1].grade_name} and ${sorted[i].grade_name}.`);
-    }
+for (let i = 1; i < sorted.length; i++) {
+  if (sorted[i].minimum_score < sorted[i - 1].maximum_score) {
+    throw new Error(
+      `Score ranges must not overlap: check ${sorted[i - 1].grade_name} and ${sorted[i].grade_name}.`
+    );
   }
+}
   return bands;
 }
 
