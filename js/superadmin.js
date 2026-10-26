@@ -1597,56 +1597,36 @@ async function saveGradingVersion(event) {
   clearMessage("gradingMessage");
 
   try {
-    // Verify the current account before saving.
     await currentSuperAdmin();
 
-    const name =
-      $("gradingSystemName")?.value.trim() || "";
-
-    const description =
-      $("gradingDescription")?.value.trim() || "";
+    const name = $("gradingSystemName")?.value.trim() || "";
+    const description = $("gradingDescription")?.value.trim() || "";
 
     if (!name) {
       throw new Error("Enter a grading system name.");
     }
 
-    // Validate grade names, score ranges and points.
     const bands = readGradingBands();
 
-    // Confirm the authenticated user and obtain their ID.
-    const {
-      data: authData,
-      error: authError
-    } = await supabase.auth.getUser();
+    const { data: authData, error: authError } =
+      await supabase.auth.getUser();
 
     if (authError) throw authError;
 
     if (!authData.user) {
-      throw new Error(
-        "Your session has expired. Please sign in again."
-      );
+      throw new Error("Your session has expired. Sign in again.");
     }
 
-    // Calculate the next version for this grading-system name.
     const versions = gradingSystems.filter(
-      (system) =>
-        system.name.toLowerCase() === name.toLowerCase()
+      system => system.name.toLowerCase() === name.toLowerCase()
     );
 
     const nextVersion = versions.length
-      ? Math.max(
-          ...versions.map(
-            (system) => Number(system.version) || 1
-          )
-        ) + 1
+      ? Math.max(...versions.map(system => Number(system.version) || 1)) + 1
       : 1;
 
-    // Save the system, all its grade bands, and activation
-    // through the secure database function.
-    const {
-      data: newSystemId,
-      error: saveError
-    } = await supabase.rpc(
+    // Save through the database function.
+    const { data: newSystemId, error: saveError } = await supabase.rpc(
       "save_grading_system_with_bands",
       {
         p_name: name,
@@ -1658,39 +1638,65 @@ async function saveGradingVersion(event) {
 
     if (saveError) throw saveError;
 
-    if (!newSystemId) {
+    if (typeof newSystemId !== "string" || !newSystemId) {
       throw new Error(
-        "The database did not return the new grading-system ID."
+        "Supabase did not return a grading-system ID. The save could not be verified."
       );
     }
 
-    // Refresh the dashboard using the newly saved system.
-    await loadGradingEditor();
+    // Verify that the new record can be read back.
+    const { data: savedSystem, error: verifyError } = await supabase
+      .from("grading_systems")
+      .select("id, name, version, is_active")
+      .eq("id", newSystemId)
+      .maybeSingle();
 
-    const select = $("gradingSystemSelect");
-
-    if (select) {
-      select.value = newSystemId;
+    if (verifyError) {
+      throw new Error(
+        "The save function returned an ID, but the record could not be verified: " +
+        verifyError.message
+      );
     }
 
-    await loadSelectedGradingSystem();
+    if (!savedSystem) {
+      throw new Error(
+        "The save function returned an ID, but the grading system is not visible in the database list. Check SELECT permissions and RLS policies."
+      );
+    }
+
+    // Refresh the editor and verify the saved system appears.
+    try {
+      await loadGradingEditor();
+
+      const select = $("gradingSystemSelect");
+      if (select) {
+        select.value = newSystemId;
+      }
+
+      await loadSelectedGradingSystem();
+
+    } catch (refreshError) {
+      console.error("Grading system saved, but refresh failed:", refreshError);
+
+      message(
+        "gradingMessage",
+        `The grading system was saved (${savedSystem.name}, version ${savedSystem.version}), but the page could not refresh. Reload the page and check the list. Details: ${errorText(refreshError)}`,
+        "error"
+      );
+      return;
+    }
 
     message(
       "gradingMessage",
-      `Saved ${name}, version ${nextVersion}. ` +
-      "The grade bands were saved and the new system is active. " +
-      "Existing exams retain their original grading-system references."
+      `Verified: ${savedSystem.name}, version ${savedSystem.version} was saved successfully.`
     );
 
   } catch (error) {
-    console.error(
-      "Grading-system save failed:",
-      error
-    );
+    console.error("Grading-system save failed:", error);
 
     message(
       "gradingMessage",
-      `Could not save grading system: ${errorText(error)}`,
+      `Could not verify grading-system save: ${errorText(error)}`,
       "error"
     );
 
