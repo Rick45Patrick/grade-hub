@@ -1589,69 +1589,116 @@ for (let i = 1; i < sorted.length; i++) {
 
 async function saveGradingVersion(event) {
   event.preventDefault();
+
   if (busy.has("grading")) return;
+
   busy.add("grading");
   busyButton("saveGradingButton", true, "Saving...");
   clearMessage("gradingMessage");
 
-  let newSystemId = null;
-  let bandsInserted = false;
-  let activated = false;
-
   try {
+    // Verify the current account before saving.
     await currentSuperAdmin();
-    const name = $("gradingSystemName")?.value.trim() || "";
-    const description = $("gradingDescription")?.value.trim() || "";
-    if (!name) throw new Error("Enter a grading system name.");
+
+    const name =
+      $("gradingSystemName")?.value.trim() || "";
+
+    const description =
+      $("gradingDescription")?.value.trim() || "";
+
+    if (!name) {
+      throw new Error("Enter a grading system name.");
+    }
+
+    // Validate grade names, score ranges and points.
     const bands = readGradingBands();
 
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    // Confirm the authenticated user and obtain their ID.
+    const {
+      data: authData,
+      error: authError
+    } = await supabase.auth.getUser();
+
     if (authError) throw authError;
-    if (!authData.user) throw new Error("Your session has expired. Please sign in again.");
 
-    const versions = gradingSystems.filter((system) => system.name.toLowerCase() === name.toLowerCase());
-    const nextVersion = versions.length ? Math.max(...versions.map((system) => Number(system.version) || 1)) + 1 : 1;
+    if (!authData.user) {
+      throw new Error(
+        "Your session has expired. Please sign in again."
+      );
+    }
 
-    const { data: created, error: createError } = await supabase
-      .from("grading_systems")
-      .insert({ name, version: nextVersion, description: description || null, is_active: false, created_by: authData.user.id })
-      .select("id")
-      .single();
-    if (createError) throw createError;
-    newSystemId = created.id;
-
-    const { error: bandError } = await supabase.from("grade_bands").insert(
-      bands.map((band) => ({ ...band, grading_system_id: newSystemId }))
+    // Calculate the next version for this grading-system name.
+    const versions = gradingSystems.filter(
+      (system) =>
+        system.name.toLowerCase() === name.toLowerCase()
     );
-    if (bandError) throw bandError;
-    bandsInserted = true;
 
-    const oldActiveIds = gradingSystems.filter((system) => system.is_active).map((system) => system.id);
-    if (oldActiveIds.length) {
-      const { error: deactivateError } = await supabase.from("grading_systems").update({ is_active: false }).in("id", oldActiveIds);
-      if (deactivateError) throw deactivateError;
+    const nextVersion = versions.length
+      ? Math.max(
+          ...versions.map(
+            (system) => Number(system.version) || 1
+          )
+        ) + 1
+      : 1;
+
+    // Save the system, all its grade bands, and activation
+    // through the secure database function.
+    const {
+      data: newSystemId,
+      error: saveError
+    } = await supabase.rpc(
+      "save_grading_system_with_bands",
+      {
+        p_name: name,
+        p_description: description || null,
+        p_version: nextVersion,
+        p_bands: bands
+      }
+    );
+
+    if (saveError) throw saveError;
+
+    if (!newSystemId) {
+      throw new Error(
+        "The database did not return the new grading-system ID."
+      );
     }
 
-    const { error: activateError } = await supabase.from("grading_systems").update({ is_active: true }).eq("id", newSystemId);
-    if (activateError) throw activateError;
-    activated = true;
-
-    message("gradingMessage", `Saved ${name}, version ${nextVersion}. Existing exams retain their original grading-system references.`);
+    // Refresh the dashboard using the newly saved system.
     await loadGradingEditor();
-    $("gradingSystemSelect").value = newSystemId;
-    await loadSelectedGradingSystem();
-  } catch (error) {
-    if (newSystemId && !activated) {
-      if (bandsInserted) await supabase.from("grade_bands").delete().eq("grading_system_id", newSystemId);
-      await supabase.from("grading_systems").delete().eq("id", newSystemId);
+
+    const select = $("gradingSystemSelect");
+
+    if (select) {
+      select.value = newSystemId;
     }
-    message("gradingMessage", `Could not save grading system: ${errorText(error)}`, "error");
+
+    await loadSelectedGradingSystem();
+
+    message(
+      "gradingMessage",
+      `Saved ${name}, version ${nextVersion}. ` +
+      "The grade bands were saved and the new system is active. " +
+      "Existing exams retain their original grading-system references."
+    );
+
+  } catch (error) {
+    console.error(
+      "Grading-system save failed:",
+      error
+    );
+
+    message(
+      "gradingMessage",
+      `Could not save grading system: ${errorText(error)}`,
+      "error"
+    );
+
   } finally {
     busy.delete("grading");
     busyButton("saveGradingButton", false);
   }
 }
-
 /* =====================================================
    NEWSLETTERS / SCHOOL DOCUMENTS
    Uses Supabase Storage bucket: newsletters
