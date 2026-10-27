@@ -17,6 +17,7 @@ input,select,textarea{width:100%;min-height:42px;padding:10px 12px;border:1px so
 <body><div class="layout">
 <aside class="sidebar" id="sidebar"><div class="brand">Grade <span>Hub</span></div><nav>
 <button class="nav-button active" data-section="overview">Overview</button>
+<button class="nav-button" data-section="students">Register Student</button>
 <button class="nav-button" data-section="marks">Enter Marks</button>
 <button class="nav-button" data-section="announcements">Announcements</button>
 <a class="nav-button" href="../merit.html">Merit List</a>
@@ -24,9 +25,29 @@ input,select,textarea{width:100%;min-height:42px;padding:10px 12px;border:1px so
 </nav></aside>
 <main class="main"><header class="topbar"><div><h1 id="pageTitle">Overview</h1><p id="welcomeText">Checking account...</p></div><div class="row" style="margin:0"><button class="button secondary mobile" id="mobileMenuButton">Menu</button><button class="button danger" id="signOutButton">Sign Out</button></div></header>
 <div class="content"><p class="message" id="globalMessage" role="status"></p>
-<section class="section active" id="section-overview"><h2 class="heading">School Overview</h2><p class="muted">Enter examination marks and view school results. Student registration and class assignment are not available on this dashboard.</p>
+<section class="section active" id="section-overview"><h2 class="heading">School Overview</h2><p class="muted">Register students, assign their class and subject combination, enter examination marks, and view school results.</p>
 <div class="stats"><article class="stat"><p>Students</p><h3 id="totalStudents">—</h3></article><article class="stat"><p>Exams</p><h3 id="totalExams">—</h3></article><article class="stat"><p>Subjects</p><h3 id="totalSubjects">—</h3></article></div>
-<div class="panel"><h3>Marks entry workflow</h3><ol class="muted"><li>Select an exam and subject.</li><li>Set the maximum marks for that subject.</li><li>Load the list of students whose marks have not been uploaded.</li><li>Enter marks and save them.</li></ol><button class="button" data-open-section="marks">Go to Enter Marks</button></div></section>
+<div class="panel"><h3>Marks entry workflow</h3><ol class="muted"><li>Select an exam and subject.</li><li>Set the maximum marks for that subject.</li><li>Load the list of students whose marks have not been uploaded.</li><li>Enter marks and save them.</li></ol><div class="row"><button class="button" data-open-section="students">Register a Student</button><button class="button secondary" data-open-section="marks">Go to Enter Marks</button></div></div></section>
+
+<section class="section" id="section-students">
+<h2 class="heading">Register Student</h2>
+<p class="muted">Admins and Super Admins can register a student, assign a class, and optionally assign a subject combination. The student receives a login account using the email and temporary password entered below.</p>
+<div class="panel"><h3>Student details and school placement</h3>
+<form id="studentRegistrationForm"><div class="grid">
+<div class="field"><label for="studentFullName">Student full name</label><input id="studentFullName" maxlength="160" autocomplete="name" required></div>
+<div class="field"><label for="studentAdmissionNumber">Admission number</label><input id="studentAdmissionNumber" maxlength="80"></div>
+<div class="field"><label for="studentEmail">Student login email</label><input id="studentEmail" type="email" autocomplete="off" required></div>
+<div class="field"><label for="studentTemporaryPassword">Temporary password</label><input id="studentTemporaryPassword" type="password" minlength="8" autocomplete="new-password" required><small class="muted">Use at least 8 characters and share it securely with the student/guardian.</small></div>
+<div class="field"><label for="studentDateOfBirth">Date of birth</label><input id="studentDateOfBirth" type="date"></div>
+<div class="field"><label for="studentGuardianName">Guardian name</label><input id="studentGuardianName" maxlength="160"></div>
+<div class="field"><label for="studentGuardianContact">Guardian contact</label><input id="studentGuardianContact" maxlength="80"></div>
+<div class="field"><label for="studentClassSelect">Class</label><select id="studentClassSelect" required><option value="">Loading classes...</option></select></div>
+<div class="field full"><label for="studentCombinationSelect">Subject combination (optional)</label><select id="studentCombinationSelect"><option value="">No combination / not applicable</option></select><small class="muted">This dashboard uses the existing subject-combination tables. Individual subject-by-subject assignment is not supported by the current schema.</small></div>
+</div><div class="row"><button class="button" id="registerStudentButton" type="submit">Register Student</button><button class="button secondary" id="refreshStudentChoicesButton" type="button">Refresh Classes and Combinations</button></div><p class="message" id="studentRegistrationMessage" role="status"></p></form>
+</div>
+<div class="panel"><h3>Recently registered students</h3><div class="table-wrap"><table><thead><tr><th>Admission No.</th><th>Student</th><th>Class</th><th>Subject combination</th></tr></thead><tbody id="recentStudentsBody"><tr><td colspan="4">Loading...</td></tr></tbody></table></div><p class="message" id="recentStudentsMessage" role="status"></p></div>
+</section>
+
 <section class="section" id="section-marks"><h2 class="heading">Enter Examination Marks</h2><p class="muted">Students who already have marks for the selected exam and subject are excluded from the missing-marks list.</p>
 <div class="panel"><h3>Choose exam and subject</h3><form id="marksFilterForm"><div class="grid">
 <div class="field"><label for="examSelect">Exam</label><select id="examSelect" required><option value="">Loading exams...</option></select></div>
