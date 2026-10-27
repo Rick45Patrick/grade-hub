@@ -1,24 +1,21 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#142747">
-    <title>Grade Hub 2.0 | Admin Dashboard</title>
+    <title>Grade Hub | Admin Dashboard</title>
 
     <style>
         :root {
-            --navy: #142747;
-            --navy-light: #29436b;
-            --blue: #1769d2;
-            --background: #f4f7fb;
-            --white: #ffffff;
-            --text: #172033;
-            --muted: #69778c;
-            --border: #e4eaf2;
-            --success: #17643a;
-            --danger: #b42318;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --background: #f1f5f9;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #dc2626;
+            --success: #15803d;
         }
 
         * {
@@ -45,224 +42,232 @@
         }
 
         .layout {
-            display: flex;
             min-height: 100vh;
+            display: flex;
         }
 
-        aside {
-            width: 245px;
+        .sidebar {
+            width: 250px;
             flex-shrink: 0;
-            padding: 24px 15px;
-            background: var(--navy);
+            background: #0f172a;
             color: white;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
         }
 
         .brand {
-            margin: 0 0 30px;
-            font-size: 25px;
+            padding: 8px 12px 22px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 16px;
         }
 
-        .brand span {
-            color: #61a7ff;
+        .brand h2 {
+            margin: 0 0 6px;
+            font-size: 23px;
+        }
+
+        .brand p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 13px;
         }
 
         .nav-label {
-            margin: 24px 10px 10px;
-            color: #aab9d1;
+            padding: 10px 12px 5px;
+            color: #94a3b8;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .nav-item {
-            display: block;
-            width: 100%;
-            margin-bottom: 5px;
-            padding: 12px;
             border: 0;
-            border-radius: 7px;
-            background: transparent;
-            color: #e4ebf6;
+            width: 100%;
             text-align: left;
-            font-size: 13px;
-            transition: background .15s;
+            color: #cbd5e1;
+            background: transparent;
+            padding: 11px 12px;
+            border-radius: 8px;
+            margin: 2px 0;
         }
 
-        .nav-item:hover,
-        .nav-item.active {
-            background: var(--navy-light);
+        .nav-item:hover {
+            background: #1e293b;
             color: white;
         }
 
-        main {
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        .danger-button {
+            color: #fecaca;
+        }
+
+        .main {
             flex: 1;
             min-width: 0;
-            padding: 27px;
         }
 
         .topbar {
+            background: var(--surface);
+            padding: 18px 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
             gap: 16px;
-            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
         }
 
-        h1 {
-            margin: 0 0 7px;
-            font-size: 27px;
+        .topbar h1 {
+            margin: 0;
+            font-size: 23px;
         }
 
-        h2 {
-            font-size: 19px;
-        }
-
-        h3 {
-            font-size: 16px;
-        }
-
-        .muted {
+        .topbar p {
+            margin: 5px 0 0;
             color: var(--muted);
             font-size: 13px;
-            line-height: 1.6;
         }
 
-        .button {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 7px;
-            min-height: 40px;
-            padding: 10px 15px;
-            border: 0;
-            border-radius: 7px;
-            background: var(--blue);
-            color: white;
-            font-size: 13px;
+        .content {
+            padding: 25px;
+            max-width: 1500px;
+            margin: auto;
         }
 
-        .button:hover {
-            filter: brightness(.95);
+        .message {
+            padding: 12px 15px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            display: none;
+            overflow-wrap: anywhere;
         }
 
-        .button:disabled {
-            opacity: .55;
-            cursor: not-allowed;
+        .message.show {
+            display: block;
         }
 
-        .button.secondary {
-            background: #e7eef8;
-            color: #1d3557;
+        .message.error {
+            color: #991b1b;
+            background: #fee2e2;
         }
 
-        .button.danger {
-            background: var(--danger);
-            color: white;
+        .message.success {
+            color: #166534;
+            background: #dcfce7;
         }
 
         .stats {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card,
-        .panel {
-            padding: 21px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--white);
-            box-shadow: 0 3px 12px rgba(20, 39, 71, .035);
-        }
-
-        .stat-card p {
-            margin: 0 0 12px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .stat-card strong {
-            font-size: 29px;
-        }
-
-        .stat-card .stat-note {
-            display: block;
-            margin-top: 8px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .panel {
+            gap: 16px;
             margin-bottom: 22px;
         }
 
-        .panel-heading {
+        .stat-card, .panel, .module-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgb(15 23 42 / 4%);
+        }
+
+        .stat-card p {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .stat-card h2 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        .section-heading {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 18px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .panel-heading h2 {
+        .section-heading h2 {
             margin: 0;
+            font-size: 19px;
         }
 
-        .panel-heading p {
-            margin-bottom: 0;
+        .toolbar, .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 9px;
+        .form-grid .full-width {
+            grid-column: 1 / -1;
         }
 
-        input,
-        select,
-        textarea {
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
             width: 100%;
-            min-width: 0;
-            min-height: 40px;
-            padding: 9px 11px;
-            border: 1px solid #ccd6e4;
+            padding: 10px 11px;
+            border: 1px solid #cbd5e1;
             border-radius: 7px;
             background: white;
             color: var(--text);
         }
 
         textarea {
-            min-height: 90px;
             resize: vertical;
+            min-height: 90px;
         }
 
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: 2px solid #a9ccff;
-            border-color: var(--blue);
+        .field {
+            min-width: 0;
         }
 
-        label {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            color: #46546a;
-            font-size: 13px;
+        .button {
+            background: var(--primary);
+            color: white;
+            border: 0;
+            border-radius: 7px;
+            padding: 10px 14px;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 15px;
-            margin-bottom: 18px;
+        .button:hover {
+            background: var(--primary-dark);
         }
 
-        .form-grid .full-width {
-            grid-column: 1 / -1;
+        .button.secondary {
+            background: #475569;
+        }
+
+        .button.secondary:hover {
+            background: #334155;
+        }
+
+        .button.danger {
+            background: var(--danger);
+        }
+
+        .button.small {
+            padding: 7px 10px;
+            font-size: 12px;
         }
 
         .table-wrap {
@@ -271,102 +276,56 @@
         }
 
         table {
-            width: 100%;
             border-collapse: collapse;
-            white-space: nowrap;
+            width: 100%;
+            min-width: 650px;
         }
 
-        th,
-        td {
-            padding: 13px 12px;
-            border-bottom: 1px solid #edf0f5;
+        th, td {
+            padding: 12px 10px;
             text-align: left;
+            border-bottom: 1px solid var(--border);
             font-size: 13px;
+            vertical-align: top;
         }
 
         th {
-            background: #f8fafd;
-            color: #627087;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .5px;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
         }
 
-        td select {
-            min-width: 145px;
-        }
-
-        .status {
-            margin-bottom: 18px;
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .status:empty {
-            display: none;
-        }
-
-        .status.info {
-            background: #eaf3ff;
-            color: #174a85;
-        }
-
-        .status.success {
-            background: #e7f7ed;
-            color: var(--success);
-        }
-
-        .status.error {
-            background: #fff0ef;
-            color: #9d2420;
+        .muted {
+            color: var(--muted);
         }
 
         .empty {
-            padding: 28px;
             color: var(--muted);
             text-align: center;
+            padding: 22px;
         }
 
-        .notice {
-            margin-bottom: 16px;
-            padding: 13px;
-            border-radius: 8px;
-            background: #eaf3ff;
-            color: #174a85;
-            font-size: 13px;
-            line-height: 1.6;
+        .module-content {
+            margin-bottom: 18px;
         }
 
-        .divider {
-            margin: 22px 0;
-            border: 0;
-            border-top: 1px solid var(--border);
+        .module-content h2 {
+            margin-top: 0;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 5px 9px;
-            border-radius: 20px;
-            background: #e7eef8;
-            color: #1d3557;
-            font-size: 11px;
+        .form-panel {
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .login-message {
-            max-width: 550px;
-            margin: 70px auto;
-            padding: 30px;
-            border-radius: 12px;
-            background: white;
+        .loading-screen, .access-denied {
+            padding: 50px 20px;
             text-align: center;
         }
 
-        footer {
-            padding: 18px 0;
-            color: #8290a3;
-            font-size: 12px;
+        .access-denied h2 {
+            color: var(--danger);
         }
 
         @media (max-width: 900px) {
@@ -374,253 +333,165 @@
                 display: block;
             }
 
-            aside {
+            .sidebar {
                 width: 100%;
-                padding: 17px;
+                height: auto;
             }
 
-            .brand {
-                margin-bottom: 14px;
+            .sidebar nav {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 3px;
             }
 
-            .nav-label {
-                margin-top: 15px;
-            }
-
-            main {
-                padding: 18px;
+            .sidebar-bottom {
+                margin-top: 12px;
             }
 
             .stats {
                 grid-template-columns: 1fr;
-                gap: 12px;
-            }
-        }
-
-        @media (max-width: 520px) {
-            main {
-                padding: 12px;
             }
 
-            .panel,
-            .stat-card {
+            .content {
                 padding: 15px;
             }
 
-            .form-grid {
+            .topbar {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .toolbar, .form-grid {
                 grid-template-columns: 1fr;
             }
 
             .form-grid .full-width {
                 grid-column: auto;
             }
-
-            h1 {
-                font-size: 23px;
-            }
         }
     </style>
 </head>
 
 <body>
-
-    <!-- Loading screen -->
-    <div id="loadingScreen" class="login-message">
-        <h2>Grade Hub 2.0</h2>
-        <p>Checking your account...</p>
+    <div id="loadingScreen" class="loading-screen">
+        <h2>Loading Grade Hub...</h2>
+        <p class="muted">Checking your administrator account.</p>
     </div>
 
-    <!-- Access denied screen -->
-    <div id="accessDenied" class="login-message hidden">
-        <h2>Access unavailable</h2>
-        <p id="accessDeniedText">
-            Sign in with an active administrator account to continue.
-        </p>
-        <button class="button" id="returnButton" type="button">
-            Return to Login
-        </button>
+    <div id="accessDenied" class="access-denied hidden">
+        <h2>Access denied</h2>
+        <p id="accessDeniedText">You do not have permission to view this page.</p>
+        <button id="returnButton" class="button">Return to login</button>
     </div>
 
-    <!-- Main dashboard -->
     <div id="dashboard" class="layout hidden">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>Grade Hub</h2>
+                <p>Administrator Portal</p>
+            </div>
 
-        <aside>
-            <h2 class="brand">Grade <span>Hub</span></h2>
+            <nav>
+                <div class="nav-label">Main</div>
+                <button id="dashboardNav" class="nav-item active">Dashboard</button>
+                <button id="studentsNav" class="nav-item">Student Management</button>
+                <button id="classesNav" class="nav-item">Class Assignment</button>
+                <button id="teachersNav" class="nav-item">Class Teachers</button>
 
-            <div class="nav-label">Overview</div>
-            <button class="nav-item active" type="button" id="dashboardNav">
-                Dashboard
-            </button>
+                <div class="nav-label">Academics</div>
+                <button id="subjectsNav" class="nav-item">Subjects</button>
+                <button id="combinationsNav" class="nav-item">Subject Combinations</button>
+                <button id="gradingNav" class="nav-item">Grading Systems</button>
+                <button id="resultsNav" class="nav-item">Exams &amp; Results</button>
+                <button id="meritNav" class="nav-item">Merit Lists</button>
+                <button id="reportsNav" class="nav-item">Reports</button>
 
-            <div class="nav-label">Administration</div>
-            <button class="nav-item" type="button" id="studentsNav">
-                Student Management
-            </button>
+                <div class="nav-label">Resources</div>
+                <button id="documentsNav" class="nav-item">Documents &amp; Newsletters</button>
+                <button id="announcementsNav" class="nav-item">Announcements</button>
+            </nav>
 
-            <button class="nav-item" type="button" id="classesNav">
-                Class Assignment
-            </button>
-
-            <button class="nav-item" type="button" id="teachersNav">
-                Class Teachers
-            </button>
-
-            <div class="nav-label">Academic</div>
-            <button class="nav-item" type="button" id="subjectsNav">
-                Subjects
-            </button>
-
-            <button class="nav-item" type="button" id="combinationsNav">
-                Subject Combinations
-            </button>
-
-            <button class="nav-item" type="button" id="gradingNav">
-                Grading Systems
-            </button>
-
-            <button class="nav-item" type="button" id="resultsNav">
-                Exams &amp; Results
-            </button>
-
-            <button class="nav-item" type="button" id="meritNav">
-                Merit Lists
-            </button>
-
-            <div class="nav-label">Communication</div>
-            <button class="nav-item" type="button" id="documentsNav">
-                Documents &amp; Newsletters
-            </button>
-
-            <button class="nav-item" type="button" id="announcementsNav">
-                Announcements
-            </button>
-
-            <div class="nav-label">Account</div>
-            <button class="nav-item" type="button" id="refreshButton">
-                Refresh Data
-            </button>
-
-            <button class="nav-item" type="button" id="signOutButton">
-                Sign Out
-            </button>
+            <div class="sidebar-bottom">
+                <button id="refreshButton" class="nav-item">Refresh Data</button>
+                <button id="signOutButton" class="nav-item danger-button">Sign Out</button>
+            </div>
         </aside>
 
-        <main>
-
+        <main class="main">
             <header class="topbar">
                 <div>
-                    <h1 id="pageTitle">Admin Dashboard</h1>
-                    <div class="muted" id="welcomeText">
-                        Loading administrator...
-                    </div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <p id="welcomeText">Welcome to Grade Hub.</p>
                 </div>
             </header>
 
-            <div id="message"
-                 class="status"
-                 role="status"
-                 aria-live="polite"></div>
+            <div class="content">
+                <div id="message" class="message" role="status"></div>
 
-            <!-- Dashboard overview -->
-            <section id="overviewSection">
-                <div class="stats">
-                    <article class="stat-card">
-                        <p>Registered Students</p>
-                        <strong id="totalStudents">—</strong>
-                        <span class="stat-note">Student records</span>
-                    </article>
-
-                    <article class="stat-card">
-                        <p>Active Classes</p>
-                        <strong id="totalClasses">—</strong>
-                        <span class="stat-note">Available classes</span>
-                    </article>
-
-                    <article class="stat-card">
-                        <p>Students Assigned to Classes</p>
-                        <strong id="assignedStudents">—</strong>
-                        <span class="stat-note">Current class assignments</span>
-                    </article>
-                </div>
-
-                <section class="panel">
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Welcome to Grade Hub</h2>
-                            <p class="muted">
-                                Manage students, academic records, examinations
-                                and school communications.
-                            </p>
+                <section id="overviewSection">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <p>Total Students</p>
+                            <h2 id="totalStudents">0</h2>
+                        </div>
+                        <div class="stat-card">
+                            <p>Total Classes</p>
+                            <h2 id="totalClasses">0</h2>
+                        </div>
+                        <div class="stat-card">
+                            <p>Students Assigned to Classes</p>
+                            <h2 id="assignedStudents">0</h2>
                         </div>
                     </div>
 
-                    <div class="notice">
-                        Use the navigation menu to access the different
-                        administrative sections.
-                    </div>
-                </section>
-            </section>
-
-            <!-- Student class assignment -->
-            <section class="panel hidden" id="studentPanel">
-                <div class="panel-heading">
-                    <div>
-                        <h2>Student Class Assignment</h2>
+                    <div class="panel">
+                        <div class="section-heading">
+                            <h2>Administrator Overview</h2>
+                            <span class="muted">Grade Hub 2.0</span>
+                        </div>
                         <p class="muted">
-                            Assign students to classes or change their current class.
+                            Use the navigation menu to manage student class assignments,
+                            view subjects and combinations, enter results, and generate reports.
                         </p>
                     </div>
+                </section>
 
-                    <div class="filters">
-                        <input
-                            type="search"
-                            id="searchInput"
-                            placeholder="Search student or admission number"
-                            aria-label="Search students"
-                        >
+                <section id="studentPanel" class="panel hidden">
+                    <div class="section-heading">
+                        <h2>Student Class Assignment</h2>
+                    </div>
 
-                        <select id="classFilter" aria-label="Filter by class">
+                    <div class="toolbar">
+                        <input id="searchInput" type="search" placeholder="Search name or admission number">
+                        <select id="classFilter">
                             <option value="">All classes</option>
-                            <option value="unassigned">Not assigned</option>
                         </select>
                     </div>
-                </div>
 
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Admission Number</th>
-                                <th>Registration</th>
-                                <th>Current Class</th>
-                                <th>Assign / Move</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Admission Number</th>
+                                    <th>Registration</th>
+                                    <th>Class</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                <tr><td colspan="5" class="empty">Loading students...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
-                        <tbody id="studentsTableBody">
-                            <tr>
-                                <td colspan="6" class="empty">
-                                    Loading students...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Other feature pages are created by admin.js -->
-            <div id="moduleArea"></div>
-
-            <footer>
-                Grade Hub 2.0 · Administrator Portal
-            </footer>
-
+                <div id="moduleArea"></div>
+            </div>
         </main>
     </div>
 
     <script type="module" src="../js/admin.js"></script>
-
 </body>
 </html>
