@@ -76,42 +76,165 @@ async function loadChoices() {
 }
 
 async function loadMissing(event) {
-  event?.preventDefault(); msg("marksMessage",""); msg("saveMarksMessage","");
-  const examId = $("examSelect").value, subjectId = $("subjectSelect").value;
+  event?.preventDefault();
+  msg("marksMessage", "");
+  msg("saveMarksMessage", "");
+
+  const examId = $("examSelect").value;
+  const subjectId = $("subjectSelect").value;
   const maxMarks = Number($("totalMarksInput").value);
   const classId = $("examSelect").selectedOptions[0]?.dataset.classId || "";
-  if (!examId || !subjectId) return msg("marksMessage","Choose both an exam and a subject.","error");
-  if (!Number.isFinite(maxMarks) || maxMarks <= 0) return msg("marksMessage","Maximum marks must be greater than zero.","error");
 
-  busy($("loadMissingButton"),true,"Loading students...");
+  if (!examId || !subjectId) {
+    return msg("marksMessage", "Choose both an exam and a subject.", "error");
+  }
+  if (!Number.isFinite(maxMarks) || maxMarks <= 0) {
+    return msg("marksMessage", "Maximum marks must be greater than zero.", "error");
+  }
+
+  busy($("loadMissingButton"), true, "Loading assigned students...");
   $("missingMarksPanel").hidden = false;
   $("missingMarksTableBody").innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-  try {
-    let query = supabase.from("students").select("id,admission_number,profile_id,class_id").order("admission_number");
-    if (classId) query = query.eq("class_id",classId);
-    const { data: students, error: se } = await query;
-    if (se) throw se;
-    if (!students?.length) { missingStudents = []; renderMissing(); return msg("marksMessage","No students were found for this exam/class.","error"); }
 
-    const ids = students.map(s => s.id);
-    const { data: results, error: re } = await supabase.from("exam_results").select("student_id").eq("exam_id",examId).eq("subject_id",subjectId).in("student_id",ids);
-    if (re) throw re;
-    const hasResult = new Set((results || []).map(r => r.student_id));
-    const missing = students.filter(s => !hasResult.has(s.id));
-    const profileIds = [...new Set(missing.map(s => s.profile_id).filter(Boolean))];
+  try {
+    // Start with students in the exam's class, if the exam is class-specific.
+    let studentQuery = supabase
+      .from("students")
+      .select("id,admission_number,profile_id,class_id")
+      .order("admission_number");
+
+    if (classId) studentQuery = studentQuery.eq("class_id", classId);
+
+    const { data: students, error: studentError } = await studentQuery;
+    if (studentError) throw studentError;
+
+    if (!students?.length) {
+      missingStudents = [];
+      renderMissing();
+      return msg("marksMessage", "No students were found for this exam/class.", "error");
+    }
+
+    const studentIds = students.map(student => student.id);
+
+    // A student is eligible for a subject if it is assigned directly,
+    // or if it belongs to the student's active subject combination.
+    const [directResult, combinationResult] = await Promise.all([
+      supabase
+        .from("student_subjects")
+        .select("student_id")
+        .eq("subject_id", subjectId)
+        .in("student_id", studentIds),
+      supabase
+        .from("student_combinations")
+        .select("student_id,combination_id")
+        .is("ended_at", null)
+        .in("student_id", studentIds)
+    ]);
+
+    if (directResult.error) throw directResult.error;
+    if (combinationResult.error) throw combinationResult.error;
+
+    const assignedStudentIds = new Set(
+      (directResult.data || []).map(row => row.student_id)
+    );
+
+    const combinationIds = [...new Set(
+      (combinationResult.data || [])
+        .map(row => row.combination_id)
+        .filter(Boolean)
+    )];
+
+    if (combinationIds.length) {
+      const { data: combinationSubjects, error: combinationSubjectsError } =
+        await supabase
+          .from("combination_subjects")
+          .select("combination_id,subject_id")
+          .eq("subject_id", subjectId)
+          .in("combination_id", combinationIds);
+
+      if (combinationSubjectsError) throw combinationSubjectsError;
+
+      const matchingCombinationIds = new Set(
+        (combinationSubjects || []).map(row => row.combination_id)
+      );
+
+      (combinationResult.data || []).forEach(row => {
+        if (matchingCombinationIds.has(row.combination_id)) {
+          assignedStudentIds.add(row.student_id);
+        }
+      });
+    }
+
+    const eligibleStudents = students.filter(student =>
+      assignedStudentIds.has(student.id)
+    );
+
+    if (!eligibleStudents.length) {
+      missingStudents = [];
+      renderMissing();
+      $("missingMarksHint").textContent =
+        "No students are assigned to this subject in the selected class.";
+      return msg(
+        "marksMessage",
+        "No students are assigned to the selected subject. Check subject assignments and combination setup.",
+        "error"
+      );
+    }
+
+    const eligibleIds = eligibleStudents.map(student => student.id);
+    const { data: results, error: resultsError } = await supabase
+      .from("exam_results")
+      .select("student_id")
+      .eq("exam_id", examId)
+      .eq("subject_id", subjectId)
+      .in("student_id", eligibleIds);
+
+    if (resultsError) throw resultsError;
+
+    const studentsWithResults = new Set(
+      (results || []).map(row => row.student_id)
+    );
+    const missing = eligibleStudents.filter(
+      student => !studentsWithResults.has(student.id)
+    );
+
+    const profileIds = [...new Set(
+      missing.map(student => student.profile_id).filter(Boolean)
+    )];
+
     let names = new Map();
     if (profileIds.length) {
-      const { data, error } = await supabase.from("profiles").select("id,full_name").in("id",profileIds);
-      if (error) throw error;
-      names = new Map((data || []).map(p => [p.id,p.full_name]));
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id,full_name")
+        .in("id", profileIds);
+
+      if (profilesError) throw profilesError;
+      names = new Map((profiles || []).map(profile => [profile.id, profile.full_name]));
     }
-    missingStudents = missing.map(s => ({...s,full_name:names.get(s.profile_id) || "Name unavailable"}));
+
+    missingStudents = missing.map(student => ({
+      ...student,
+      full_name: names.get(student.profile_id) || "Name unavailable"
+    }));
+
     renderMissing();
-    $("missingMarksHint").textContent = `${missingStudents.length} student(s) need marks. Maximum marks: ${maxMarks}.`;
-    msg("marksMessage",missingStudents.length ? `Found ${missingStudents.length} student(s) without marks.` : "All students already have marks for this exam and subject.");
+    $("missingMarksHint").textContent =
+      `${missingStudents.length} assigned student(s) need marks. Maximum marks: ${maxMarks}.`;
+
+    msg(
+      "marksMessage",
+      missingStudents.length
+        ? `Found ${missingStudents.length} assigned student(s) without marks.`
+        : "All students assigned to this subject already have marks for this exam."
+    );
   } catch (error) {
-    missingStudents = []; renderMissing(); msg("marksMessage",errText("Loading students missing marks",error),"error");
-  } finally { busy($("loadMissingButton"),false); }
+    missingStudents = [];
+    renderMissing();
+    msg("marksMessage", errText("Loading students missing marks", error), "error");
+  } finally {
+    busy($("loadMissingButton"), false);
+  }
 }
 
 function renderMissing() {
