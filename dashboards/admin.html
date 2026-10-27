@@ -1,19 +1,47 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grade Hub | Admin Dashboard</title>
+    <meta name="theme-color" content="#142747">
+    <title>Grade Hub 2.0 | Admin Dashboard</title>
+
     <style>
+        :root {
+            --navy: #142747;
+            --navy-light: #29436b;
+            --blue: #1769d2;
+            --background: #f4f7fb;
+            --white: #ffffff;
+            --text: #172033;
+            --muted: #69778c;
+            --border: #e4eaf2;
+            --success: #17643a;
+            --danger: #b42318;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #172033;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .layout {
@@ -22,16 +50,16 @@
         }
 
         aside {
-            width: 235px;
+            width: 245px;
             flex-shrink: 0;
-            padding: 25px 16px;
-            background: #142747;
+            padding: 24px 15px;
+            background: var(--navy);
             color: white;
         }
 
         .brand {
-            margin: 0 0 35px;
-            font-size: 23px;
+            margin: 0 0 30px;
+            font-size: 25px;
         }
 
         .brand span {
@@ -49,35 +77,36 @@
         .nav-item {
             display: block;
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             padding: 12px;
             border: 0;
             border-radius: 7px;
             background: transparent;
             color: #e4ebf6;
             text-align: left;
-            font-size: 14px;
-            cursor: pointer;
+            font-size: 13px;
+            transition: background .15s;
         }
 
-        .nav-item.active,
-        .nav-item:hover {
-            background: #29436b;
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--navy-light);
             color: white;
         }
 
         main {
-            min-width: 0;
             flex: 1;
-            padding: 28px;
+            min-width: 0;
+            padding: 27px;
         }
 
         .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
             gap: 16px;
-            margin-bottom: 28px;
+            margin-bottom: 25px;
         }
 
         h1 {
@@ -85,28 +114,40 @@
             font-size: 27px;
         }
 
-        .muted {
-            color: #69778c;
-            font-size: 14px;
+        h2 {
+            font-size: 19px;
         }
 
-        button,
-        input,
-        select {
-            font: inherit;
+        h3 {
+            font-size: 16px;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         .button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 7px;
+            min-height: 40px;
             padding: 10px 15px;
             border: 0;
             border-radius: 7px;
-            background: #1769d2;
+            background: var(--blue);
             color: white;
-            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .button:hover {
+            filter: brightness(.95);
         }
 
         .button:disabled {
-            opacity: 0.6;
+            opacity: .55;
             cursor: not-allowed;
         }
 
@@ -116,7 +157,8 @@
         }
 
         .button.danger {
-            background: #b42318;
+            background: var(--danger);
+            color: white;
         }
 
         .stats {
@@ -129,20 +171,27 @@
         .stat-card,
         .panel {
             padding: 21px;
-            border: 1px solid #e4eaf2;
+            border: 1px solid var(--border);
             border-radius: 12px;
-            background: white;
-            box-shadow: 0 3px 12px rgba(20, 39, 71, 0.04);
+            background: var(--white);
+            box-shadow: 0 3px 12px rgba(20, 39, 71, .035);
         }
 
         .stat-card p {
             margin: 0 0 12px;
-            color: #69778c;
-            font-size: 14px;
+            color: var(--muted);
+            font-size: 13px;
         }
 
         .stat-card strong {
             font-size: 29px;
+        }
+
+        .stat-card .stat-note {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
         }
 
         .panel {
@@ -154,38 +203,70 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 14px;
             margin-bottom: 18px;
         }
 
         .panel-heading h2 {
             margin: 0;
-            font-size: 19px;
+        }
+
+        .panel-heading p {
+            margin-bottom: 0;
         }
 
         .filters {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 9px;
         }
 
         input,
-        select {
+        select,
+        textarea {
+            width: 100%;
+            min-width: 0;
             min-height: 40px;
             padding: 9px 11px;
             border: 1px solid #ccd6e4;
             border-radius: 7px;
             background: white;
-            color: #172033;
+            color: var(--text);
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
         }
 
         input:focus,
-        select:focus {
+        select:focus,
+        textarea:focus {
             outline: 2px solid #a9ccff;
-            border-color: #1769d2;
+            border-color: var(--blue);
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            color: #46546a;
+            font-size: 13px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .form-grid .full-width {
+            grid-column: 1 / -1;
         }
 
         .table-wrap {
+            width: 100%;
             overflow-x: auto;
         }
 
@@ -197,7 +278,7 @@
 
         th,
         td {
-            padding: 14px 12px;
+            padding: 13px 12px;
             border-bottom: 1px solid #edf0f5;
             text-align: left;
             font-size: 13px;
@@ -208,19 +289,18 @@
             color: #627087;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: .5px;
         }
 
         td select {
-            min-width: 150px;
-            max-width: 210px;
+            min-width: 145px;
         }
 
         .status {
             margin-bottom: 18px;
             padding: 12px 14px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
         }
 
@@ -235,7 +315,7 @@
 
         .status.success {
             background: #e7f7ed;
-            color: #17643a;
+            color: var(--success);
         }
 
         .status.error {
@@ -245,12 +325,33 @@
 
         .empty {
             padding: 28px;
-            color: #69778c;
+            color: var(--muted);
             text-align: center;
         }
 
-        .hidden {
-            display: none !important;
+        .notice {
+            margin-bottom: 16px;
+            padding: 13px;
+            border-radius: 8px;
+            background: #eaf3ff;
+            color: #174a85;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .divider {
+            margin: 22px 0;
+            border: 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #e7eef8;
+            color: #1d3557;
+            font-size: 11px;
         }
 
         .login-message {
@@ -263,27 +364,27 @@
         }
 
         footer {
-            padding: 10px 0;
+            padding: 18px 0;
             color: #8290a3;
             font-size: 12px;
         }
 
-        @media (max-width: 800px) {
+        @media (max-width: 900px) {
             .layout {
                 display: block;
             }
 
             aside {
                 width: 100%;
-                padding: 16px;
+                padding: 17px;
             }
 
             .brand {
-                margin-bottom: 15px;
+                margin-bottom: 14px;
             }
 
             .nav-label {
-                margin-top: 14px;
+                margin-top: 15px;
             }
 
             main {
@@ -294,123 +395,232 @@
                 grid-template-columns: 1fr;
                 gap: 12px;
             }
+        }
 
-            .topbar {
-                align-items: flex-start;
-                flex-wrap: wrap;
+        @media (max-width: 520px) {
+            main {
+                padding: 12px;
+            }
+
+            .panel,
+            .stat-card {
+                padding: 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid .full-width {
+                grid-column: auto;
+            }
+
+            h1 {
+                font-size: 23px;
             }
         }
     </style>
 </head>
+
 <body>
 
-<div id="loadingScreen" class="login-message">
-    <h2>Grade Hub</h2>
-    <p>Checking your account...</p>
-</div>
+    <!-- Loading screen -->
+    <div id="loadingScreen" class="login-message">
+        <h2>Grade Hub 2.0</h2>
+        <p>Checking your account...</p>
+    </div>
 
-<div id="dashboard" class="layout hidden">
-    <aside>
-        <h2 class="brand">Grade <span>Hub</span></h2>
+    <!-- Access denied screen -->
+    <div id="accessDenied" class="login-message hidden">
+        <h2>Access unavailable</h2>
+        <p id="accessDeniedText">
+            Sign in with an active administrator account to continue.
+        </p>
+        <button class="button" id="returnButton" type="button">
+            Return to Login
+        </button>
+    </div>
 
-        <div class="nav-label">Administration</div>
-        <button class="nav-item active" type="button">Dashboard</button>
-        <button class="nav-item" type="button" id="studentsNav">Student Management</button>
-        <button class="nav-item" type="button" id="classesNav">Class Assignment</button>
-        <button class="nav-item" type="button" id="teachersNav">Class Teachers</button>
+    <!-- Main dashboard -->
+    <div id="dashboard" class="layout hidden">
 
-        <div class="nav-label">Academic</div>
-        <button class="nav-item" type="button" id="combinationsNav">Subject Combinations</button>
-        <button class="nav-item" type="button" id="resultsNav">Exams &amp; Results</button>
-        <button class="nav-item" type="button" id="meritNav">Merit Lists</button>
+        <aside>
+            <h2 class="brand">Grade <span>Hub</span></h2>
 
-        <div class="nav-label">Account</div>
-        <button class="nav-item" type="button" id="signOutButton">Sign Out</button>
-    </aside>
+            <div class="nav-label">Overview</div>
+            <button class="nav-item active" type="button" id="dashboardNav">
+                Dashboard
+            </button>
 
-    <main>
-        <header class="topbar">
-            <div>
-                <h1 id="pageTitle">Admin Dashboard</h1>
-                <div class="muted" id="welcomeText">Loading administrator...</div>
-            </div>
-            <button class="button secondary" id="refreshButton" type="button">
+            <div class="nav-label">Administration</div>
+            <button class="nav-item" type="button" id="studentsNav">
+                Student Management
+            </button>
+
+            <button class="nav-item" type="button" id="classesNav">
+                Class Assignment
+            </button>
+
+            <button class="nav-item" type="button" id="teachersNav">
+                Class Teachers
+            </button>
+
+            <div class="nav-label">Academic</div>
+            <button class="nav-item" type="button" id="subjectsNav">
+                Subjects
+            </button>
+
+            <button class="nav-item" type="button" id="combinationsNav">
+                Subject Combinations
+            </button>
+
+            <button class="nav-item" type="button" id="gradingNav">
+                Grading Systems
+            </button>
+
+            <button class="nav-item" type="button" id="resultsNav">
+                Exams &amp; Results
+            </button>
+
+            <button class="nav-item" type="button" id="meritNav">
+                Merit Lists
+            </button>
+
+            <div class="nav-label">Communication</div>
+            <button class="nav-item" type="button" id="documentsNav">
+                Documents &amp; Newsletters
+            </button>
+
+            <button class="nav-item" type="button" id="announcementsNav">
+                Announcements
+            </button>
+
+            <div class="nav-label">Account</div>
+            <button class="nav-item" type="button" id="refreshButton">
                 Refresh Data
             </button>
-        </header>
 
-        <div id="message" class="status" role="status" aria-live="polite"></div>
+            <button class="nav-item" type="button" id="signOutButton">
+                Sign Out
+            </button>
+        </aside>
 
-        <section class="stats">
-            <article class="stat-card">
-                <p>Registered Students</p>
-                <strong id="totalStudents">—</strong>
-            </article>
+        <main>
 
-            <article class="stat-card">
-                <p>Active Classes</p>
-                <strong id="totalClasses">—</strong>
-            </article>
-
-            <article class="stat-card">
-                <p>Students Assigned to Classes</p>
-                <strong id="assignedStudents">—</strong>
-            </article>
-        </section>
-
-        <section class="panel" id="studentPanel">
-            <div class="panel-heading">
+            <header class="topbar">
                 <div>
-                    <h2>Student Class Assignment</h2>
-                    <p class="muted">Assign a student to a class or change their current class.</p>
+                    <h1 id="pageTitle">Admin Dashboard</h1>
+                    <div class="muted" id="welcomeText">
+                        Loading administrator...
+                    </div>
+                </div>
+            </header>
+
+            <div id="message"
+                 class="status"
+                 role="status"
+                 aria-live="polite"></div>
+
+            <!-- Dashboard overview -->
+            <section id="overviewSection">
+                <div class="stats">
+                    <article class="stat-card">
+                        <p>Registered Students</p>
+                        <strong id="totalStudents">—</strong>
+                        <span class="stat-note">Student records</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <p>Active Classes</p>
+                        <strong id="totalClasses">—</strong>
+                        <span class="stat-note">Available classes</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <p>Students Assigned to Classes</p>
+                        <strong id="assignedStudents">—</strong>
+                        <span class="stat-note">Current class assignments</span>
+                    </article>
                 </div>
 
-                <div class="filters">
-                    <input
-                        type="search"
-                        id="searchInput"
-                        placeholder="Search name or admission number"
-                        aria-label="Search students"
-                    >
+                <section class="panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Welcome to Grade Hub</h2>
+                            <p class="muted">
+                                Manage students, academic records, examinations
+                                and school communications.
+                            </p>
+                        </div>
+                    </div>
 
-                    <select id="classFilter" aria-label="Filter by class">
-                        <option value="">All classes</option>
-                        <option value="unassigned">Not assigned</option>
-                    </select>
+                    <div class="notice">
+                        Use the navigation menu to access the different
+                        administrative sections.
+                    </div>
+                </section>
+            </section>
+
+            <!-- Student class assignment -->
+            <section class="panel hidden" id="studentPanel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Student Class Assignment</h2>
+                        <p class="muted">
+                            Assign students to classes or change their current class.
+                        </p>
+                    </div>
+
+                    <div class="filters">
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Search student or admission number"
+                            aria-label="Search students"
+                        >
+
+                        <select id="classFilter" aria-label="Filter by class">
+                            <option value="">All classes</option>
+                            <option value="unassigned">Not assigned</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Admission Number</th>
-                            <th>Registration</th>
-                            <th>Current Class</th>
-                            <th>Assign / Move</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="studentsTableBody">
-                        <tr>
-                            <td colspan="6" class="empty">Loading students...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Admission Number</th>
+                                <th>Registration</th>
+                                <th>Current Class</th>
+                                <th>Assign / Move</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
 
-        <footer>Grade Hub 2.0 · Administrator Portal</footer>
-    </main>
-</div>
+                        <tbody id="studentsTableBody">
+                            <tr>
+                                <td colspan="6" class="empty">
+                                    Loading students...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-<div id="accessDenied" class="login-message hidden">
-    <h2>Access unavailable</h2>
-    <p id="accessDeniedText">You must sign in with an active Admin account to use this page.</p>
-    <button class="button" id="returnButton" type="button">Return to Login</button>
-</div>
+            <!-- Other feature pages are created by admin.js -->
+            <div id="moduleArea"></div>
 
-<script type="module" src="../js/admin.js"></script>
+            <footer>
+                Grade Hub 2.0 · Administrator Portal
+            </footer>
+
+        </main>
+    </div>
+
+    <script type="module" src="../js/admin.js"></script>
+
 </body>
 </html>
