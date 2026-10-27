@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102447">
+<title>Grade Hub | Student Dashboard</title>
+<style>
+*{box-sizing:border-box}
+:root{--navy:#102447;--blue:#1d4ed8;--bg:#f3f6fb;--text:#17243b;--muted:#64748b;--line:#e4eaf2}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:235px;flex-shrink:0;padding:22px 15px;background:var(--navy);color:white}
+.brand{padding:8px 12px 26px;font-size:23px;font-weight:800}.brand span{color:#64b5ff}
+.nav-button{display:block;width:100%;padding:13px;margin:5px 0;border:0;border-radius:8px;text-align:left;background:transparent;color:#d8e2f2;font-size:15px;cursor:pointer}
+.nav-button:hover,.nav-button.active{background:#24436f;color:white}
+.main{flex:1;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 26px;background:white;border-bottom:1px solid var(--line)}
+.topbar h1{margin:0 0 6px;font-size:23px}.topbar p{margin:0;color:var(--muted);font-size:13px}
+.content{padding:26px}.section{display:none}.section.active{display:block}
+.heading{margin:0 0 8px;font-size:23px}.muted{color:var(--muted);line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0}
+.stat,.panel{padding:21px;background:white;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 12px #1024470a}
+.stat p{margin:0 0 12px;color:var(--muted);font-size:14px}.stat h3{margin:0;font-size:29px}
+.panel{margin-top:18px}.panel h3{margin:0 0 17px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.subject-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.subject{padding:15px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.subject strong{display:block;margin-bottom:7px}.subject small{color:var(--muted)}
+.table-wrap{overflow-x:auto;margin-top:15px}table{width:100%;min-width:570px;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #e8edf4;text-align:left;font-size:14px;vertical-align:middle}
+th{background:#f8fafc;color:var(--muted)}
+.button{padding:10px 14px;border:0;border-radius:7px;background:var(--blue);color:white;font-size:14px;font-weight:700;cursor:pointer}
+.secondary{background:#e8eef8;color:var(--text)}.button:disabled{opacity:.6;cursor:wait}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.message{margin-top:12px;font-size:14px;overflow-wrap:anywhere}.message.success{color:#15803d}.message.error{color:#b91c1c}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#e0f2fe;color:#075985;font-size:12px;font-weight:700}
+.announcement{padding:14px 0;border-bottom:1px solid var(--line)}.announcement:last-child{border-bottom:0}
+.announcement h4{margin:0 0 7px}.announcement p{margin:0;line-height:1.6;white-space:pre-wrap}
+.mobile{display:none}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.subject-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.layout{display:block}.sidebar{display:none;width:100%}.sidebar.open{display:block}.topbar{padding:16px}.content{padding:15px}.mobile{display:inline-block}.stats{grid-template-columns:1fr 1fr}.grid,.subject-grid{grid-template-columns:1fr}.topbar h1{font-size:19px}.stat,.panel{padding:16px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="brand">Grade <span>Hub</span></div>
+  <button class="nav-button active" data-section="overview">Overview</button>
+  <button class="nav-button" data-section="subjects">My Subjects</button>
+  <button class="nav-button" data-section="results">My Results</button>
+  <button class="nav-button" data-section="announcements">Announcements</button>
+</aside>
+<main class="main">
+  <header class="topbar">
+    <div class="row">
+      <button class="button secondary mobile" id="mobileMenuButton" type="button">☰</button>
+      <div><h1 id="pageTitle">Student Dashboard</h1><p id="welcomeText">Loading your student account...</p></div>
+    </div>
+    <button class="button secondary" id="signOutButton" type="button">Sign Out</button>
+  </header>
+  <div class="content">
+    <p id="globalMessage" class="message" role="status"></p>
+
+    <section class="section active" id="section-overview">
+      <h2 class="heading">Your learning overview</h2>
+      <p class="muted">Check your subjects, examination results and school announcements.</p>
+      <div class="stats">
+        <div class="stat"><p>My Subjects</p><h3 id="subjectCount">—</h3></div>
+        <div class="stat"><p>Results Published</p><h3 id="resultCount">—</h3></div>
+        <div class="stat"><p>Average Percentage</p><h3 id="averageScore">—</h3></div>
+      </div>
+      <div class="panel">
+        <h3>Performance trend</h3>
+        <p class="muted">Your average percentage for each exam, based on recorded results.</p>
+        <div style="position:relative;height:280px"><canvas id="performanceTrendChart" aria-label="Performance trend graph" role="img"></canvas></div>
+        <p id="trendChartMessage" class="message" role="status"></p>
+      </div>
+      <div class="panel">
+        <h3>Performance by subject</h3>
+        <p class="muted">Compare your average percentage across subjects.</p>
+        <div style="position:relative;height:320px"><canvas id="subjectPerformanceChart" aria-label="Performance by subject graph" role="img"></canvas></div>
+        <p id="subjectChartMessage" class="message" role="status"></p>
+      </div>
+      <div class="panel">
+        <h3>Student details</h3>
+        <div class="grid">
+          <div><small class="muted">Full name</small><p id="studentName">Loading...</p></div>
+          <div><small class="muted">Admission number</small><p id="admissionNumber">—</p></div>
+          <div><small class="muted">Class</small><p id="studentClass">—</p></div>
+          <div><small class="muted">Login email</small><p id="studentEmail">—</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h3 style="margin:0">Recent results</h3><button class="button secondary" data-open-section="results">View all results</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Exam</th><th>Subject</th><th>Marks</th><th>Percentage</th></tr></thead><tbody id="recentResultsBody"><tr><td colspan="4">Loading...</td></tr></tbody></table></div>
+      </div>
+      <div class="panel"><h3>Latest announcements</h3><div id="recentAnnouncements"><p class="muted">Loading announcements...</p></div></div>
+    </section>
+
+    <section class="section" id="section-subjects">
+      <h2 class="heading">My Subjects</h2>
+      <p class="muted">Subjects assigned to your student account.</p>
+      <div class="subject-grid" id="subjectGrid"><p class="muted">Loading subjects...</p></div>
+      <p id="subjectsMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="section" id="section-results">
+      <h2 class="heading">My Results</h2>
+      <p class="muted">Only results linked to your student record are displayed here.</p>
+      <div class="panel">
+        <div class="row"><label for="examFilter">Filter by exam</label><select id="examFilter" style="max-width:300px;min-height:40px;padding:8px;border:1px solid #ccd6e4;border-radius:7px"><option value="">All exams</option></select><button class="button secondary" id="printResultsButton" type="button">Print / Save PDF</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Exam</th><th>Subject</th><th>Marks</th><th>Maximum</th><th>Percentage</th><th>Grade</th></tr></thead><tbody id="allResultsBody"><tr><td colspan="6">Loading results...</td></tr></tbody></table></div>
+        <p id="resultsMessage" class="message" role="status"></p>
+      </div>
+    </section>
+
+    <section class="section" id="section-announcements">
+      <h2 class="heading">Announcements</h2>
+      <p class="muted">Published notices from your school.</p>
+      <div class="panel"><div id="allAnnouncements"><p class="muted">Loading announcements...</p></div></div>
+    </section>
+  </div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="../js/student.js"></script>
+</body>
+</html>
