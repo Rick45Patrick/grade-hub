@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Hub | Admin Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        aside {
+            width: 235px;
+            flex-shrink: 0;
+            padding: 25px 16px;
+            background: #142747;
+            color: white;
+        }
+
+        .brand {
+            margin: 0 0 35px;
+            font-size: 23px;
+        }
+
+        .brand span {
+            color: #61a7ff;
+        }
+
+        .nav-label {
+            margin: 24px 10px 10px;
+            color: #aab9d1;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            margin-bottom: 6px;
+            padding: 12px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #e4ebf6;
+            text-align: left;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-item.active,
+        .nav-item:hover {
+            background: #29436b;
+            color: white;
+        }
+
+        main {
+            min-width: 0;
+            flex: 1;
+            padding: 28px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            margin: 0 0 7px;
+            font-size: 27px;
+        }
+
+        .muted {
+            color: #69778c;
+            font-size: 14px;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .button {
+            padding: 10px 15px;
+            border: 0;
+            border-radius: 7px;
+            background: #1769d2;
+            color: white;
+            cursor: pointer;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button.secondary {
+            background: #e7eef8;
+            color: #1d3557;
+        }
+
+        .button.danger {
+            background: #b42318;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card,
+        .panel {
+            padding: 21px;
+            border: 1px solid #e4eaf2;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 3px 12px rgba(20, 39, 71, 0.04);
+        }
+
+        .stat-card p {
+            margin: 0 0 12px;
+            color: #69778c;
+            font-size: 14px;
+        }
+
+        .stat-card strong {
+            font-size: 29px;
+        }
+
+        .panel {
+            margin-bottom: 22px;
+        }
+
+        .panel-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .panel-heading h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        input,
+        select {
+            min-height: 40px;
+            padding: 9px 11px;
+            border: 1px solid #ccd6e4;
+            border-radius: 7px;
+            background: white;
+            color: #172033;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 2px solid #a9ccff;
+            border-color: #1769d2;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf0f5;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f8fafd;
+            color: #627087;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td select {
+            min-width: 150px;
+            max-width: 210px;
+        }
+
+        .status {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .status:empty {
+            display: none;
+        }
+
+        .status.info {
+            background: #eaf3ff;
+            color: #174a85;
+        }
+
+        .status.success {
+            background: #e7f7ed;
+            color: #17643a;
+        }
+
+        .status.error {
+            background: #fff0ef;
+            color: #9d2420;
+        }
+
+        .empty {
+            padding: 28px;
+            color: #69778c;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .login-message {
+            max-width: 550px;
+            margin: 70px auto;
+            padding: 30px;
+            border-radius: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        footer {
+            padding: 10px 0;
+            color: #8290a3;
+            font-size: 12px;
+        }
+
+        @media (max-width: 800px) {
+            .layout {
+                display: block;
+            }
+
+            aside {
+                width: 100%;
+                padding: 16px;
+            }
+
+            .brand {
+                margin-bottom: 15px;
+            }
+
+            .nav-label {
+                margin-top: 14px;
+            }
+
+            main {
+                padding: 18px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingScreen" class="login-message">
+    <h2>Grade Hub</h2>
+    <p>Checking your account...</p>
+</div>
+
+<div id="dashboard" class="layout hidden">
+    <aside>
+        <h2 class="brand">Grade <span>Hub</span></h2>
+
+        <div class="nav-label">Administration</div>
+        <button class="nav-item active" type="button">Dashboard</button>
+        <button class="nav-item" type="button" id="studentsNav">Student Management</button>
+        <button class="nav-item" type="button" id="classesNav">Class Assignment</button>
+        <button class="nav-item" type="button" id="teachersNav">Class Teachers</button>
+
+        <div class="nav-label">Academic</div>
+        <button class="nav-item" type="button" id="combinationsNav">Subject Combinations</button>
+        <button class="nav-item" type="button" id="resultsNav">Exams &amp; Results</button>
+        <button class="nav-item" type="button" id="meritNav">Merit Lists</button>
+
+        <div class="nav-label">Account</div>
+        <button class="nav-item" type="button" id="signOutButton">Sign Out</button>
+    </aside>
+
+    <main>
+        <header class="topbar">
+            <div>
+                <h1 id="pageTitle">Admin Dashboard</h1>
+                <div class="muted" id="welcomeText">Loading administrator...</div>
+            </div>
+            <button class="button secondary" id="refreshButton" type="button">
+                Refresh Data
+            </button>
+        </header>
+
+        <div id="message" class="status" role="status" aria-live="polite"></div>
+
+        <section class="stats">
+            <article class="stat-card">
+                <p>Registered Students</p>
+                <strong id="totalStudents">—</strong>
+            </article>
+
+            <article class="stat-card">
+                <p>Active Classes</p>
+                <strong id="totalClasses">—</strong>
+            </article>
+
+            <article class="stat-card">
+                <p>Students Assigned to Classes</p>
+                <strong id="assignedStudents">—</strong>
+            </article>
+        </section>
+
+        <section class="panel" id="studentPanel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Student Class Assignment</h2>
+                    <p class="muted">Assign a student to a class or change their current class.</p>
+                </div>
+
+                <div class="filters">
+                    <input
+                        type="search"
+                        id="searchInput"
+                        placeholder="Search name or admission number"
+                        aria-label="Search students"
+                    >
+
+                    <select id="classFilter" aria-label="Filter by class">
+                        <option value="">All classes</option>
+                        <option value="unassigned">Not assigned</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Admission Number</th>
+                            <th>Registration</th>
+                            <th>Current Class</th>
+                            <th>Assign / Move</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr>
+                            <td colspan="6" class="empty">Loading students...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>Grade Hub 2.0 · Administrator Portal</footer>
+    </main>
+</div>
+
+<div id="accessDenied" class="login-message hidden">
+    <h2>Access unavailable</h2>
+    <p id="accessDeniedText">You must sign in with an active Admin account to use this page.</p>
+    <button class="button" id="returnButton" type="button">Return to Login</button>
+</div>
+
+<script type="module" src="./js/admin.js"></script>
+</body>
+</html>
